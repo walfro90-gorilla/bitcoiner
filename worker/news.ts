@@ -69,7 +69,8 @@ Titulares:
 ${titles}`;
   try {
     const raw = await generateText({ prompt, json: true, maxTokens: 500 });
-    const cleaned = (raw.match(/\{[\s\S]*\}/)?.[0] ?? raw).trim();
+    // Extrae el primer objeto JSON plano (robusto ante texto/objetos extra del modelo).
+    const cleaned = (raw.match(/\{[^{}]*\}/)?.[0] ?? raw).trim();
     const j = JSON.parse(cleaned) as { sentiment?: number; impact?: string; summary?: string };
     const sentiment = Math.max(-1, Math.min(1, Number(j.sentiment) || 0));
     const impact = (['low', 'medium', 'high'].includes(j.impact ?? '') ? j.impact : 'low') as NewsRegime['impact'];

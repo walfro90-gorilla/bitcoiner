@@ -12,7 +12,8 @@ import { RiskManager, type BotRuntimeState } from './risk';
 import { Writer } from './writer';
 import { Ledger } from './state';
 import { loadBotState, loadExchanges, loadFees, loadWallets } from './supabase';
-import { bestAsk, bestBid, type DetectedOpportunity, type OrderBook, type Venue } from './core';
+import { bestAsk, bestBid, midPrice, type DetectedOpportunity, type OrderBook, type Venue } from './core';
+import { getUsdtMxn, startFx } from './fx';
 
 type FeedBuilder = (pair: string, onBook: (b: OrderBook) => void) => Feed | null;
 const BUILDERS: Record<string, FeedBuilder> = {
@@ -177,6 +178,14 @@ async function main(): Promise<void> {
       }
     }
 
+  // Premio Bitso MX (Fase 1): feed BTC/MXN + tipo de cambio USDT/MXN.
+  const bitsoMxn = createBitsoFeed('BTC/MXN', engine.onBook);
+  if (bitsoMxn) {
+    bitsoMxn.start();
+    feeds.push(bitsoMxn);
+  }
+  startFx();
+
   // 3) Muestreo de snapshots para replay/backtest (opt-in: solo si SNAPSHOT_SAMPLE_MS > 0).
   if (CONFIG.snapshotSampleMs > 0) {
     setInterval(() => {
@@ -225,8 +234,18 @@ async function main(): Promise<void> {
     const lines = books.map(
       (b) => `  ${b.venue}:${b.pair}  bid=${bestBid(b)?.toFixed(2)}  ask=${bestAsk(b)?.toFixed(2)}`,
     );
+    const fx = getUsdtMxn();
+    const bMxn = engine.state.get('bitso:BTC/MXN');
+    const bUsdt = engine.state.get('binance:BTC/USDT');
+    let premio = '';
+    if (fx > 0 && bMxn && bUsdt) {
+      const bitsoUsd = (midPrice(bMxn) ?? 0) / fx;
+      const globalUsd = midPrice(bUsdt) ?? 0;
+      const bps = globalUsd > 0 ? (bitsoUsd / globalUsd - 1) * 1e4 : 0;
+      premio = `\n  [PREMIO BITSO] usdtMxn=${fx.toFixed(3)} bitsoUSD=${bitsoUsd.toFixed(0)} globalUSD=${globalUsd.toFixed(0)} premio=${bps.toFixed(1)}bps`;
+    }
     console.log(
-      `--- @ ${new Date().toISOString()} | pnlAcum=$${runtime.cumulativePnlUsd.toFixed(2)} trading=${runtime.tradingEnabled} ---\n${lines.join('\n')}`,
+      `--- @ ${new Date().toISOString()} | pnlAcum=$${runtime.cumulativePnlUsd.toFixed(2)} trading=${runtime.tradingEnabled} ---\n${lines.join('\n')}${premio}`,
     );
   }, 5000);
 

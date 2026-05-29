@@ -5,6 +5,7 @@ import type { Level, OrderBook, Quote } from '../core';
 
 const BOOKS: Record<string, { book: string; quote: Quote }> = {
   'BTC/USDT': { book: 'btc_usdt', quote: 'USDT' },
+  'BTC/MXN': { book: 'btc_mxn', quote: 'MXN' },
 };
 
 interface BitsoEntry {
