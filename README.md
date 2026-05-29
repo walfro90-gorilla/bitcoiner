@@ -1,8 +1,40 @@
 # 🦅 Clawbot — Bot de Arbitraje de Bitcoin en tiempo real
 
-Sistema de **detección y simulación de arbitraje de BTC** multi-exchange, en tiempo real, con dashboard web en vivo, un copiloto de IA y un módulo de **noticias/sentimiento**. Construido para el **Coding Challenge México**.
+> Sistema que **detecta oportunidades de arbitraje de BTC en tiempo real** entre Binance, OKX, Kraken y Bitso, calcula su **rentabilidad neta** (fees + withdrawal + slippage), **simula la ejecución** respetando la liquidez del order book, e incorpora **noticias de última hora + IA** en la gestión de riesgo. Construido para el **Coding Challenge México**.
 
-Monitorea order books de Bitcoin en **Binance, OKX, Kraken y Bitso** vía WebSockets, detecta divergencias, calcula la rentabilidad **neta** (fees + withdrawal + slippage + latencia), **simula la ejecución** respetando la liquidez del libro (órdenes parciales + balances de wallet), incorpora **noticias de última hora** como régimen de riesgo, y visualiza oportunidades, operaciones y P&L acumulado.
+## 🔗 Enlaces
+
+| | |
+|---|---|
+| 🌐 **Dashboard en vivo** | **https://TU-APP.vercel.app** ← *(reemplaza con tu URL de Vercel)* |
+| 💻 **Repositorio** | https://github.com/walfro90-gorilla/bitcoiner |
+| ⚙️ **Worker** | UpCloud · Frankfurt (EU) · 24/7 con pm2 |
+
+---
+
+## 🎬 Qué estás viendo (en 30 segundos)
+
+Un **worker** corriendo en un servidor de **Frankfurt** mantiene conexiones **WebSocket** abiertas a 4 exchanges y procesa cada cambio de precio en **<1 ms**. Cuando detecta que el precio de compra (ask) en un exchange es menor al de venta (bid) en otro, calcula si es rentable **después de todos los costos** y, si lo es, **simula la operación**. Todo se guarda en Supabase y este dashboard lo refleja **en vivo** (sin recargar). El **copiloto IA** explica lo que pasa y las **noticias** ajustan el riesgo.
+
+> 💡 **Toggle DEMO/Real (arriba a la derecha):** en **Real**, el bot solo ejecuta operaciones con ganancia neta ≥ umbral — y como los mercados son eficientes, *correctamente* descarta casi todas (esa es la precisión). En **DEMO** ejecuta cada divergencia real aunque el neto sea chico, para mostrar la mecánica (fills, parciales, P&L) en vivo.
+
+---
+
+## 🖥️ Guía del dashboard — qué hace cada sección
+
+1. **Header / Controles** — `Trading ON/OFF` (kill switch global), `DEMO/Real` (modo de ejecución) y `min net bps` (umbral de rentabilidad). Cualquier cambio aquí lo obedece el worker remoto en **~2.5 s** (vía la tabla `bot_state`), sin reiniciar nada.
+2. **Tarjetas (KPIs):**
+   - **P&L acumulado** — ganancia/pérdida neta simulada de todas las operaciones.
+   - **Operaciones** — # de trades ejecutados (y oportunidades que se ejecutaron).
+   - **Oportunidades vistas** — # de divergencias detectadas, *se ejecuten o no* (prueba que el bot "ve" el mercado).
+   - **Latencia detección** — tiempo de procesamiento por evento (típico **<1 ms**).
+3. **P&L acumulado (gráfica)** — evolución temporal del P&L neto (recharts).
+4. **Arbitraje estadístico (z-score)** — el *spread* (log-ratio) entre Binance USDT y Kraken USD normalizado a desviaciones estándar; bandas **±2σ** marcan zonas de entrada (mean-reversion).
+5. **Oportunidades detectadas (tabla en vivo)** — cada fila es una divergencia. Columnas: hora · **estrategia** (spatial/cross-quote/triangular/statistical) · **ruta** (compra→venta) · **Gross** (spread bruto) · **Net** (neto tras costos) · **Net $** · **Vol** (BTC ejecutable) · **estado** (`ejecutada` / `vista` / motivo de descarte como `below_threshold`, `news_risk_off`, `insufficient_balance`).
+6. **Operaciones ejecutadas (blotter)** — trades simulados: volumen, **VWAP** de compra/venta, fees, **P&L neto**, `ms` de ejecución y bandera **parcial** (cuando la liquidez no cubrió el tamaño completo).
+7. **Noticias & sentimiento** — titulares recientes + **termómetro** (sentimiento −1..1 e impacto) generado por la **IA**. Noticias de alto impacto negativo activan **risk-off** (el bot pausa ejecuciones).
+8. **Wallets simuladas** — saldos por exchange y activo; se actualizan tras cada operación (y el *wallet guard* impide que se vuelvan negativos).
+9. **Copiloto 🦅 (abajo a la derecha)** — chat con IA (Gemini) que responde sobre P&L, por qué se ejecutó/descartó una operación, estado del mercado y noticias, **con datos reales** de la base de datos.
 
 ---
 
@@ -11,7 +43,7 @@ Monitorea order books de Bitcoin en **Binance, OKX, Kraken y Bitso** vía WebSoc
 Tres piezas; **el hot-path (detección) nunca toca el servidor web**:
 
 ```
-  UpCloud VM (EU) / Railway              Supabase (Postgres + Realtime)        Vercel
+  UpCloud VM (Frankfurt, EU)             Supabase (Postgres + Realtime)        Vercel
  ┌───────────────────────┐          ┌──────────────────────────────┐   ┌────────────────────┐
  │  WORKER (Node + tsx)   │  service │ exchanges · fee_config        │   │ Next.js dashboard  │
  │  WebSockets ─► RAM     │  role    │ wallets · opportunities       │◄──┤ (anon, RLS)        │
@@ -23,77 +55,101 @@ Tres piezas; **el hot-path (detección) nunca toca el servidor web**:
  └───────────────────────┘                    └────────────┘
 ```
 
-- **Worker** (`/worker`): conexiones WebSocket persistentes + order books **en RAM**, matemática de rentabilidad por evento, ejecución simulada, poller de noticias, y escritura a Supabase (service role). Va en **UpCloud VM región EU** (o Railway EU) — Binance/OKX bloquean IPs de EE.UU.
-- **Supabase**: estado + historial + **Realtime** para el dashboard.
-- **Next.js / Vercel** (`/app`, `/components`): dashboard read-only en vivo (anon + RLS) + copiloto `/api/chat`.
-- **Núcleo compartido** (`/lib/core`): TS puro (tipos, VWAP, fees, profit, estrategias) importado por worker **y** web.
+- **Worker** (`/worker`): WebSockets persistentes + order books **en RAM**, matemática por evento, ejecución simulada, poller de noticias; escribe a Supabase (service role). En **EU** porque Binance/OKX bloquean IPs de EE.UU.
+- **Supabase**: estado + historial + **Realtime** (empuja cambios al dashboard).
+- **Next.js / Vercel**: dashboard read-only (anon + RLS) + copiloto `/api/chat`.
+- **Núcleo compartido** (`/lib/core`): TS puro (tipos, VWAP, fees, profit, estrategias) usado por worker **y** web.
 
 ## 🧮 La matemática: rentabilidad NETA depth-aware
 
 Corazón: [`lib/core/profit.ts`](lib/core/profit.ts). Para comprar `V` BTC barato y venderlo caro:
 
-1. **Cap de liquidez:** `execBase = min(targetBase, Σ asks_compra, Σ bids_venta)` → **órdenes parciales**.
-2. **VWAP** caminando ambos libros (no solo el top).
+1. **Cap de liquidez:** `execBase = min(targetBase, Σ asks_compra, Σ bids_venta)` → de aquí salen las **órdenes parciales**.
+2. **VWAP** caminando ambos libros (no solo el top-of-book).
 3. **Bruto:** `(vwapSell·fx − vwapBuy)·execBase`.
 4. **Neto** = bruto − fees taker (ambos lados) − withdrawal (amortizado) − slippage − depeg (cross-quote).
 5. Ejecuta solo si `netSpreadBps ≥ MIN_NET_BPS`.
 
-> **Insight clave:** entre exchanges líquidos los fees taker (~20 bps round-trip) **superan** el spread (<1 bp) → el arbitraje espacial puro casi nunca es rentable. El edge real aparece en **Bitso** (premium regional) y **cross-quote USD↔USDT**. El bot registra *todas* las oportunidades (rentables o no) para demostrar que "ve" el mercado.
+> **Insight clave:** entre exchanges líquidos los fees taker (~20 bps round-trip) **superan** el spread (<1 bp) → el arbitraje espacial puro casi nunca es rentable. El edge real aparece en **Bitso** (premium regional) y **cross-quote USD↔USDT**. Por eso el bot registra *todas* las oportunidades y **descarta correctamente** las no rentables.
 
 ## 🧠 Estrategias
 
 | Estrategia | Descripción |
 |---|---|
-| **Espacial** | Mismo par/quote entre dos venues. |
+| **Espacial** | Mismo par/quote entre dos venues (comprar barato, vender caro). |
 | **Cross-quote** | BTC/USD (Kraken) vs BTC/USDT, modelando costo de stablecoin (depeg). |
-| **Triangular** | Ciclo intra-exchange USDT→BTC→ETH→USDT. |
+| **Triangular** | Ciclo intra-exchange USDT→BTC→ETH→USDT (sin withdrawal). |
 | **Estadística** | z-score / mean-reversion del spread (log-ratio) entre venues. |
 
 ## 🛡️ Gestión de riesgo (circuit breakers)
 
-`MIN_NET_BPS` · tamaño máximo por trade (BTC y USD) · rate limit (trades/min) · **halt por N pérdidas consecutivas** + cooldown · exclusión de feeds *stale*/desconectados · **wallet guard** (no permite balances negativos → fuerza órdenes parciales) · **kill switch global** + umbral editables desde el dashboard · **régimen risk-off por noticias** de alto impacto.
+`MIN_NET_BPS` · tamaño máx. por trade (BTC y USD) · rate limit (trades/min) · **halt por N pérdidas consecutivas** + cooldown · exclusión de feeds *stale*/desconectados · **wallet guard** (sin balances negativos → fuerza parciales) · **kill switch** + umbral en vivo desde el dashboard · **régimen risk-off por noticias** de alto impacto · **re-chequeo del libro** antes de cada fill (modela movimiento adverso por latencia).
 
 ## 📰 Noticias & sentimiento (IA)
 
-Poller **fuera del hot-path** (cada ~3 min) consulta **CryptoPanic** (o **Google News RSS** sin key como fallback); un **LLM (Gemini/Claude)** sintetiza los titulares en `{sentimiento -1..1, impacto, resumen}` → `news_signals` + `bot_state`. Noticias de **alto impacto negativo** activan **risk-off** (pausa de ejecuciones). El arbitraje es instantáneo, así que la noticia **modula el riesgo/volatilidad**, no el cálculo del spread. El dashboard muestra feed + termómetro; el copiloto lo cita.
+Poller **fuera del hot-path** (~3 min): **CryptoPanic** (o **Google News RSS** sin key) → un **LLM (Gemini)** sintetiza `{sentimiento −1..1, impacto, resumen}` → `news_signals` + `bot_state`. Alto impacto negativo ⇒ **risk-off**. El arbitraje es instantáneo, así que la noticia **modula el riesgo/volatilidad**, no el cálculo del spread.
 
 ## ⚡ Latencia
 
-Detección **event-driven** (no polling): cada mensaje WS re-evalúa solo los pares afectados (coalescing por microtask). Se mide y persiste `detection_latency_ms` (típicamente **<1 ms**) y `feed_lag_ms`.
+Detección **event-driven** (no polling): cada mensaje WS re-evalúa solo los pares afectados (coalescing por microtask). Se persiste `detection_latency_ms` (típico **<1 ms**) y `feed_lag_ms`.
+
+---
+
+## 🎯 Cómo cumplimos los criterios de evaluación
+
+| Criterio del reto | Cómo lo resolvemos |
+|---|---|
+| **1. Velocidad / eficiencia de detección** | **WebSockets** (no polling) + order books en RAM + loop event-driven con coalescing → **<1 ms** por evento, medido y mostrado. Worker en EU para baja latencia y sin geo-bloqueo. |
+| **2. Precisión del cálculo neto** | `computeNetProfit` depth-aware: VWAP sobre el libro + **fees por exchange** + **withdrawal** (amortizado) + **slippage** + **depeg** cross-quote. Descarta lo que es rentable en bruto pero negativo en neto. |
+| **3. Solidez / robustez** | Órdenes **parciales** por liquidez, **wallet guard**, suite de **circuit breakers**, halt por pérdidas, manejo de feeds stale + reconexión con backoff, y **re-chequeo del libro** antes de ejecutar. |
+| **4. Estrategia e inteligencia** | **4 estrategias** (espacial, cross-quote, triangular, estadística) + **régimen de riesgo por noticias con IA**. No toma "la primera": evalúa todos los pares y prioriza por neto. |
+| **5. Arquitectura y código** | Separación worker/web, **núcleo TS puro reutilizado**, tipos compartidos, RLS estricta, capa LLM **pluggable**, migraciones versionadas. |
+| **6. Experiencia web** | Dashboard **en tiempo real** (Supabase Realtime + SWR) con P&L, oportunidades, trades, z-score, noticias, wallets, controles en vivo y **copiloto IA**. |
+
+---
 
 ## 🧰 Stack
 
-Next.js 16 · React 19 · TypeScript · Tailwind v4 · Recharts · SWR · `ws` · `@supabase/ssr` + Realtime · **LLM pluggable** `@google/genai` (Gemini) / `@anthropic-ai/sdk` · Node 20 + `tsx`.
+Next.js 16 · React 19 · TypeScript · Tailwind v4 · Recharts · SWR · `ws` · `@supabase/ssr` + Realtime · **LLM pluggable** `@google/genai` (Gemini) / `@anthropic-ai/sdk` · Node 20+ · `tsx` · pm2.
 
 ## 🚀 Correr en local
 
 ```bash
 npm install
-
-# 1) Variables (ver .env.example): .env.local (web) y .env.worker (worker)
-# 2) DB: aplicar supabase/migrations/*.sql (MCP de Supabase o SQL Editor)
-# 3) Arrancar
-npm run worker     # el "cerebro" (feeds + detección + ejecución + noticias)
+# 1) Variables: copia .env.example -> .env.local (web) y .env.worker (worker)
+# 2) DB: aplica supabase/migrations/*.sql (MCP de Supabase o SQL Editor)
+# 3) Arranca:
+npm run worker     # el "cerebro": feeds + detección + ejecución + noticias
 npm run dev        # dashboard en http://localhost:3000
 ```
 
-`DEMO_MODE=true` (o el toggle del dashboard) relaja el umbral para mostrar ejecuciones en vivo.
-
 ## ☁️ Despliegue
 
-- **Worker** — **UpCloud VM región EU (recomendado)**, ver [`deploy/UPCLOUD.md`](deploy/UPCLOUD.md); o Railway EU (`railway.json`), o Docker (`Dockerfile`). IP **no-US** para Binance/OKX.
-- **Web** — **Vercel**: import del repo, framework Next.js. Vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`. `worker/` se ignora vía `.vercelignore`.
-- **Supabase** — un proyecto compartido.
+- **Worker** → **UpCloud VM región EU** (guía paso a paso: [`deploy/UPCLOUD.md`](deploy/UPCLOUD.md)); alternativas: Railway EU (`railway.json`) o Docker (`Dockerfile`). IP **no-US** para Binance/OKX.
+- **Web** → **Vercel** (import del repo). Env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`, `LLM_PROVIDER=gemini`. `worker/` se ignora con `.vercelignore`.
+- **Supabase** → un proyecto compartido por worker y web.
 
-## 🗄️ Esquema
+## 🗄️ Esquema (Supabase / Postgres)
 
-`exchanges`, `fee_config`, `wallets`, `opportunities`, `trades`, `spread_history`, `book_snapshots`, `bot_state`, `news_signals`. RLS: lectura pública (anon) para el dashboard; escritura solo vía service role (worker). Realtime en `opportunities`, `trades`, `wallets`, `bot_state`, `news_signals`. SQL en [`supabase/migrations/`](supabase/migrations).
+`exchanges`, `fee_config`, `wallets`, `opportunities`, `trades`, `spread_history`, `book_snapshots`, `bot_state`, `news_signals`. **RLS:** lectura pública (anon) para el dashboard; escritura solo vía service role (worker). **Realtime** en `opportunities`, `trades`, `wallets`, `bot_state`, `news_signals`. SQL en [`supabase/migrations/`](supabase/migrations).
 
 ## 📐 Decisiones técnicas
 
-- **Worker separado del web**: Edge/Serverless no mantienen conexiones persistentes → forzarían polling (lento, rate-limited). Un proceso Node 24/7 con libros en RAM da latencia mínima.
-- **Región EU del worker**: evita el geo-bloqueo de Binance/OKX desde IPs de US.
-- **Modelo de inventario**: saldos en cada venue; el `withdrawal` se **amortiza** entre los trades que un rebalanceo soporta (`WITHDRAWAL_AMORTIZE_TRADES`), no completo por trade.
+- **Worker separado del web**: Edge/Serverless no mantienen conexiones persistentes → forzarían polling lento. Un proceso Node 24/7 con libros en RAM da latencia mínima.
+- **Región EU**: evita el geo-bloqueo de Binance/OKX desde IPs de EE.UU.
+- **Modelo de inventario**: saldos en cada venue; el `withdrawal` se **amortiza** entre los trades que un rebalanceo soporta, no completo por trade.
 - **Cross-quote ≠ arbitraje puro**: USDT ≠ USD → costo de depeg configurable.
-- **IA fuera del hot-path**: copiloto (Gemini por defecto, Anthropic opcional — `lib/llm.ts`) lee la DB y explica; nunca decide trades (microsegundos).
-- **Noticias = régimen de riesgo, no señal de hot-path**: poller + scoring LLM modulan riesgo/volatilidad; no tocan el cálculo del spread.
+- **IA fuera del hot-path**: copiloto + scoring de noticias (Gemini, pluggable) leen la DB y modulan riesgo; **nunca** deciden el trade en sí (eso es de microsegundos).
+
+---
+
+## 🎤 Guion de pitch (2 minutos)
+
+1. **(15s)** "Clawbot detecta arbitraje de Bitcoin en tiempo real entre 4 exchanges. El cerebro corre en Frankfurt con WebSockets; este dashboard refleja todo en vivo."
+2. **(30s)** Señala las **Oportunidades** llegando y la **latencia <1 ms**. "Detectamos cada divergencia en sub-milisegundo."
+3. **(30s)** Abre una operación en el **blotter**: "Calculamos el neto real — fees, withdrawal, slippage — y caminamos el order book (VWAP), con **órdenes parciales** si falta liquidez."
+4. **(20s)** Toggle **DEMO → Real**: "En real el bot **descarta** lo que no es rentable tras costos. Esa precisión es la diferencia entre un bot promedio y uno bueno." (Cambio se aplica al worker remoto en 2.5 s.)
+5. **(15s)** **Noticias + termómetro**: "La IA puntúa noticias de última hora; las de alto impacto activan risk-off automático."
+6. **(10s)** Abre el **copiloto 🦅**: pregunta *"¿por qué se descartó la última oportunidad?"* → responde con datos reales.
+
+> **Cierre:** *"Velocidad, precisión y robustez — y todo desplegado y en vivo."*
