@@ -59,7 +59,7 @@ async function main(): Promise<void> {
   writer.start();
 
   const seenThrottle = new Map<string, number>();
-  const SEEN_MS = 1500;
+  const SEEN_MS = 5000; // registra como mucho 1 oportunidad "vista" por ruta cada 5s (evita saturar la DB)
 
   function buildOppRow(opp: DetectedOpportunity, t: OppTiming, executed: boolean, skip: string | null) {
     return {
