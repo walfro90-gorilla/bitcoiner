@@ -97,17 +97,17 @@ async function main(): Promise<void> {
       return;
     }
     if (runtime.newsRiskOff) {
-      persistSeen(opp, t, 'news_risk_off', true);
+      persistSeen(opp, t, 'news_risk_off', opp.profitable);
       return;
     }
     const block = risk.blockReason(now);
     if (block) {
-      persistSeen(opp, t, block, true);
+      persistSeen(opp, t, block, opp.profitable);
       return;
     }
     const sim = simulate(opp, ledger);
     if (sim.status === 'rejected') {
-      persistSeen(opp, t, sim.rejectReason ?? 'rejected', true);
+      persistSeen(opp, t, sim.rejectReason ?? 'rejected', opp.profitable);
       return;
     }
     risk.recordTrade(now, sim.netPnlUsd);
@@ -199,6 +199,12 @@ async function main(): Promise<void> {
       runtime.minNetBps = +s.min_net_bps;
       runtime.maxPositionUsd = +s.max_position_usd;
       engine.setMinNetBps(runtime.minNetBps);
+      // Si el panel admin reinició el P&L (DB=0) pero el worker tiene un valor en memoria, adoptar el reset.
+      if (+s.cumulative_pnl_usd === 0 && runtime.cumulativePnlUsd !== 0) {
+        runtime.cumulativePnlUsd = 0;
+        runtime.consecutiveLosses = 0;
+        console.log('[reset] P&L reiniciado desde el panel admin');
+      }
     }, 2500);
   }
 
