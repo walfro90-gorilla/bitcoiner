@@ -6,7 +6,7 @@
 
 | | |
 |---|---|
-| 🌐 **Dashboard en vivo** | **https://TU-APP.vercel.app** ← *(reemplaza con tu URL de Vercel)* |
+| 🌐 **Dashboard en vivo** | **https://bitcoiner-three.vercel.app** |
 | 💻 **Repositorio** | https://github.com/walfro90-gorilla/bitcoiner |
 | ⚙️ **Worker** | UpCloud · Frankfurt (EU) · 24/7 con pm2 |
 
