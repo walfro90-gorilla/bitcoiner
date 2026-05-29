@@ -93,6 +93,17 @@ Poller **fuera del hot-path** (~3 min): **CryptoPanic** (o **Google News RSS** s
 
 Detección **event-driven** (no polling): cada mensaje WS re-evalúa solo los pares afectados (coalescing por microtask). Se persiste `detection_latency_ms` (típico **<1 ms**) y `feed_lag_ms`.
 
+## 🧪 Pruebas de estrés
+
+Probado bajo carga agresiva contra Supabase de producción (metodología + cómo reproducir en [`docs/PRUEBAS-ESTRES.md`](docs/PRUEBAS-ESTRES.md)):
+
+| Dimensión | Resultado |
+|---|---|
+| **Carga / throughput** | latencia **avg 2.31 ms** (máx 50) · 286 opps + 88 trades / 30 s · RSS ~131 MB · **0 crashes** |
+| **Resiliencia de feeds** | reconexión con backoff + watchdog de staleness (5 s) · 5 reinicios limpios resumiendo P&L desde la DB |
+| **Circuit breakers** | halt por pérdidas (**41 bloqueos**) + rate-limit (**37**) → ejecuciones **88 → 8** (~90 % frenado) |
+| **Capacidad de DB** | **12 MB** bajo carga · acotada a ~55–100 MB por `pg_cron` + snapshots off |
+
 ---
 
 ## 🎯 Cómo cumplimos los criterios de evaluación
