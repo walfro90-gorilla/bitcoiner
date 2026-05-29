@@ -7,6 +7,7 @@ import { createOkxFeed } from './feeds/okx';
 import { createKrakenFeed } from './feeds/kraken';
 import { createBitsoFeed } from './feeds/bitso';
 import { simulate } from './executor';
+import { startNewsPoller } from './news';
 import { RiskManager, type BotRuntimeState } from './risk';
 import { Writer } from './writer';
 import { Ledger } from './state';
@@ -48,6 +49,9 @@ async function main(): Promise<void> {
     maxPositionUsd: bs ? +bs.max_position_usd : CONFIG.maxPositionUsd,
     cumulativePnlUsd: bs ? +bs.cumulative_pnl_usd : 0,
     consecutiveLosses: bs?.consecutive_losses ?? 0,
+    newsRiskOff: false,
+    newsSentiment: 0,
+    newsImpact: 'low',
   };
 
   const risk = new RiskManager(runtime);
@@ -90,6 +94,10 @@ async function main(): Promise<void> {
 
     if (!wantExecute) {
       persistSeen(opp, t, 'below_threshold', false);
+      return;
+    }
+    if (runtime.newsRiskOff) {
+      persistSeen(opp, t, 'news_risk_off', true);
       return;
     }
     const block = risk.blockReason(now);
@@ -194,6 +202,14 @@ async function main(): Promise<void> {
     }, 2500);
   }
 
+  // 4b) Poller de noticias -> régimen de riesgo (fuera del hot-path).
+  const newsTimer = startNewsPoller((r) => {
+    runtime.newsRiskOff = r.riskOff;
+    runtime.newsSentiment = r.sentiment;
+    runtime.newsImpact = r.impact;
+    if (r.riskOff) console.log('[risk] NEWS RISK-OFF activo: ejecuciones en pausa por noticias.');
+  });
+
   // 5) Heartbeat de consola.
   setInterval(() => {
     const books = engine.state.all();
@@ -210,6 +226,7 @@ async function main(): Promise<void> {
     console.log('\nDeteniendo...');
     feeds.forEach((f) => f.stop());
     writer.stop();
+    clearInterval(newsTimer);
     process.exit(0);
   });
 

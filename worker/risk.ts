@@ -8,6 +8,9 @@ export interface BotRuntimeState {
   maxPositionUsd: number;
   cumulativePnlUsd: number;
   consecutiveLosses: number;
+  newsRiskOff: boolean;
+  newsSentiment: number;
+  newsImpact: string;
 }
 
 export class RiskManager {

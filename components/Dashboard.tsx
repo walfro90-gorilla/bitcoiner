@@ -8,6 +8,7 @@ import { SpreadChart } from './SpreadChart';
 import { OpportunitiesTable } from './OpportunitiesTable';
 import { TradesTable } from './TradesTable';
 import { WalletsPanel } from './WalletsPanel';
+import { NewsPanel } from './NewsPanel';
 import { Copilot } from './Copilot';
 
 export function Dashboard() {
@@ -52,7 +53,8 @@ export function Dashboard() {
         <TradesTable />
       </div>
 
-      <div className="mt-3">
+      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <NewsPanel />
         <WalletsPanel />
       </div>
 

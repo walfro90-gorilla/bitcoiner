@@ -7,6 +7,7 @@ import { subscribeTable } from '../realtime';
 import type {
   BotStateRow,
   ExchangeRow,
+  NewsSignalRow,
   OpportunityRow,
   TradeRow,
   WalletRow,
@@ -147,5 +148,18 @@ export function useSpreadHistory(pairA: string, pairB: string, limit = 240) {
     },
     { refreshInterval: 5000 },
   );
+  return data ?? [];
+}
+
+export function useNews(limit = 12) {
+  const { data, mutate } = useSWR(
+    ['news', limit],
+    async () => {
+      const { data } = await sb().from('news_signals').select('*').order('ts', { ascending: false }).limit(limit);
+      return (data ?? []) as NewsSignalRow[];
+    },
+    { refreshInterval: 60_000 },
+  );
+  useEffect(() => subscribeTable('news_signals', () => void mutate()), [mutate]);
   return data ?? [];
 }

@@ -40,6 +40,7 @@ export const CONFIG = {
 
   // Replay / demo
   snapshotSampleMs: num('SNAPSHOT_SAMPLE_MS', 1000),
+  newsPollMs: num('NEWS_POLL_MS', 180000),
   demoMode: str('DEMO_MODE', 'false').toLowerCase() === 'true',
 };
 

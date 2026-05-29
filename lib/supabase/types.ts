@@ -84,5 +84,21 @@ export interface BotStateRow {
   max_position_usd: number;
   cumulative_pnl_usd: number;
   consecutive_losses: number;
+  news_sentiment: number | null;
+  news_impact: string | null;
+  news_summary: string | null;
+  news_updated_at: string | null;
   updated_at: string;
+}
+
+export interface NewsSignalRow {
+  id: number;
+  ts: string;
+  source: string | null;
+  headline: string;
+  url: string | null;
+  currencies: string | null;
+  sentiment: number | null;
+  impact: string | null;
+  summary: string | null;
 }
