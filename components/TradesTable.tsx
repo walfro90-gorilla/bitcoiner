@@ -47,7 +47,7 @@ export function TradesTable() {
             {trades.length === 0 && (
               <tr>
                 <td colSpan={9} className="px-3 py-8 text-center text-sm text-muted">
-                  Aún no hay operaciones ejecutadas.
+                  Aún no hay operaciones — en modo Real el bot espera un arbitraje rentable; activa DEMO para ver ejecuciones.
                 </td>
               </tr>
             )}

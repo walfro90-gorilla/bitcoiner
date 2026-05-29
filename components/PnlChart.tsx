@@ -1,11 +1,13 @@
 'use client';
 import { Area, AreaChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { usePnlSeries } from '@/lib/hooks';
+import { useBotState, usePnlSeries } from '@/lib/hooks';
 import { fmtTime, fmtUsd } from '@/lib/format';
 import { Card, SectionTitle } from './ui';
 
 export function PnlChart() {
   const data = usePnlSeries(600);
+  const { botState } = useBotState();
+  const demo = botState?.demo_mode ?? false;
   const last = data.length ? data[data.length - 1].cum : 0;
   const up = last >= 0;
   const color = up ? '#16c784' : '#ea3943';
@@ -19,7 +21,23 @@ export function PnlChart() {
       </SectionTitle>
       <div className="h-64 p-2">
         {data.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-sm text-muted">Sin operaciones todavía…</div>
+          <div className="flex h-full flex-col items-center justify-center gap-2 px-8 text-center">
+            <div className="text-sm font-medium text-foreground/80">Sin operaciones todavía</div>
+            {demo ? (
+              <p className="max-w-md text-xs leading-relaxed text-muted">
+                En modo <strong className="text-accent">DEMO</strong> el bot ejecuta cada divergencia real para mostrar
+                la mecánica. Esperando la primera… (verifica que el worker esté corriendo).
+              </p>
+            ) : (
+              <p className="max-w-md text-xs leading-relaxed text-muted">
+                En modo <strong className="text-foreground/90">Real</strong>, el bot solo ejecuta cuando el arbitraje es
+                rentable <em>tras todos los costos</em> (fees + slippage + withdrawal). Como los mercados están
+                eficientes ahora, <strong className="text-foreground/90">espera disciplinadamente</strong> en lugar de
+                perder dinero — esa es la precisión. Activa <strong className="text-accent">DEMO</strong> para ver la
+                mecánica en vivo.
+              </p>
+            )}
+          </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 10, right: 12, bottom: 0, left: 4 }}>
