@@ -79,6 +79,7 @@ export interface SpreadHistoryRow {
 export interface BotStateRow {
   id: boolean;
   trading_enabled: boolean;
+  demo_mode: boolean;
   min_net_bps: number;
   max_position_usd: number;
   cumulative_pnl_usd: number;

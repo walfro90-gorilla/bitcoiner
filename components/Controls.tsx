@@ -13,6 +13,7 @@ export function Controls() {
   }, [botState, bps]);
 
   const enabled = botState?.trading_enabled ?? true;
+  const demo = botState?.demo_mode ?? true;
 
   async function post(patch: Record<string, unknown>) {
     setBusy(true);
@@ -36,6 +37,17 @@ export function Controls() {
         )}
       >
         {enabled ? '● Trading ON' : '■ Trading OFF'}
+      </button>
+      <button
+        disabled={busy}
+        onClick={() => post({ demo_mode: !demo })}
+        title="DEMO ejecuta divergencias reales aunque el neto sea pequeño"
+        className={cn(
+          'rounded-md px-3 py-1.5 text-xs font-semibold transition-colors',
+          demo ? 'bg-accent/15 text-accent hover:bg-accent/25' : 'bg-muted/15 text-muted hover:bg-muted/25',
+        )}
+      >
+        {demo ? '◐ DEMO' : '○ Real'}
       </button>
       <div className="flex items-center gap-1 rounded-md border border-border px-2 py-1">
         <span className="text-xs text-muted">min net</span>

@@ -131,3 +131,21 @@ export function useCounts() {
   }, [mutate]);
   return data ?? { opportunities: 0, trades: 0, executed: 0 };
 }
+
+export function useSpreadHistory(pairA: string, pairB: string, limit = 240) {
+  const { data } = useSWR(
+    ['spread', pairA, pairB, limit],
+    async () => {
+      const { data } = await sb()
+        .from('spread_history')
+        .select('ts, spread, zscore, mean, stddev')
+        .eq('pair_a', pairA)
+        .eq('pair_b', pairB)
+        .order('ts', { ascending: false })
+        .limit(limit);
+      return ((data ?? []) as Array<{ ts: string; spread: number; zscore: number | null }>).reverse();
+    },
+    { refreshInterval: 5000 },
+  );
+  return data ?? [];
+}

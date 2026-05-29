@@ -15,6 +15,7 @@ export const supabase: SupabaseClient | null = HAS_SUPABASE
 
 export interface BotStateRow {
   trading_enabled: boolean;
+  demo_mode: boolean;
   min_net_bps: number;
   max_position_usd: number;
   cumulative_pnl_usd: number;
@@ -66,7 +67,7 @@ export async function loadBotState(): Promise<BotStateRow | null> {
   if (!supabase) return null;
   const { data, error } = await supabase
     .from('bot_state')
-    .select('trading_enabled, min_net_bps, max_position_usd, cumulative_pnl_usd, consecutive_losses')
+    .select('trading_enabled, demo_mode, min_net_bps, max_position_usd, cumulative_pnl_usd, consecutive_losses')
     .eq('id', true)
     .single();
   if (error) console.error('[db] loadBotState:', error.message);

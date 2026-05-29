@@ -3,6 +3,7 @@ import { CONFIG } from './config';
 
 export interface BotRuntimeState {
   tradingEnabled: boolean;
+  demoMode: boolean;
   minNetBps: number;
   maxPositionUsd: number;
   cumulativePnlUsd: number;

@@ -9,6 +9,7 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const patch: Record<string, unknown> = {};
   if (typeof body.trading_enabled === 'boolean') patch.trading_enabled = body.trading_enabled;
+  if (typeof body.demo_mode === 'boolean') patch.demo_mode = body.demo_mode;
   if (typeof body.min_net_bps === 'number' && Number.isFinite(body.min_net_bps)) patch.min_net_bps = body.min_net_bps;
   if (typeof body.max_position_usd === 'number' && Number.isFinite(body.max_position_usd))
     patch.max_position_usd = body.max_position_usd;

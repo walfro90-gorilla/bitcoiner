@@ -4,6 +4,7 @@ import { fmtUsd, n } from '@/lib/format';
 import { Stat } from './ui';
 import { Controls } from './Controls';
 import { PnlChart } from './PnlChart';
+import { SpreadChart } from './SpreadChart';
 import { OpportunitiesTable } from './OpportunitiesTable';
 import { TradesTable } from './TradesTable';
 import { WalletsPanel } from './WalletsPanel';
@@ -41,8 +42,9 @@ export function Dashboard() {
         <Stat label="Latencia detección" value={avgLat > 0 ? `${avgLat} ms` : '<1 ms'} tone="accent" sub="procesamiento por evento" />
       </div>
 
-      <div className="mt-3">
+      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
         <PnlChart />
+        <SpreadChart />
       </div>
 
       <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">

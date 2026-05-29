@@ -43,6 +43,7 @@ async function main(): Promise<void> {
   const bs = await loadBotState();
   const runtime: BotRuntimeState = {
     tradingEnabled: bs?.trading_enabled ?? true,
+    demoMode: bs?.demo_mode ?? CONFIG.demoMode,
     minNetBps: bs ? +bs.min_net_bps : CONFIG.minNetBps,
     maxPositionUsd: bs ? +bs.max_position_usd : CONFIG.maxPositionUsd,
     cumulativePnlUsd: bs ? +bs.cumulative_pnl_usd : 0,
@@ -85,7 +86,7 @@ async function main(): Promise<void> {
 
   function handleOpp(opp: DetectedOpportunity, t: OppTiming): void {
     const now = Date.now();
-    const wantExecute = CONFIG.demoMode ? opp.grossSpreadBps > 0 : opp.profitable;
+    const wantExecute = runtime.demoMode ? opp.grossSpreadBps > 0 : opp.profitable;
 
     if (!wantExecute) {
       persistSeen(opp, t, 'below_threshold', false);
@@ -130,7 +131,18 @@ async function main(): Promise<void> {
     );
   }
 
-  const engine = new Engine(handleOpp);
+  const engine = new Engine(handleOpp, (s) =>
+    writer.queueSpread({
+      pair_a: s.pair_a,
+      pair_b: s.pair_b,
+      mid_a: s.mid_a,
+      mid_b: s.mid_b,
+      spread: s.spread,
+      zscore: s.zscore,
+      mean: s.mean,
+      stddev: s.stddev,
+    }),
+  );
   engine.setFees(fees);
   engine.setMinNetBps(runtime.minNetBps);
 
@@ -138,6 +150,17 @@ async function main(): Promise<void> {
   const feeds: Feed[] = [];
   for (const pair of CONFIG.pairs)
     for (const venue of CONFIG.venues) {
+      const build = BUILDERS[venue];
+      const feed = build ? build(pair, engine.onBook) : null;
+      if (feed) {
+        feed.start();
+        feeds.push(feed);
+      }
+    }
+
+  // Feeds extra para arbitraje triangular (ETH) en venues que lo soportan.
+  for (const pair of ['ETH/USDT', 'ETH/BTC'])
+    for (const venue of ['binance', 'okx']) {
       const build = BUILDERS[venue];
       const feed = build ? build(pair, engine.onBook) : null;
       if (feed) {
@@ -164,6 +187,7 @@ async function main(): Promise<void> {
       const s = await loadBotState();
       if (!s) return;
       runtime.tradingEnabled = s.trading_enabled;
+      runtime.demoMode = s.demo_mode;
       runtime.minNetBps = +s.min_net_bps;
       runtime.maxPositionUsd = +s.max_position_usd;
       engine.setMinNetBps(runtime.minNetBps);
@@ -191,7 +215,7 @@ async function main(): Promise<void> {
 
   console.log(
     `Clawbot worker iniciado | db=${HAS_SUPABASE} venues=${CONFIG.venues.join(',')} ` +
-      `pairs=${CONFIG.pairs.join(',')} minNetBps=${runtime.minNetBps} demo=${CONFIG.demoMode} ` +
+      `pairs=${CONFIG.pairs.join(',')} minNetBps=${runtime.minNetBps} demo=${runtime.demoMode} ` +
       `pnlAcum=$${runtime.cumulativePnlUsd.toFixed(2)}`,
   );
 }
