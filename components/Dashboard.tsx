@@ -5,6 +5,7 @@ import { Stat } from './ui';
 import { Controls } from './Controls';
 import { PnlChart } from './PnlChart';
 import { SpreadChart } from './SpreadChart';
+import { PremiumPanel } from './PremiumPanel';
 import { OpportunitiesTable } from './OpportunitiesTable';
 import { TradesTable } from './TradesTable';
 import { WalletsPanel } from './WalletsPanel';
@@ -41,6 +42,10 @@ export function Dashboard() {
         <Stat label="Operaciones" value={counts.trades} sub={`${counts.executed} oportunidades ejecutadas`} />
         <Stat label="Oportunidades vistas" value={counts.opportunities} sub="ejecutadas o no" />
         <Stat label="Latencia detección" value={avgLat > 0 ? `${avgLat} ms` : '<1 ms'} tone="accent" sub="procesamiento por evento" />
+      </div>
+
+      <div className="mt-3">
+        <PremiumPanel />
       </div>
 
       <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">

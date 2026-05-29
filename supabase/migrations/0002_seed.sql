@@ -31,7 +31,7 @@ join (values
   ('binance','USDT',100000),('binance','BTC',1),
   ('okx','USDT',100000),    ('okx','BTC',1),
   ('kraken','USDT',100000), ('kraken','USD',100000), ('kraken','BTC',1),
-  ('bitso','USDT',100000),  ('bitso','BTC',1)
+  ('bitso','USDT',100000),  ('bitso','BTC',1), ('bitso','MXN',2000000)
 ) as w(venue, asset, bal) on w.venue = e.venue
 on conflict (exchange_id, asset) do nothing;
 

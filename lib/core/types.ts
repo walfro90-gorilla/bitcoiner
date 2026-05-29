@@ -3,7 +3,7 @@
 export type Venue = 'binance' | 'okx' | 'kraken' | 'bitso';
 export type Quote = 'USDT' | 'USD' | 'MXN';
 export type Asset = 'BTC' | 'ETH' | 'USDT' | 'USD' | 'MXN';
-export type StrategyType = 'spatial' | 'cross_quote' | 'triangular' | 'statistical';
+export type StrategyType = 'spatial' | 'cross_quote' | 'triangular' | 'statistical' | 'regional';
 
 /** Identifica un feed único (venue + par), p.ej. "kraken:BTC/USD". */
 export type VenueKey = string;

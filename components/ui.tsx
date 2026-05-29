@@ -60,4 +60,5 @@ export const strategyTone: Record<string, Tone> = {
   cross_quote: 'accent',
   triangular: 'up',
   statistical: 'muted',
+  regional: 'accent',
 };

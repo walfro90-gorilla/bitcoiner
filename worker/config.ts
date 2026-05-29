@@ -37,6 +37,8 @@ export const CONFIG = {
   depegBps: num('DEPEG_BPS', 8),
   slippageBps: num('SLIPPAGE_BPS', 2),
   withdrawalAmortizeTrades: num('WITHDRAWAL_AMORTIZE_TRADES', 50),
+  bitsoMxnFeeBps: num('BITSO_MXN_FEE_BPS', 65), // fee taker de Bitso en pares MXN
+  fxSpreadBps: num('FX_SPREAD_BPS', 30), // costo de conversión MXN<->USD
 
   // Replay / demo
   snapshotSampleMs: num('SNAPSHOT_SAMPLE_MS', 0), // 0 = desactivado (replay opt-in); evita ~700MB/día

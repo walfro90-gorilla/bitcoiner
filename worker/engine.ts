@@ -7,6 +7,7 @@ import {
   DEFAULT_FEES,
   RollingZScore,
   detectCrossQuote,
+  detectRegional,
   detectSpatial,
   detectTriangular,
   midPrice,
@@ -17,6 +18,7 @@ import {
   type Quote,
   type Venue,
 } from './core';
+import { getUsdtMxn } from './fx';
 
 export interface OppTiming {
   exchangeTs: number;
@@ -127,6 +129,43 @@ export class Engine {
       if (new Set(btc.map((b) => b.quote)).size >= 2) {
         for (const o of detectCrossQuote(btc, { ...baseParams, depegBps: CONFIG.depegBps }))
           this.emit(o, now, trig);
+      }
+    }
+
+    // 2b) Regional: premio Bitso MX (BTC/MXN vs BTC/USDT global).
+    if (this.dirtyPairs.has('BTC/MXN') || this.dirtyPairs.has('BTC/USDT')) {
+      const usdtMxn = getUsdtMxn();
+      const bitsoMxn = this.state.get('bitso:BTC/MXN');
+      if (usdtMxn > 0 && this.isFresh(bitsoMxn, now)) {
+        const globals = this.fresh(this.state.byBase('BTC'), now).filter(
+          (b) => b.pair === 'BTC/USDT' && b.venue !== 'bitso',
+        );
+        if (globals.length) {
+          for (const o of detectRegional(bitsoMxn, globals, {
+            ...baseParams,
+            usdtMxn,
+            bitsoMxnFeeBps: CONFIG.bitsoMxnFeeBps,
+            fxSpreadBps: CONFIG.fxSpreadBps,
+          }))
+            this.emit(o, now, trig);
+
+          // Registrar el premio firmado (Bitso vs global) para la gráfica del dashboard.
+          const bitsoUsd = (midPrice(bitsoMxn) ?? 0) / usdtMxn;
+          const globalUsd = midPrice(globals[0]) ?? 0;
+          if (bitsoUsd > 0 && globalUsd > 0 && now - (this.lastSpreadWrite.get('premium') ?? 0) >= 1000) {
+            this.lastSpreadWrite.set('premium', now);
+            this.onSpread({
+              pair_a: 'Bitso BTC/MXN (USD)',
+              pair_b: 'Global BTC/USDT',
+              mid_a: bitsoUsd,
+              mid_b: globalUsd,
+              spread: (bitsoUsd / globalUsd - 1) * 1e4, // premio en bps
+              zscore: 0,
+              mean: 0,
+              stddev: 0,
+            });
+          }
+        }
       }
     }
 
