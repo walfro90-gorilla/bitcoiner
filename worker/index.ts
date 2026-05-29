@@ -245,7 +245,7 @@ async function main(): Promise<void> {
       premio = `\n  [PREMIO BITSO] usdtMxn=${fx.toFixed(3)} bitsoUSD=${bitsoUsd.toFixed(0)} globalUSD=${globalUsd.toFixed(0)} premio=${bps.toFixed(1)}bps`;
     }
     console.log(
-      `--- @ ${new Date().toISOString()} | pnlAcum=$${runtime.cumulativePnlUsd.toFixed(2)} trading=${runtime.tradingEnabled} ---\n${lines.join('\n')}${premio}`,
+      `--- @ ${new Date().toISOString()} | pnlAcum=$${runtime.cumulativePnlUsd.toFixed(2)} trading=${runtime.tradingEnabled} rss=${(process.memoryUsage().rss / 1048576).toFixed(0)}MB ---\n${lines.join('\n')}${premio}`,
     );
   }, 5000);
 
