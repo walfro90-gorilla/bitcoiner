@@ -53,7 +53,7 @@ export async function* streamChat(opts: {
   const stream = await ai.models.generateContentStream({
     model: GEMINI_MODEL,
     contents: toGeminiContents(opts.messages),
-    config: { systemInstruction: opts.system, maxOutputTokens: maxTokens },
+    config: { systemInstruction: opts.system, maxOutputTokens: maxTokens, thinkingConfig: { thinkingBudget: 0 } },
   });
   for await (const chunk of stream) {
     const t = chunk.text;
@@ -88,6 +88,7 @@ export async function generateText(opts: {
     config: {
       systemInstruction: opts.system,
       maxOutputTokens: maxTokens,
+      thinkingConfig: { thinkingBudget: 0 },
       ...(opts.json ? { responseMimeType: 'application/json' } : {}),
     },
   });

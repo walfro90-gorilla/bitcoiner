@@ -68,8 +68,9 @@ Devuelve SOLO JSON válido: {"sentiment": number entre -1 (muy bajista) y 1 (muy
 Titulares:
 ${titles}`;
   try {
-    const raw = await generateText({ prompt, json: true, maxTokens: 300 });
-    const j = JSON.parse(raw) as { sentiment?: number; impact?: string; summary?: string };
+    const raw = await generateText({ prompt, json: true, maxTokens: 500 });
+    const cleaned = (raw.match(/\{[\s\S]*\}/)?.[0] ?? raw).trim();
+    const j = JSON.parse(cleaned) as { sentiment?: number; impact?: string; summary?: string };
     const sentiment = Math.max(-1, Math.min(1, Number(j.sentiment) || 0));
     const impact = (['low', 'medium', 'high'].includes(j.impact ?? '') ? j.impact : 'low') as NewsRegime['impact'];
     const summary = String(j.summary ?? '').slice(0, 300);
