@@ -113,12 +113,12 @@ export function useCounts() {
     'counts',
     async () => {
       const c = sb();
-      const [opp, trd, exe] = await Promise.all([
-        c.from('opportunities').select('*', { count: 'exact', head: true }),
+      const [opp, trd] = await Promise.all([
+        c.from('opportunities').select('*', { count: 'estimated', head: true }),
         c.from('trades').select('*', { count: 'exact', head: true }),
-        c.from('opportunities').select('*', { count: 'exact', head: true }).eq('executed', true),
       ]);
-      return { opportunities: opp.count ?? 0, trades: trd.count ?? 0, executed: exe.count ?? 0 };
+      const trades = trd.count ?? 0;
+      return { opportunities: opp.count ?? 0, trades, executed: trades };
     },
     { refreshInterval: 15_000 },
   );

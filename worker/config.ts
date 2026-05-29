@@ -39,7 +39,7 @@ export const CONFIG = {
   withdrawalAmortizeTrades: num('WITHDRAWAL_AMORTIZE_TRADES', 50),
 
   // Replay / demo
-  snapshotSampleMs: num('SNAPSHOT_SAMPLE_MS', 1000),
+  snapshotSampleMs: num('SNAPSHOT_SAMPLE_MS', 0), // 0 = desactivado (replay opt-in); evita ~700MB/día
   newsPollMs: num('NEWS_POLL_MS', 180000),
   demoMode: str('DEMO_MODE', 'false').toLowerCase() === 'true',
 };

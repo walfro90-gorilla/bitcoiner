@@ -177,17 +177,19 @@ async function main(): Promise<void> {
       }
     }
 
-  // 3) Muestreo de snapshots para replay/backtest.
-  setInterval(() => {
-    for (const b of engine.state.all())
-      writer.queueSnapshot({
-        exchange_id: writer.exId(b.venue),
-        pair: b.pair,
-        bids: b.bids.slice(0, 10),
-        asks: b.asks.slice(0, 10),
-        exchange_ts: b.exchangeTs || null,
-      });
-  }, CONFIG.snapshotSampleMs);
+  // 3) Muestreo de snapshots para replay/backtest (opt-in: solo si SNAPSHOT_SAMPLE_MS > 0).
+  if (CONFIG.snapshotSampleMs > 0) {
+    setInterval(() => {
+      for (const b of engine.state.all())
+        writer.queueSnapshot({
+          exchange_id: writer.exId(b.venue),
+          pair: b.pair,
+          bids: b.bids.slice(0, 10),
+          asks: b.asks.slice(0, 10),
+          exchange_ts: b.exchangeTs || null,
+        });
+    }, CONFIG.snapshotSampleMs);
+  }
 
   // 4) Poll de bot_state (kill switch + umbral desde el dashboard).
   if (HAS_SUPABASE) {
