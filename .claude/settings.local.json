@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(npx --version)",
+      "Bash(git --version)",
+      "Bash(Get-ChildItem -Path \"X:\\\\Codes\\\\donna-website\" -Force)",
+      "Bash(Select-Object -Property Name, PSIsContainer)",
+      "Bash(ls -la \"X:\\\\Codes\\\\donna-website\" 2>&1 | head -50)",
+      "Bash(xargs ls -la)",
+      "Bash(echo '===== lib/supabase/__TRACKED_VAR__ =====')",
+      "Bash(cat x:/Codes/donna-website/lib/supabase/__TRACKED_VAR__)",
+      "Bash(echo)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:docs.kraken.com)",
+      "WebFetch(domain:www.okx.com)",
+      "WebFetch(domain:docs.bitso.com)",
+      "WebFetch(domain:supabase.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:composio.dev)",
+      "WebFetch(domain:www.rconnect.tech)"
+    ]
+  }
+}
