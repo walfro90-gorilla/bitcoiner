@@ -1,0 +1,3 @@
+# El worker se despliega en Railway, no en Vercel.
+worker/
+*.output
