@@ -36,6 +36,8 @@ Un **worker** corriendo en un servidor de **Frankfurt** mantiene conexiones **We
 8. **Wallets simuladas** — saldos por exchange y activo; se actualizan tras cada operación (y el *wallet guard* impide que se vuelvan negativos).
 9. **Copiloto 🦅 (abajo a la derecha)** — chat con IA (Gemini) que responde sobre P&L, por qué se ejecutó/descartó una operación, estado del mercado y noticias, **con datos reales** de la base de datos.
 
+> **Paneles de mercado (parte superior):** **Estado del mercado** (mejor bid/ask por exchange) + **Matriz de arbitraje** N×N que resalta dónde `ask(compra) < bid(venta)` · **Velocidad de detección** (avg/p50/p95/p99) · **Mejor oportunidad reciente** (priorización por neto) · **Desempeño por estrategia** (trades, win-rate y P&L de las 5).
+
 ---
 
 ## 🏗️ Arquitectura
@@ -72,7 +74,7 @@ Corazón: [`lib/core/profit.ts`](lib/core/profit.ts). Para comprar `V` BTC barat
 
 > **Insight clave:** entre exchanges líquidos los fees taker (~20 bps round-trip) **superan** el spread (<1 bp) → el arbitraje espacial puro casi nunca es rentable. El edge real aparece en **Bitso** (premium regional) y **cross-quote USD↔USDT**. Por eso el bot registra *todas* las oportunidades y **descarta correctamente** las no rentables.
 
-## 🧠 Estrategias
+## 🧠 Estrategias (5 en paralelo)
 
 | Estrategia | Descripción |
 |---|---|
@@ -80,6 +82,9 @@ Corazón: [`lib/core/profit.ts`](lib/core/profit.ts). Para comprar `V` BTC barat
 | **Cross-quote** | BTC/USD (Kraken) vs BTC/USDT, modelando costo de stablecoin (depeg). |
 | **Triangular** | Ciclo intra-exchange USDT→BTC→ETH→USDT (sin withdrawal). |
 | **Estadística** | z-score / mean-reversion del spread (log-ratio) entre venues. |
+| **Regional (Bitso MX)** | Premio/descuento de BTC en el mercado mexicano (BTC/MXN) vs. el global (BTC/USDT), con FX USDT/MXN y costos locales. |
+
+> Cada tick recolecta TODAS las oportunidades y las emite **priorizadas por `net_usd`** (rentables primero) → el bot ejecuta la **mejor del tick primero**, no "la primera que aparece".
 
 ## 🛡️ Gestión de riesgo (circuit breakers)
 
@@ -91,7 +96,7 @@ Poller **fuera del hot-path** (~3 min): **CryptoPanic** (o **Google News RSS** s
 
 ## ⚡ Latencia
 
-Detección **event-driven** (no polling): cada mensaje WS re-evalúa solo los pares afectados (coalescing por microtask). Se persiste `detection_latency_ms` (típico **<1 ms**) y `feed_lag_ms`.
+Detección **event-driven** (no polling): cada mensaje WS re-evalúa solo los pares afectados (coalescing por microtask). Se persiste `detection_latency_ms` (típico **<1 ms**) y `feed_lag_ms` (latencia de red exchange→worker). El dashboard muestra **avg / p50 / p95 / p99** en vivo y la latencia por oportunidad.
 
 ## 🧪 Pruebas de estrés
 
@@ -113,7 +118,7 @@ Probado bajo carga agresiva contra Supabase de producción (metodología + cómo
 | **1. Velocidad / eficiencia de detección** | **WebSockets** (no polling) + order books en RAM + loop event-driven con coalescing → **<1 ms** por evento, medido y mostrado. Worker en EU para baja latencia y sin geo-bloqueo. |
 | **2. Precisión del cálculo neto** | `computeNetProfit` depth-aware: VWAP sobre el libro + **fees por exchange** + **withdrawal** (amortizado) + **slippage** + **depeg** cross-quote. Descarta lo que es rentable en bruto pero negativo en neto. |
 | **3. Solidez / robustez** | Órdenes **parciales** por liquidez, **wallet guard**, suite de **circuit breakers**, halt por pérdidas, manejo de feeds stale + reconexión con backoff, y **re-chequeo del libro** antes de ejecutar. |
-| **4. Estrategia e inteligencia** | **4 estrategias** (espacial, cross-quote, triangular, estadística) + **régimen de riesgo por noticias con IA**. No toma "la primera": evalúa todos los pares y prioriza por neto. |
+| **4. Estrategia e inteligencia** | **5 estrategias** (espacial, cross-quote, triangular, estadística, **regional Bitso MX**) + **régimen de riesgo por noticias con IA**. No toma "la primera": evalúa todos los pares y **prioriza por `net_usd`** (ejecuta la mejor del tick primero); el dashboard muestra el **desglose de P&L por estrategia**. |
 | **5. Arquitectura y código** | Separación worker/web, **núcleo TS puro reutilizado**, tipos compartidos, RLS estricta, capa LLM **pluggable**, migraciones versionadas. |
 | **6. Experiencia web** | Dashboard **en tiempo real** (Supabase Realtime + SWR) con P&L, oportunidades, trades, z-score, noticias, wallets, controles en vivo y **copiloto IA**. |
 

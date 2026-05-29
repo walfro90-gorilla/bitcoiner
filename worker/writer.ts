@@ -41,6 +41,13 @@ export class Writer {
     this.snapQueue.push(row);
   }
 
+  /** Upsert del estado de mercado en vivo (BBO). Tabla acotada: 1 fila por venue+pair. */
+  async upsertMarketTicks(rows: Row[]): Promise<void> {
+    if (!supabase || !rows.length) return;
+    const { error } = await supabase.from('market_ticks').upsert(rows, { onConflict: 'exchange_id,pair' });
+    if (error) console.error('[db] market_ticks upsert:', error.message);
+  }
+
   private async flush(): Promise<void> {
     if (!supabase) {
       this.oppQueue.length = 0;

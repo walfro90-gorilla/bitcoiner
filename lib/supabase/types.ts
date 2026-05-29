@@ -102,3 +102,19 @@ export interface NewsSignalRow {
   impact: string | null;
   summary: string | null;
 }
+
+/** Estado de mercado en vivo: 1 fila por (exchange_id, pair), upserted por el worker. */
+export interface MarketTickRow {
+  exchange_id: number;
+  pair: string;
+  base: string;
+  quote: string;
+  bid: number;
+  ask: number;
+  bid_size: number;
+  ask_size: number;
+  mid: number;
+  spread_bps: number;
+  exchange_ts: number | null;
+  ts: string;
+}

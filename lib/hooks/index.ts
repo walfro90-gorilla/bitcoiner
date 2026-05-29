@@ -7,6 +7,7 @@ import { subscribeTable } from '../realtime';
 import type {
   BotStateRow,
   ExchangeRow,
+  MarketTickRow,
   NewsSignalRow,
   OpportunityRow,
   TradeRow,
@@ -162,4 +163,73 @@ export function useNews(limit = 12) {
   );
   useEffect(() => subscribeTable('news_signals', () => void mutate()), [mutate]);
   return data ?? [];
+}
+
+/** Estado de mercado en vivo (BBO por venue+pair). Polling cada 2s (tabla acotada). */
+export function useMarketTicks() {
+  const { data } = useSWR(
+    'market_ticks',
+    async () => {
+      const { data } = await sb().from('market_ticks').select('*');
+      return (data ?? []) as MarketTickRow[];
+    },
+    { refreshInterval: 2000 },
+  );
+  return data ?? [];
+}
+
+/** Latencias crudas de las últimas N oportunidades (para percentiles en la UI). */
+export function useLatencyStats(limit = 200) {
+  const { data, mutate } = useSWR(
+    ['latency', limit],
+    async () => {
+      const { data } = await sb()
+        .from('opportunities')
+        .select('detection_latency_ms, feed_lag_ms')
+        .order('detected_at', { ascending: false })
+        .limit(limit);
+      return (data ?? []) as Array<{ detection_latency_ms: number | null; feed_lag_ms: number | null }>;
+    },
+    { refreshInterval: 10_000 },
+  );
+  useEffect(() => subscribeTable('opportunities', () => void mutate()), [mutate]);
+  return data ?? [];
+}
+
+export interface StrategyStat {
+  trades: number;
+  wins: number;
+  pnl: number;
+}
+type TradeStratRow = {
+  net_pnl_usd: number | string;
+  opportunities: { strategy: string } | { strategy: string }[] | null;
+};
+
+/** Agrega P&L / win-rate por estrategia (join trades -> opportunities.strategy). */
+export function useStrategyStats() {
+  const { data, mutate } = useSWR(
+    'strategy-stats',
+    async () => {
+      const { data } = await sb()
+        .from('trades')
+        .select('net_pnl_usd, opportunities(strategy)')
+        .order('executed_at', { ascending: false })
+        .limit(1000);
+      const acc: Record<string, StrategyStat> = {};
+      for (const row of (data ?? []) as TradeStratRow[]) {
+        const opp = Array.isArray(row.opportunities) ? row.opportunities[0] : row.opportunities;
+        const strat = opp?.strategy ?? 'spatial';
+        const pnl = Number(row.net_pnl_usd) || 0;
+        const s = (acc[strat] ??= { trades: 0, wins: 0, pnl: 0 });
+        s.trades++;
+        s.pnl += pnl;
+        if (pnl > 0) s.wins++;
+      }
+      return acc;
+    },
+    { refreshInterval: 30_000 },
+  );
+  useEffect(() => subscribeTable('trades', () => void mutate()), [mutate]);
+  return data ?? ({} as Record<string, StrategyStat>);
 }

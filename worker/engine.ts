@@ -109,6 +109,11 @@ export class Engine {
       withdrawalAmortizeTrades: CONFIG.withdrawalAmortizeTrades,
     };
 
+    // Buffer del tick: recolectamos TODAS las oportunidades y al final las emitimos
+    // PRIORIZADAS (rentables primero, luego mayor net_usd) -> el bot ejecuta la MEJOR
+    // del tick primero, no "la primera que aparece" (criterio #4 del reto).
+    const candidates: DetectedOpportunity[] = [];
+
     // 1) Espacial: misma quote, distinto venue.
     for (const pair of this.dirtyPairs) {
       const byQuote = new Map<string, OrderBook[]>();
@@ -119,7 +124,7 @@ export class Engine {
       }
       for (const books of byQuote.values()) {
         if (books.length < 2) continue;
-        for (const o of detectSpatial(books, baseParams)) this.emit(o, now, trig);
+        for (const o of detectSpatial(books, baseParams)) candidates.push(o);
       }
     }
 
@@ -127,8 +132,7 @@ export class Engine {
     if (this.dirtyBases.has('BTC')) {
       const btc = this.fresh(this.state.byBase('BTC'), now);
       if (new Set(btc.map((b) => b.quote)).size >= 2) {
-        for (const o of detectCrossQuote(btc, { ...baseParams, depegBps: CONFIG.depegBps }))
-          this.emit(o, now, trig);
+        for (const o of detectCrossQuote(btc, { ...baseParams, depegBps: CONFIG.depegBps })) candidates.push(o);
       }
     }
 
@@ -147,7 +151,7 @@ export class Engine {
             bitsoMxnFeeBps: CONFIG.bitsoMxnFeeBps,
             fxSpreadBps: CONFIG.fxSpreadBps,
           }))
-            this.emit(o, now, trig);
+            candidates.push(o);
 
           // Registrar el premio firmado (Bitso vs global) para la gráfica del dashboard.
           const bitsoUsd = (midPrice(bitsoMxn) ?? 0) / usdtMxn;
@@ -177,19 +181,29 @@ export class Engine {
         const ethUsdt = this.state.get(`${v}:ETH/USDT`);
         if (this.isFresh(btcUsdt, now) && this.isFresh(ethBtc, now) && this.isFresh(ethUsdt, now)) {
           for (const o of detectTriangular(v, btcUsdt, ethBtc, ethUsdt, { fees: this.fees, minNetBps: this.minNet }))
-            this.emit(o, now, trig);
+            candidates.push(o);
         }
       }
     }
 
     // 4) Estadística: z-score del spread (registra spread_history + emite señales).
-    if (this.dirtyBases.has('BTC')) this.evalStatistical(now, trig);
+    if (this.dirtyBases.has('BTC')) this.evalStatistical(now, candidates);
 
     this.dirtyPairs.clear();
     this.dirtyBases.clear();
+
+    if (candidates.length === 0) return;
+    // Priorización por valor esperado: rentables primero, luego mayor net_usd.
+    candidates.sort((a, b) => (b.profitable ? 1 : 0) - (a.profitable ? 1 : 0) || b.netUsd - a.netUsd);
+    const timing: OppTiming = {
+      exchangeTs: trig?.exchangeTs ?? 0,
+      recvTs: trig?.recvTs ?? now,
+      detectedTs: Date.now(),
+    };
+    for (const o of candidates) this.onOpp(o, timing);
   }
 
-  private evalStatistical(now: number, trig?: OrderBook): void {
+  private evalStatistical(now: number, candidates: DetectedOpportunity[]): void {
     for (const sp of STAT_PAIRS) {
       const a = this.state.get(sp.a);
       const b = this.state.get(sp.b);
@@ -222,22 +236,13 @@ export class Engine {
         const buyBook = sig.action === 'enter_short_a' ? b : a;
         const sellBook = sig.action === 'enter_short_a' ? a : b;
         const fx = fxFor(sellBook.quote, buyBook.quote);
-        const r = (
+        const r =
           // reutiliza el motor neto; depeg solo si cruzan quotes
-          detectStatExec(buyBook, sellBook, this.fees, this.minNet, fx, buyBook.quote !== sellBook.quote ? CONFIG.depegBps : 0)
-        );
+          detectStatExec(buyBook, sellBook, this.fees, this.minNet, fx, buyBook.quote !== sellBook.quote ? CONFIG.depegBps : 0);
         if (r && r.maxExecBase > 0)
-          this.emit({ ...r, pair: `${sp.labelA} ↔ ${sp.labelB} (z=${sig.z.toFixed(2)})` }, now, trig);
+          candidates.push({ ...r, pair: `${sp.labelA} ↔ ${sp.labelB} (z=${sig.z.toFixed(2)})` });
       }
     }
-  }
-
-  private emit(o: DetectedOpportunity, now: number, trig?: OrderBook): void {
-    this.onOpp(o, {
-      exchangeTs: trig?.exchangeTs ?? 0,
-      recvTs: trig?.recvTs ?? now,
-      detectedTs: Date.now(),
-    });
   }
 }
 

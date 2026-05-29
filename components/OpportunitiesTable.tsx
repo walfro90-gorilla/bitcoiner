@@ -23,6 +23,7 @@ export function OpportunitiesTable() {
               <th className="!text-right">Net</th>
               <th className="!text-right">Net $</th>
               <th className="!text-right">Vol</th>
+              <th className="!text-right">ms</th>
               <th>Estado</th>
             </tr>
           </thead>
@@ -46,6 +47,9 @@ export function OpportunitiesTable() {
                     {fmtUsd(o.net_usd)}
                   </td>
                   <td className="text-right font-mono text-xs tabular-nums text-muted">{fmtBtc(o.max_exec_base)}</td>
+                  <td className="text-right font-mono text-xs tabular-nums text-accent">
+                    {o.detection_latency_ms == null ? '—' : o.detection_latency_ms < 1 ? '<1' : o.detection_latency_ms}
+                  </td>
                   <td>
                     {o.executed ? (
                       <Badge tone="up">ejecutada</Badge>
@@ -60,7 +64,7 @@ export function OpportunitiesTable() {
             })}
             {opportunities.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-sm text-muted">
+                <td colSpan={9} className="px-3 py-8 text-center text-sm text-muted">
                   Esperando oportunidades del worker…
                 </td>
               </tr>

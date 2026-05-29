@@ -11,6 +11,10 @@ import { TradesTable } from './TradesTable';
 import { WalletsPanel } from './WalletsPanel';
 import { NewsPanel } from './NewsPanel';
 import { Copilot } from './Copilot';
+import { MarketView } from './MarketView';
+import { LatencyPanel } from './LatencyPanel';
+import { BestOpportunity } from './BestOpportunity';
+import { StrategyBreakdown } from './StrategyBreakdown';
 
 export function Dashboard() {
   const { botState } = useBotState();
@@ -45,6 +49,15 @@ export function Dashboard() {
       </div>
 
       <div className="mt-3">
+        <MarketView />
+      </div>
+
+      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <LatencyPanel />
+        <BestOpportunity />
+      </div>
+
+      <div className="mt-3">
         <PremiumPanel />
       </div>
 
@@ -59,8 +72,12 @@ export function Dashboard() {
       </div>
 
       <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <NewsPanel />
+        <StrategyBreakdown />
         <WalletsPanel />
+      </div>
+
+      <div className="mt-3">
+        <NewsPanel />
       </div>
 
       <footer className="mt-8 text-center text-xs text-muted">

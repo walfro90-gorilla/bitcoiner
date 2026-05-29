@@ -200,6 +200,38 @@ async function main(): Promise<void> {
     }, CONFIG.snapshotSampleMs);
   }
 
+  // 3b) Estado de mercado en vivo: upsert del mejor bid/ask por venue+pair (~cada 1.5s).
+  //     Tabla acotada (1 fila por venue+pair) que alimenta la vista de mercado del dashboard.
+  if (HAS_SUPABASE) {
+    setInterval(() => {
+      const t = Date.now();
+      const rows: Record<string, unknown>[] = [];
+      for (const b of engine.state.all()) {
+        if (t - b.recvTs > CONFIG.staleMs) continue; // no publicar books stale
+        const bid = bestBid(b);
+        const ask = bestAsk(b);
+        const exId = writer.exId(b.venue);
+        if (bid == null || ask == null || exId == null) continue;
+        const mid = (bid + ask) / 2;
+        rows.push({
+          exchange_id: exId,
+          pair: b.pair,
+          base: b.base,
+          quote: b.quote,
+          bid: round(bid, 8),
+          ask: round(ask, 8),
+          bid_size: round(b.bids[0]?.size ?? 0, 8),
+          ask_size: round(b.asks[0]?.size ?? 0, 8),
+          mid: round(mid, 8),
+          spread_bps: mid > 0 ? round(((ask - bid) / mid) * 1e4, 4) : 0,
+          exchange_ts: b.exchangeTs || null,
+          ts: new Date(t).toISOString(),
+        });
+      }
+      if (rows.length) void writer.upsertMarketTicks(rows);
+    }, 1500);
+  }
+
   // 4) Poll de bot_state (kill switch + umbral desde el dashboard).
   if (HAS_SUPABASE) {
     setInterval(async () => {
