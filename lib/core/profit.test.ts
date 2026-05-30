@@ -74,3 +74,39 @@ test('el slippage estimado reduce el neto', () => {
 
   assert.ok(con.netUsd < sin.netUsd, 'con slippage el neto debe ser menor');
 });
+
+// ── Maker fills: mejor precio (entra al bid/ask) + fee maker menor ──
+// Fees con maker (5 bps) < taker (10 bps) para ver el doble beneficio.
+const feesMaker: FeeTable = {
+  binance: { takerBps: 10, makerBps: 5, withdrawalBtc: 0 },
+  okx: { takerBps: 10, makerBps: 5, withdrawalBtc: 0 },
+  kraken: { takerBps: 10, makerBps: 5, withdrawalBtc: 0 },
+  bitso: { takerBps: 10, makerBps: 5, withdrawalBtc: 0 },
+  bitstamp: { takerBps: 10, makerBps: 5, withdrawalBtc: 0 },
+};
+
+test('maker captura mejor neto que taker (mejor precio + fee menor)', () => {
+  const buyBook = book('kraken', 'USDT', [{ price: 69990, size: 5 }], [{ price: 70000, size: 5 }]);
+  const sellBook = book('binance', 'USDT', [{ price: 70250, size: 5 }], [{ price: 70260, size: 5 }]);
+
+  const taker = computeNetProfit({ buyBook, sellBook, fees: feesMaker, targetBase: 1, slippageBps: 0 }, 0);
+  const maker = computeNetProfit({ buyBook, sellBook, fees: feesMaker, targetBase: 1, slippageBps: 0, maker: true }, 0);
+
+  // Taker: compra al ask 70000, vende al bid 70250 -> bruto 250/BTC.
+  assert.ok(Math.abs(taker.grossUsd - 250) < 1e-9, `taker bruto ${taker.grossUsd} debe ser 250`);
+  // Maker: compra al bid 69990, vende al ask 70260 -> bruto 270/BTC (mejor precio en ambos lados).
+  assert.ok(Math.abs(maker.grossUsd - 270) < 1e-9, `maker bruto ${maker.grossUsd} debe ser 270`);
+  // Maker neto = 70260 - 35.13 - 69990 - 34.995 = 199.875
+  assert.ok(Math.abs(maker.netUsd - 199.875) < 1e-6, `maker neto ${maker.netUsd} debe ser 199.875`);
+  assert.ok(maker.netUsd > taker.netUsd, 'maker debe superar a taker (precio + fee)');
+  assert.equal(maker.maker, true);
+  assert.equal(taker.maker, false);
+});
+
+test('maker usa la tarifa maker (no la taker)', () => {
+  const buyBook = book('kraken', 'USDT', [{ price: 69990, size: 5 }], [{ price: 70000, size: 5 }]);
+  const sellBook = book('binance', 'USDT', [{ price: 70250, size: 5 }], [{ price: 70260, size: 5 }]);
+  const maker = computeNetProfit({ buyBook, sellBook, fees: feesMaker, targetBase: 1, slippageBps: 0, maker: true }, 0);
+  // fee compra maker = 69990 * 0.0005 = 34.995 (no 69990*0.001=69.99)
+  assert.ok(Math.abs(maker.buy.feeQuote - 34.995) < 1e-6, `fee maker compra ${maker.buy.feeQuote} debe ser 34.995`);
+});

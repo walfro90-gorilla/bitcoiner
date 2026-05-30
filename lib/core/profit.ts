@@ -2,7 +2,7 @@
 // Cálculo de rentabilidad NETA depth-aware (VWAP) con fees, withdrawal, slippage y cross-quote.
 import type { FeeTable, FillLeg, OrderBook } from './types';
 import { totalSize, walkVwap } from './orderbook';
-import { takerFee, withdrawalBtc } from './fees';
+import { makerFee, takerFee, withdrawalBtc } from './fees';
 
 export interface NetProfitInput {
   buyBook: OrderBook; // compramos contra sus ASKS
@@ -15,6 +15,7 @@ export interface NetProfitInput {
   depthCap?: number; // máximo de niveles a considerar (default: todos)
   includeWithdrawal?: boolean; // cobrar withdrawal del BTC comprado (default true)
   withdrawalAmortizeTrades?: number; // amortizar el withdrawal entre N trades (rebalanceo); default 1
+  maker?: boolean; // si true: modela fills MAKER (entra al mejor precio del lado contrario, paga fee maker)
 }
 
 export interface NetProfitResult {
@@ -27,6 +28,7 @@ export interface NetProfitResult {
   netSpreadBps: number;
   withdrawalQuote: number;
   profitable: boolean;
+  maker: boolean; // true si el cálculo asumió fills maker (órdenes límite pasivas)
 }
 
 const SLIP_DEFAULT = 2;
@@ -40,18 +42,23 @@ export function computeNetProfit(i: NetProfitInput, minNetBps = 0): NetProfitRes
   const fx = i.fxBuyToSell ?? 1;
   const depeg = (i.depegBps ?? 0) / 1e4;
   const cap = i.depthCap ?? Infinity;
+  const maker = i.maker ?? false;
 
-  const buyAsks = cap === Infinity ? i.buyBook.asks : i.buyBook.asks.slice(0, cap);
-  const sellBids = cap === Infinity ? i.sellBook.bids : i.sellBook.bids.slice(0, cap);
+  // Maker: la orden límite se UNE al lado propio (comprar al bid, vender al ask) -> mejor precio.
+  // Taker: cruza el spread (comprar al ask, vender al bid).
+  const buyLevels = maker ? i.buyBook.bids : i.buyBook.asks;
+  const sellLevels = maker ? i.sellBook.asks : i.sellBook.bids;
+  const buySide = cap === Infinity ? buyLevels : buyLevels.slice(0, cap);
+  const sellSide = cap === Infinity ? sellLevels : sellLevels.slice(0, cap);
 
   // 1) Cap de liquidez en ambos lados -> de aquí salen las ÓRDENES PARCIALES.
-  const liqBuy = totalSize(buyAsks);
-  const liqSell = totalSize(sellBids);
+  const liqBuy = totalSize(buySide);
+  const liqSell = totalSize(sellSide);
   const execBase = Math.min(i.targetBase, liqBuy, liqSell);
 
-  // 2) y 3) VWAP de compra (asks asc) y venta (bids desc).
-  const buyW = walkVwap(buyAsks, execBase);
-  const sellW = walkVwap(sellBids, execBase);
+  // 2) y 3) VWAP de compra y venta caminando el lado correspondiente.
+  const buyW = walkVwap(buySide, execBase);
+  const sellW = walkVwap(sellSide, execBase);
 
   // VWAPs crudos (sin slippage) -> spread BRUTO depth-aware (sin costos).
   const vwapBuyRaw = buyW.vwap;
@@ -60,7 +67,10 @@ export function computeNetProfit(i: NetProfitInput, minNetBps = 0): NetProfitRes
   const grossUsd = vwapSellRaw * execBase * fx - quoteSpentRaw; // normalizado a quote del comprador (sin depeg)
   const grossSpreadBps = quoteSpentRaw > 0 ? (grossUsd / quoteSpentRaw) * 1e4 : 0;
 
-  // Slippage adverso (compra sube, venta baja) -> precios efectivos del fill.
+  // Ajuste de precio efectivo del fill:
+  //  - Taker: slippage ADVERSO (compra sube, venta baja) por la latencia detect->fill.
+  //  - Maker: el "slippage" representa riesgo de no-fill / colas; lo aplicamos también adverso
+  //    (conservador) para NO inflar el resultado de un fill pasivo que puede no completarse.
   const vwapBuy = vwapBuyRaw * (1 + slip);
   const vwapSell = vwapSellRaw * (1 - slip);
   const quoteSpent = vwapBuy * execBase; // en quote del comprador
@@ -69,9 +79,10 @@ export function computeNetProfit(i: NetProfitInput, minNetBps = 0): NetProfitRes
   // Normalización cross-quote a la quote del comprador + costo de depeg (solo en el neto).
   const quoteRecvNorm = quoteRecvRaw * fx * (1 - depeg);
 
-  // Fees taker de ambos lados + withdrawal del BTC (una vez por oportunidad).
-  const buyFee = quoteSpent * takerFee(i.fees, i.buyBook.venue);
-  const sellFeeRaw = quoteRecvRaw * takerFee(i.fees, i.sellBook.venue);
+  // Fees: maker (menor) o taker según el modo. Withdrawal del BTC (una vez por oportunidad).
+  const feeFn = maker ? makerFee : takerFee;
+  const buyFee = quoteSpent * feeFn(i.fees, i.buyBook.venue);
+  const sellFeeRaw = quoteRecvRaw * feeFn(i.fees, i.sellBook.venue);
   const sellFee = sellFeeRaw * fx; // a quote del comprador
   const includeWd = i.includeWithdrawal ?? true;
   const amortize = Math.max(1, i.withdrawalAmortizeTrades ?? 1);
@@ -112,5 +123,6 @@ export function computeNetProfit(i: NetProfitInput, minNetBps = 0): NetProfitRes
     netSpreadBps,
     withdrawalQuote,
     profitable: execBase > 0 && netSpreadBps >= minNetBps,
+    maker,
   };
 }

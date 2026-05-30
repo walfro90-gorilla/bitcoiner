@@ -15,6 +15,11 @@ export function takerFee(fees: FeeTable, venue: Venue): number {
   return (fees[venue] ?? DEFAULT_FEES[venue]).takerBps / 1e4;
 }
 
+/** Fee maker como fracción (orden pasiva que añade liquidez; suele ser menor que taker). */
+export function makerFee(fees: FeeTable, venue: Venue): number {
+  return (fees[venue] ?? DEFAULT_FEES[venue]).makerBps / 1e4;
+}
+
 export function withdrawalBtc(fees: FeeTable, venue: Venue): number {
   return (fees[venue] ?? DEFAULT_FEES[venue]).withdrawalBtc;
 }

@@ -107,6 +107,7 @@ export class Engine {
       minNetBps: this.minNet,
       slippageBps: CONFIG.slippageBps,
       withdrawalAmortizeTrades: CONFIG.withdrawalAmortizeTrades,
+      maker: CONFIG.makerMode,
     };
 
     // Buffer del tick: recolectamos TODAS las oportunidades y al final las emitimos

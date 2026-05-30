@@ -42,4 +42,5 @@ export interface BaseParams {
   slippageBps?: number;
   depthCap?: number;
   withdrawalAmortizeTrades?: number;
+  maker?: boolean; // modela fills maker (órdenes límite pasivas: mejor precio + fee maker)
 }

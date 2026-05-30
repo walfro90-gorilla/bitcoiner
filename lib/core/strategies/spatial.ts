@@ -29,6 +29,7 @@ export function detectSpatial(books: OrderBook[], p: BaseParams): DetectedOpport
           slippageBps: p.slippageBps,
           depthCap: p.depthCap,
           withdrawalAmortizeTrades: p.withdrawalAmortizeTrades,
+          maker: p.maker,
         },
         p.minNetBps,
       );

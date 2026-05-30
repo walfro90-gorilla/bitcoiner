@@ -40,6 +40,10 @@ export const CONFIG = {
   bitsoMxnFeeBps: num('BITSO_MXN_FEE_BPS', 65), // fee taker de Bitso en pares MXN
   fxSpreadBps: num('FX_SPREAD_BPS', 30), // costo de conversión MXN<->USD
 
+  // Modo maker: modela fills con órdenes límite pasivas (mejor precio + fee maker, con riesgo de no-fill).
+  // Default OFF (taker, fills garantizados). Activar para mostrar el upside del market-making.
+  makerMode: str('MAKER_MODE', 'false').toLowerCase() === 'true',
+
   // Replay / demo
   snapshotSampleMs: num('SNAPSHOT_SAMPLE_MS', 0), // 0 = desactivado (replay opt-in); evita ~700MB/día
   newsPollMs: num('NEWS_POLL_MS', 180000),

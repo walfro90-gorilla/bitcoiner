@@ -47,6 +47,7 @@ export function detectCrossQuote(books: OrderBook[], p: CrossQuoteParams): Detec
           fxBuyToSell: fx,
           depegBps: p.depegBps,
           withdrawalAmortizeTrades: p.withdrawalAmortizeTrades,
+          maker: p.maker,
         },
         p.minNetBps,
       );

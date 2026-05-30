@@ -97,6 +97,7 @@ function evalDirection(
     netSpreadBps,
     withdrawalQuote: withdrawalUsd,
     profitable: netSpreadBps >= p.minNetBps,
+    maker: false,
   };
 
   return {
