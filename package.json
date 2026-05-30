@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --import tsx --test lib/core/profit.test.ts",
+    "test": "node --import tsx --test lib/core/profit.test.ts worker/feeds/crc32.test.ts",
     "worker": "tsx worker/index.ts",
     "worker:watch": "tsx watch worker/index.ts"
   },
