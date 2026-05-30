@@ -18,6 +18,7 @@ import { StrategyBreakdown } from './StrategyBreakdown';
 import { DepthLadder } from './DepthLadder';
 import { ExampleAnatomy } from './ExampleAnatomy';
 import { RejectionAnalysis } from './RejectionAnalysis';
+import { MakerTakerCompare } from './MakerTakerCompare';
 
 export function Dashboard() {
   const { botState } = useBotState();
@@ -80,6 +81,10 @@ export function Dashboard() {
       <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
         <DepthLadder />
         <ExampleAnatomy />
+      </div>
+
+      <div className="mt-3">
+        <MakerTakerCompare />
       </div>
 
       <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
