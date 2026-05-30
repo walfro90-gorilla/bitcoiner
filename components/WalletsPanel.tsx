@@ -16,7 +16,9 @@ export function WalletsPanel() {
 
   return (
     <Card className="overflow-hidden">
-      <SectionTitle>Wallets simuladas</SectionTitle>
+      <SectionTitle info="Saldos simulados por exchange y moneda. Se actualizan tras cada operación; el bot nunca permite que un saldo quede negativo (wallet guard).">
+        Wallets simuladas
+      </SectionTitle>
       <div className="grid grid-cols-2 gap-px bg-border md:grid-cols-4">
         {[...byExchange.entries()].map(([exId, assets]) => (
           <div key={exId} className="bg-card p-3">

@@ -15,7 +15,10 @@ export function MarketGrid() {
 
   return (
     <Card className="overflow-hidden">
-      <SectionTitle right={<span className="live-dot text-xs text-up">● live</span>}>
+      <SectionTitle
+        info="Precio de compra (bid) y de venta (ask) de Bitcoin en cada exchange, en tiempo real. Es la 'foto' del mercado que el bot vigila para detectar diferencias de precio entre plataformas."
+        right={<span className="live-dot text-xs text-up">● live</span>}
+      >
         Estado del mercado · mejor bid/ask por exchange
       </SectionTitle>
       <div className="max-h-[360px] overflow-auto">
@@ -62,7 +65,10 @@ export function SpreadMatrix() {
 
   return (
     <Card className="overflow-hidden">
-      <SectionTitle right={<span className="text-xs text-muted">{MATRIX_PAIR}</span>}>
+      <SectionTitle
+        info="Compara todos los exchanges entre sí: cada celda es comprar en la columna y vender en la fila. En verde, donde el precio de compra es menor al de venta (posible arbitraje, antes de comisiones)."
+        right={<span className="text-xs text-muted">{MATRIX_PAIR}</span>}
+      >
         Matriz de arbitraje · comprar (col) → vender (fila)
       </SectionTitle>
       <div className="overflow-auto p-2">

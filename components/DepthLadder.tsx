@@ -35,7 +35,12 @@ export function DepthLadder() {
 
   return (
     <Card className="overflow-hidden">
-      <SectionTitle right={<span className="text-xs text-muted">{PAIR}</span>}>📒 Profundidad del libro</SectionTitle>
+      <SectionTitle
+        info="El 'libro de órdenes': cuántos BTC se ofrecen a cada precio. Verde = compras, rojo = ventas. El bot recorre estos niveles (VWAP) para saber cuánto puede operar realmente sin mover el precio."
+        right={<span className="text-xs text-muted">{PAIR}</span>}
+      >
+        📒 Profundidad del libro
+      </SectionTitle>
       {venues.length === 0 ? (
         <div className="px-3 py-8 text-center text-sm text-muted">
           Esperando profundidad del worker… (redeploy con el sampler de niveles activado)

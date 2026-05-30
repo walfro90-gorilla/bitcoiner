@@ -11,7 +11,10 @@ export function SpreadChart() {
 
   return (
     <Card className="overflow-hidden">
-      <SectionTitle right={<span className="text-xs text-muted">Binance USDT vs Kraken USD · z={last.toFixed(2)}</span>}>
+      <SectionTitle
+        info="El z-score mide qué tan lejos está la diferencia de precios de su promedio histórico. Más allá de ±2 suele revertir a la media: señal de entrada del arbitraje estadístico."
+        right={<span className="text-xs text-muted">Binance USDT vs Kraken USD · z={last.toFixed(2)}</span>}
+      >
         Arbitraje estadístico (z-score)
       </SectionTitle>
       <div className="h-56 p-2">

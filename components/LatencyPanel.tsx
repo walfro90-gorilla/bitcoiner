@@ -30,7 +30,10 @@ export function LatencyPanel() {
 
   return (
     <Card className="overflow-hidden">
-      <SectionTitle right={<span className="text-xs text-muted">{det.length} eventos</span>}>
+      <SectionTitle
+        info="Qué tan rápido detecta el bot una oportunidad cuando cambia un precio. p95 = el 95% de las veces fue aún más rápido que ese valor. Sub-milisegundo es nivel profesional (HFT)."
+        right={<span className="text-xs text-muted">{det.length} eventos</span>}
+      >
         ⚡ Velocidad de detección (latencia de procesamiento)
       </SectionTitle>
       <div className="grid grid-cols-4 gap-2 p-4">

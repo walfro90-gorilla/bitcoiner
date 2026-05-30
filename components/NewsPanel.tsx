@@ -14,6 +14,7 @@ export function NewsPanel() {
   return (
     <Card className="overflow-hidden">
       <SectionTitle
+        info="Noticias de última hora puntuadas por IA (sentimiento e impacto). Las muy negativas activan 'risk-off' y el bot pausa las ejecuciones por precaución."
         right={
           <div className="flex gap-1.5">
             <Badge tone={sentTone}>sent {s.toFixed(2)}</Badge>

@@ -44,10 +44,32 @@ export function Dashboard() {
       </header>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Stat label="P&L acumulado" value={fmtUsd(pnl)} tone={pnl >= 0 ? 'up' : 'down'} sub="neto simulado" />
-        <Stat label="Operaciones" value={counts.trades} sub={`${counts.executed} oportunidades ejecutadas`} />
-        <Stat label="Oportunidades vistas" value={counts.opportunities} sub="ejecutadas o no" />
-        <Stat label="Latencia detección" value={avgLat > 0 ? `${avgLat} ms` : '<1 ms'} tone="accent" sub="procesamiento por evento" />
+        <Stat
+          label="P&L acumulado"
+          value={fmtUsd(pnl)}
+          tone={pnl >= 0 ? 'up' : 'down'}
+          sub="neto simulado"
+          info="Ganancia o pérdida neta total (ya con comisiones) de todas las operaciones simuladas hasta ahora."
+        />
+        <Stat
+          label="Operaciones"
+          value={counts.trades}
+          sub={`${counts.executed} oportunidades ejecutadas`}
+          info="Número de operaciones que el bot ejecutó: oportunidades rentables que sí aprovechó."
+        />
+        <Stat
+          label="Oportunidades vistas"
+          value={counts.opportunities}
+          sub="ejecutadas o no"
+          info="Cuántas diferencias de precio detectó el bot, se ejecutaran o no. Demuestra que vigila el mercado constantemente."
+        />
+        <Stat
+          label="Latencia detección"
+          value={avgLat > 0 ? `${avgLat} ms` : '<1 ms'}
+          tone="accent"
+          sub="procesamiento por evento"
+          info="Tiempo promedio para procesar cada cambio de precio. Más bajo = más rápido (típico menos de 1 ms)."
+        />
       </div>
 
       <div className="mt-3">

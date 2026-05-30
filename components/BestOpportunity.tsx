@@ -31,7 +31,10 @@ export function BestOpportunity() {
 
   return (
     <Card className="overflow-hidden">
-      <SectionTitle right={<span className="text-xs text-muted">prioriza por neto</span>}>
+      <SectionTitle
+        info="De las divergencias detectadas hace poco, la de mayor ganancia neta. El bot la prioriza: ejecuta primero la mejor, no la primera que aparece."
+        right={<span className="text-xs text-muted">prioriza por neto</span>}
+      >
         🎯 Mejor oportunidad reciente
       </SectionTitle>
       <div className="p-4">

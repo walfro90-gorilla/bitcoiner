@@ -8,7 +8,9 @@ export function TradesTable() {
 
   return (
     <Card className="overflow-hidden">
-      <SectionTitle>Operaciones ejecutadas (simuladas)</SectionTitle>
+      <SectionTitle info="Las operaciones que el bot sí ejecutó: volumen, precio promedio (VWAP) de compra/venta, comisiones y ganancia neta. 'parcial' = no había liquidez para el tamaño completo.">
+        Operaciones ejecutadas (simuladas)
+      </SectionTitle>
       <div className="max-h-[420px] overflow-auto">
         <table className="w-full text-sm">
           <thead className="sticky top-0 bg-card text-xs text-muted">

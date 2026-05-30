@@ -9,7 +9,10 @@ export function OpportunitiesTable() {
 
   return (
     <Card className="overflow-hidden">
-      <SectionTitle right={<span className="live-dot text-xs text-up">● live</span>}>
+      <SectionTitle
+        info="Cada diferencia de precio detectada, se ejecute o no. Gross = bruto, Net = tras comisiones, ms = latencia. Si no es rentable, la columna Estado indica por qué se descartó."
+        right={<span className="live-dot text-xs text-up">● live</span>}
+      >
         Oportunidades detectadas
       </SectionTitle>
       <div className="max-h-[420px] overflow-auto">

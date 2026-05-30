@@ -14,6 +14,7 @@ export function PremiumPanel() {
   return (
     <Card className="overflow-hidden">
       <SectionTitle
+        info="Diferencia entre el precio de BTC en Bitso (México) y el precio global. 'Premio' = más caro en México; 'descuento' = más barato. Es el arbitraje regional que persigue el bot."
         right={
           <span className={`text-sm font-semibold ${premium ? 'text-up' : 'text-down'}`}>
             {(last / 100).toFixed(2)}% {premium ? '(premio)' : '(descuento)'}

@@ -12,7 +12,9 @@ export function StrategyBreakdown() {
 
   return (
     <Card className="overflow-hidden">
-      <SectionTitle>Desempeño por estrategia</SectionTitle>
+      <SectionTitle info="Resultados de cada una de las 5 estrategias: número de operaciones, % de aciertos (win-rate) y ganancia/pérdida total.">
+        Desempeño por estrategia
+      </SectionTitle>
       <div className="max-h-[360px] overflow-auto">
         <table className="w-full text-sm">
           <thead className="sticky top-0 bg-card text-xs text-muted">

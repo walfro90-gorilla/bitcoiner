@@ -15,6 +15,7 @@ export function PnlChart() {
   return (
     <Card className="overflow-hidden">
       <SectionTitle
+        info="Ganancia o pérdida acumulada (neta, ya con comisiones) de todas las operaciones simuladas, a lo largo del tiempo."
         right={<span className={`text-sm font-semibold ${up ? 'text-up' : 'text-down'}`}>{fmtUsd(last)}</span>}
       >
         P&amp;L acumulado

@@ -17,7 +17,10 @@ const grossPct = ((SELL - BUY) / BUY) * 100;
 export function ExampleAnatomy() {
   return (
     <Card className="overflow-hidden">
-      <SectionTitle right={<span className="text-xs text-muted">ejemplo del reto</span>}>
+      <SectionTitle
+        info="El ejemplo del reto, paso a paso: comprar barato, vender caro y restar comisiones = ganancia neta por BTC. Así evalúa el bot cada oportunidad antes de decidir si la ejecuta."
+        right={<span className="text-xs text-muted">ejemplo del reto</span>}
+      >
         🧬 Anatomía de una oportunidad
       </SectionTitle>
       <div className="p-4 text-sm">
