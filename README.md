@@ -85,6 +85,7 @@ Corazón: [`lib/core/profit.ts`](lib/core/profit.ts). Para comprar `V` BTC barat
 | **Triangular** | Ciclo intra-exchange USDT→BTC→ETH→USDT (sin withdrawal). |
 | **Estadística** | z-score / mean-reversion del spread (log-ratio) entre venues. |
 | **Regional (Bitso MX)** | Premio/descuento de BTC en el mercado mexicano (BTC/MXN) vs. el global (BTC/USDT), con FX USDT/MXN y costos locales. |
+| **Régimen (Markov)** | Cadena de Markov de 1er orden sobre el historial del premio Bitso: modela las transiciones entre regímenes (descuento/neutral/premio) para **anticipar** cuándo conviene pre-posicionar órdenes maker. Modela el régimen, no el precio. |
 
 > Cada tick recolecta TODAS las oportunidades y las emite **priorizadas por `net_usd`** (rentables primero) → el bot ejecuta la **mejor del tick primero**, no "la primera que aparece".
 
