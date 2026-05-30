@@ -74,6 +74,8 @@ Corazón: [`lib/core/profit.ts`](lib/core/profit.ts). Para comprar `V` BTC barat
 
 > **Insight clave:** entre exchanges líquidos los fees taker (~20 bps round-trip) **superan** el spread (<1 bp) → el arbitraje espacial puro casi nunca es rentable. El edge real aparece en **Bitso** (premium regional) y **cross-quote USD↔USDT**. Por eso el bot registra *todas* las oportunidades y **descarta correctamente** las no rentables.
 
+> **Modo maker (`MAKER_MODE`, opcional):** además del modelo *taker* (cruza el spread, fill garantizado), el motor puede modelar fills **maker** — órdenes límite pasivas que entran al **mejor precio del lado propio** (compra al bid, vende al ask) y pagan **fee maker** (menor). Es como capturan el arbitraje los profesionales: proveen liquidez en ambos extremos. A cambio asumen **riesgo de no-fill** (modelado conservadoramente). En el ejemplo del reto, maker rinde **+$199.88/BTC** vs **+$109.75** taker. Default *off* (taker, fills garantizados).
+
 ## 🧠 Estrategias (5 en paralelo)
 
 | Estrategia | Descripción |
