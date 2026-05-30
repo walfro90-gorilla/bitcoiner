@@ -35,7 +35,7 @@
 
 - [x] ~~**O1 — Maker/taker inteligente**~~ → modo maker en el motor (`MAKER_MODE`, default off); mejor precio + fee maker; verificado con tests (+$199.88 vs +$109.75 taker)
 - [ ] **O2 — 6º–7º venue** (Coinbase, Bybit): más superficie de divergencia *(30 min c/u + redeploy)*
-- [ ] **O3 — Backtest/replay** desde `book_snapshots` (infra ya existe, off) → P&L histórico *(vistoso)*
+- [x] ~~**O3 — Backtest/replay**~~ → panel web-only que reproduce el historial REAL del premio Bitso (`spread_history`, ~2000 muestras) y simula P&L vs costo round-trip, con punto de equilibrio. Sin encender `book_snapshots` (honesto + ligero)
 - [x] ~~**O4 — Análisis de descartes**~~ → panel web-only que muestra por qué el bot NO ejecuta (skip_reason + casi-rentables); refuerza criterio #2 con datos reales
 - [ ] **O5 — Copiloto con tool-use** (consultas arbitrarias a la DB) *(diferenciador IA)*
 - [ ] **O6 — Alertas WhatsApp/Telegram** (WhatsApp se difirió) *(efecto "wow")*
