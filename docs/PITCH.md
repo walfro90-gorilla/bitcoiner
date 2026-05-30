@@ -44,6 +44,24 @@
 
 ---
 
+## 🎁 Bloques extra (si hay tiempo o el jurado pregunta "qué más")
+
+Tres piezas analíticas que demuestran profundidad — todas sobre **datos reales** y **fuera del hot-path** (no arriesgan la latencia):
+
+### A · Maker vs Taker — el trade-off en vivo
+👉 *Señala:* la tarjeta **"⚖️ Maker vs Taker"**; mueve el slider de fee.
+> *"Modelamos las dos formas de ejecutar: taker cruza el spread con fill garantizado; maker pone órdenes límite — mejor precio y menor fee, pero con riesgo de no-fill. Mismo motor, recalculado en vivo: en el ejemplo del reto, taker da +$109.75 y maker hasta **+$199.88 por BTC**. Es un trade-off consciente: default el seguro."*
+
+### B · Backtest histórico del premio Bitso
+👉 *Señala:* la tarjeta **"⏮️ Backtest"**; mueve el slider de costo.
+> *"Esto NO es proyección inventada: reproducimos ~2,000 muestras reales del premio Bitso que ya capturamos. Simula el P&L de operar el premio, y el slider de costo muestra el **punto de equilibrio** donde deja de ser rentable — la misma disciplina del bot, pero en datos históricos."*
+
+### C · Régimen del premio con cadena de Markov
+👉 *Señala:* la tarjeta **"🔮 Régimen del premio"** (heatmap 4×4).
+> *"Modelamos el premio como una **cadena de Markov** sobre 53,000 muestras reales: estima la probabilidad de pasar de un régimen a otro —descuento, neutral, premio. No predice el precio: anticipa el **régimen**, para saber cuándo pre-posicionar una orden maker. Es arbitraje estadístico de verdad."*
+
+---
+
 ## 🎯 Frases-ancla (memoriza estas 3)
 1. *"Cero ejecuciones no es un bug, es la precisión."*
 2. *"Un bot promedio detecta; uno bueno sabe cuándo NO operar."*
@@ -77,6 +95,15 @@
 **— ¿Y si quisieran operar de verdad?**
 > El motor de decisión ya está; faltaría la capa de ejecución con API keys y manejo de errores de órdenes reales. La simulación ya respeta liquidez y balances, así que el salto es acotado.
 
+**— ¿Maker o taker?**
+> Modelamos ambos (mismo motor). Taker = fill garantizado, default. Maker = mejor precio + fee menor (+$199.88 vs +$109.75 en el ejemplo) pero con riesgo de no-fill. Es un trade-off explícito con palanca (`MAKER_MODE`); elegimos el seguro por honestidad. Hay un comparador en vivo en el dashboard.
+
+**— ¿No es Markov demasiado simple para predecir precios?**
+> Sí para predecir precio — por eso NO lo usamos para eso. Lo usamos para modelar **régimen** (descuento/neutral/premio), donde un Markov de 1er orden es un modelo estándar y defendible, estimado sobre 53k muestras reales. La decisión del trade sigue siendo el cálculo neto determinista; Markov solo anticipa cuándo pre-posicionar maker.
+
+**— ¿El backtest es real o inventado?**
+> Real: reproduce `spread_history`, el premio Bitso que el worker ya capturó (~2,000 muestras, rango −16 a +27 bps). No simulamos precios — usamos los que registramos. El slider de costo muestra el punto de equilibrio.
+
 ---
 
 ## 🚨 Plan de contingencia (si algo falla en vivo)
@@ -88,9 +115,11 @@
 ---
 
 ## 📦 Datos duros para soltar si hace falta
-- **5 exchanges** · **5 estrategias** · WebSockets event-driven · **<1 ms** detección
-- Motor neto depth-aware (VWAP + fees + withdrawal + slippage + depeg)
-- Circuit breakers + parciales + wallet guard + **CRC32**
+- **5 exchanges** · **5 estrategias** de ejecución + **modelo de régimen Markov** · WebSockets event-driven · **<1 ms** detección
+- Motor neto depth-aware (VWAP + fees + withdrawal + slippage + depeg) · **maker/taker** modelados
+- Circuit breakers + parciales + wallet guard + **CRC32** (OKX/Kraken incremental)
+- Capa analítica web-only sobre datos reales: **comparador maker/taker**, **backtest** del premio, **Markov** de régimen
 - Stress test: ~2.3 ms avg bajo carga, ~131 MB RSS, 0 crashes (ver `docs/PRUEBAS-ESTRES.md`)
 - Desplegado: **UpCloud Frankfurt** (worker 24/7) + **Vercel** (web) + **Supabase** (datos/realtime)
-- Tests: `npm test` (motor neto +$109.75 + CRC32)
+- Tests: `npm test` → **19/19** (motor neto +$109.75 · CRC32 · Markov)
+- Trade-offs documentados: `docs/TRADE-OFFS.md`

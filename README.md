@@ -37,6 +37,8 @@ Un **worker** corriendo en un servidor de **Frankfurt** mantiene conexiones **We
 9. **Copiloto 🦅 (abajo a la derecha)** — chat con IA (Gemini) que responde sobre P&L, por qué se ejecutó/descartó una operación, estado del mercado y noticias, **con datos reales** de la base de datos.
 
 > **Paneles de mercado (parte superior):** **Estado del mercado** (mejor bid/ask por exchange) + **Matriz de arbitraje** N×N que resalta dónde `ask(compra) < bid(venta)` · **Profundidad del libro** (ladder de niveles por venue) · **Anatomía del ejemplo del reto** ($70,000→$70,250 = +$109.75/BTC) · **Velocidad de detección** (avg/p50/p95/p99) · **Mejor oportunidad reciente** (priorización por neto) · **Desempeño por estrategia** (trades, win-rate y P&L de las 5).
+>
+> **Capa analítica (datos reales, fuera del hot-path):** **⚖️ Maker vs Taker** (comparador en vivo del trade-off, mismo motor) · **⏮️ Backtest** del premio Bitso sobre `spread_history` con punto de equilibrio · **🔮 Régimen del premio** (cadena de Markov: matriz de transición + probabilidad del próximo régimen) · **🔍 Análisis de descartes** (por qué el bot NO ejecuta).
 
 ---
 
@@ -185,7 +187,8 @@ Un buen sistema no esconde sus compensaciones: las hace explícitas y deja una *
 | **Selectividad** | Umbral alto = seguro · bajo = más trades | `min_net_bps` configurable en vivo (default 5) |
 | **Datos vs Costo DB** | Guardar todo · retención agresiva | `pg_cron` → ~6% del free tier |
 - **5º exchange (Bitstamp)** + **inyector del ejemplo del reto**: el botón "🧬 Reproducir ejemplo" del dashboard empuja el escenario $70,000→$70,250 por el pipeline real (detección → simulación → P&L), para que el jurado vea el caso del brief ejecutarse en vivo.
-- **Tests**: `npm test` corre los unit tests del motor neto (`lib/core/profit.test.ts`), incluida la verificación del ejemplo del reto (**+$109.75/BTC**).
+- **Tests**: `npm test` corre **19 unit tests** — motor neto (`profit.test.ts`, incl. ejemplo del reto **+$109.75/BTC** y maker/taker), **checksum CRC32** (`crc32.test.ts`) y **modelo de régimen Markov** (`markov.test.ts`).
+- **Capa analítica (web-only, datos reales)**: comparador **maker/taker**, **backtest** histórico del premio Bitso y **cadena de Markov** de régimen — todo en el navegador sobre datos ya capturados, sin tocar el worker ni el hot-path. Trade-offs en [`docs/TRADE-OFFS.md`](docs/TRADE-OFFS.md).
 
 ---
 
