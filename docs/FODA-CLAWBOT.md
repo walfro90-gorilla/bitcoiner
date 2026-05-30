@@ -21,7 +21,7 @@
 
 ## 🔴 Debilidades (mitigaciones)
 
-- [x] ~~**D1 — Worker = punto único de fallo**~~ → `pm2 startup` configurado (systemd `pm2-root` enabled). **Falta `pm2 save`** ⬇️
+- [x] ~~**D1 — Worker = punto único de fallo**~~ → `pm2 startup` + `pm2 save` hechos. **Verificado con reboot real**: el worker resucitó solo (11 feeds `age_s=0`)
 - [x] ~~**D2 — `worker/` excluido del typecheck**~~ → creado `npm run check:worker` (`tsconfig.worker.json`), corre limpio (RC=0)
 - [x] ~~**D4 — Admin sin auth fuerte**~~ → `ADMIN_KEY` única generada y puesta en Vercel; `.env.example` documentado
 - [ ] **D3 — En Real el P&L se queda en $0** (puede *parecer* inactivo) → mitigar con **guion de pitch** + inyector + DEMO 20s
@@ -46,7 +46,7 @@
 
 - [x] ~~**A1 — Feed cae / red en la VM**~~ → `staleMs` excluye feed muerto + reconexión backoff. Respaldo: screenshots
 - [ ] **A2 — Mercados eficientes → 0 trades en Real** *(el más probable)* → inyector + toggle DEMO lo resuelven en vivo
-- [x] ~~**A3 — VM se pausa/reinicia**~~ → `pm2 startup` (systemd) configurado. **Cerrar con `pm2 save`** ⬇️
+- [x] ~~**A3 — VM se pausa/reinicia**~~ → `pm2 startup` + `pm2 save` + **reboot probado**: worker online sin intervención ✅
 - [ ] **A4 — Supabase free se pausa** si el worker muere >7 días → no aplica si corre 24/7; **vigilar hasta la entrega**
 - [x] ~~**A5 — Rate-limit/ban de un exchange**~~ → backoff exponencial (250 ms→8 s + jitter) ya implementado
 - [x] ~~**A6 — Cuota Gemini/CryptoPanic agotada**~~ → fuera del hot-path; el bot sigue operando igual
@@ -57,8 +57,8 @@
 ## 🎯 URGENTES SIGUIENTES (priorizadas por ROI)
 
 ### 🔴 Ahora mismo (cierran riesgos abiertos, < 5 min)
-1. [ ] **`pm2 save`** en la VM → congela la lista de procesos para que el auto-arranque resucite el worker *(cierra D1/A3)*
-2. [ ] **Prueba de reboot** (opcional pero recomendada): `sudo reboot` → tras 1 min, `pm2 list` debe mostrar `clawbot-worker` online solo
+1. [x] ~~**`pm2 save`** en la VM~~ → hecho
+2. [x] ~~**Prueba de reboot**~~ → **hecha y superada**: worker resucitó solo (verificado vía DB, 11 feeds frescos)
 3. [ ] **Dejar en modo Real** hasta la presentación; **resetear P&L** justo antes si hace falta *(panel admin)*
 
 ### 🟠 Antes del jurado (alto valor, no técnico)
@@ -78,4 +78,4 @@
 - Fix del feed **Bitstamp** (5º exchange) — verificado en vivo
 - **S4** (incremental + CRC32), **S1** (tests), **S2** (honestidad README), **S3** (inyector), **S5** (Bitstamp)
 - Mejoras **A1/A2/A3 + B1/B2/B3** del dashboard (mercado en vivo, matriz, latencia, priorización, depth, ejemplo)
-- 3 acciones del cruce DAFO: **D2** (check:worker), **D4** (ADMIN_KEY), **D1/A3** (pm2 startup — pendiente `pm2 save`)
+- 3 acciones del cruce DAFO: **D2** (check:worker), **D4** (ADMIN_KEY en Vercel), **D1/A3** (pm2 startup + save + reboot probado ✅)
