@@ -98,6 +98,17 @@ Poller **fuera del hot-path** (~3 min): **CryptoPanic** (o **Google News RSS** s
 
 Detección **event-driven** (no polling): cada mensaje WS re-evalúa solo los pares afectados (coalescing por microtask). Se persiste `detection_latency_ms` (típico **<1 ms**) y `feed_lag_ms` (latencia de red exchange→worker). El dashboard muestra **avg / p50 / p95 / p99** en vivo y la latencia por oportunidad.
 
+## 🔒 Integridad de los order books (incremental + checksum CRC32)
+
+Los feeds de **OKX** (canal `books`, 400 niveles) y **Kraken** (`book` v2) son **incrementales**: tras un snapshot inicial se aplican solo los *deltas* (un nivel con tamaño 0 se borra). Mantener el libro en RAM aplicando deltas es lo que usan los sistemas reales — mucho más eficiente que recibir el libro completo cada vez.
+
+El riesgo de un libro incremental es el **desincronización** (perder un mensaje → libro corrupto → señales falsas). Por eso ambos exchanges publican un **checksum CRC32** y Clawbot lo **recalcula y verifica en cada tick**:
+- **OKX:** CRC32 (int32 con signo) de los primeros 25 niveles alternando bid/ask con los strings crudos del wire.
+- **Kraken:** CRC32 de asks(10) + bids(10) con precio/cantidad formateados; la **precisión se auto-detecta** del primer snapshot.
+- Ante un **mismatch** → *resync* automático (re-suscribe y pide snapshot nuevo); nunca se emite un libro corrupto. El de OKX es **best-effort**: si tras 3 fallos no cuadra, degrada a incremental sin checksum en vez de caerse.
+
+Verificado **en vivo** contra el wire real (`worker/feeds/crc32.test.ts` cubre el algoritmo con el vector estándar `123456789 → 0xCBF43926`).
+
 ## 🧪 Pruebas de estrés
 
 Probado bajo carga agresiva contra Supabase de producción (metodología + cómo reproducir en [`docs/PRUEBAS-ESTRES.md`](docs/PRUEBAS-ESTRES.md)):
@@ -115,9 +126,9 @@ Probado bajo carga agresiva contra Supabase de producción (metodología + cómo
 
 | Criterio del reto | Cómo lo resolvemos |
 |---|---|
-| **1. Velocidad / eficiencia de detección** | **WebSockets** (no polling) + order books en RAM + loop event-driven con coalescing → **<1 ms** por evento, medido y mostrado. Worker en EU para baja latencia y sin geo-bloqueo. |
+| **1. Velocidad / eficiencia de detección** | **WebSockets** (no polling) + order books en RAM **incrementales** (deltas, no snapshots completos) → **<1 ms** por evento, medido y mostrado. Worker en EU para baja latencia y sin geo-bloqueo. |
 | **2. Precisión del cálculo neto** | `computeNetProfit` depth-aware: VWAP sobre el libro + **fees por exchange** + **withdrawal** (amortizado) + **slippage** + **depeg** cross-quote. Descarta lo que es rentable en bruto pero negativo en neto. |
-| **3. Solidez / robustez** | Órdenes **parciales** por liquidez, **wallet guard**, suite de **circuit breakers**, halt por pérdidas, manejo de feeds stale + reconexión con backoff, **slippage adverso** (modela el movimiento del libro durante la latencia) y **recapeo contra balances/liquidez** antes del fill. |
+| **3. Solidez / robustez** | Órdenes **parciales** por liquidez, **wallet guard**, suite de **circuit breakers**, halt por pérdidas, manejo de feeds stale + reconexión con backoff, **slippage adverso** (modela el movimiento del libro durante la latencia), **recapeo contra balances/liquidez** antes del fill, y **verificación de integridad CRC32** de los libros incrementales (resync ante desync). |
 | **4. Estrategia e inteligencia** | **5 estrategias** (espacial, cross-quote, triangular, estadística, **regional Bitso MX**) + **régimen de riesgo por noticias con IA**. No toma "la primera": evalúa todos los pares y **prioriza por `net_usd`** (ejecuta la mejor del tick primero); el dashboard muestra el **desglose de P&L por estrategia**. |
 | **5. Arquitectura y código** | Separación worker/web, **núcleo TS puro reutilizado**, tipos compartidos, RLS estricta, capa LLM **pluggable**, migraciones versionadas. |
 | **6. Experiencia web** | Dashboard **en tiempo real** (Supabase Realtime + SWR) con P&L, oportunidades, trades, z-score, noticias, wallets, controles en vivo y **copiloto IA**. |
