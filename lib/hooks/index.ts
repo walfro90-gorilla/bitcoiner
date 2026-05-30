@@ -152,6 +152,27 @@ export function useSpreadHistory(pairA: string, pairB: string, limit = 240) {
   return data ?? [];
 }
 
+/** Serie larga de premio Bitso (bps) para backtest histórico. */
+export function usePremiumSeries(limit = 2000) {
+  const { data } = useSWR(
+    ['premium-series', limit],
+    async () => {
+      const { data } = await sb()
+        .from('spread_history')
+        .select('ts, spread')
+        .eq('pair_a', 'Bitso BTC/MXN (USD)')
+        .eq('pair_b', 'Global BTC/USDT')
+        .order('ts', { ascending: false })
+        .limit(limit);
+      return ((data ?? []) as Array<{ ts: string; spread: number }>)
+        .map((d) => ({ ts: d.ts, premiumBps: Number(d.spread) }))
+        .reverse();
+    },
+    { refreshInterval: 30_000 },
+  );
+  return data ?? [];
+}
+
 export function useNews(limit = 12) {
   const { data, mutate } = useSWR(
     ['news', limit],
