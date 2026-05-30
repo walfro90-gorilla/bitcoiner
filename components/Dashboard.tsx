@@ -17,6 +17,7 @@ import { BestOpportunity } from './BestOpportunity';
 import { StrategyBreakdown } from './StrategyBreakdown';
 import { DepthLadder } from './DepthLadder';
 import { ExampleAnatomy } from './ExampleAnatomy';
+import { RejectionAnalysis } from './RejectionAnalysis';
 
 export function Dashboard() {
   const { botState } = useBotState();
@@ -101,12 +102,13 @@ export function Dashboard() {
       </div>
 
       <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <RejectionAnalysis />
         <StrategyBreakdown />
-        <WalletsPanel />
       </div>
 
-      <div className="mt-3">
+      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
         <NewsPanel />
+        <WalletsPanel />
       </div>
 
       <footer className="mt-8 text-center text-xs text-muted">

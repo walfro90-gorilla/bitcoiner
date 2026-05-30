@@ -233,3 +233,56 @@ export function useStrategyStats() {
   useEffect(() => subscribeTable('trades', () => void mutate()), [mutate]);
   return data ?? ({} as Record<string, StrategyStat>);
 }
+
+export interface RejectionStats {
+  total: number;
+  profitable: number;
+  executed: number;
+  byReason: Record<string, number>;
+  nearMisses: Array<{ strategy: string; net_spread_bps: number; gross_spread_bps: number }>;
+}
+type OppRejRow = {
+  strategy: string;
+  skip_reason: string | null;
+  profitable: boolean;
+  executed: boolean;
+  net_spread_bps: number | string;
+  gross_spread_bps: number | string;
+};
+
+/** Análisis de descartes: por qué el bot NO ejecuta (skip_reason) + las "casi-rentables". */
+export function useRejectionStats(limit = 500) {
+  const { data, mutate } = useSWR(
+    ['rejection', limit],
+    async () => {
+      const { data } = await sb()
+        .from('opportunities')
+        .select('strategy, skip_reason, profitable, executed, net_spread_bps, gross_spread_bps')
+        .order('detected_at', { ascending: false })
+        .limit(limit);
+      const rows = (data ?? []) as OppRejRow[];
+      const byReason: Record<string, number> = {};
+      let profitable = 0;
+      let executed = 0;
+      for (const r of rows) {
+        if (r.executed) executed++;
+        const key = r.executed ? 'ejecutada' : r.skip_reason ?? 'vista';
+        byReason[key] = (byReason[key] ?? 0) + 1;
+        if (r.profitable) profitable++;
+      }
+      const nearMisses = rows
+        .filter((r) => !r.profitable && !r.executed)
+        .map((r) => ({
+          strategy: r.strategy,
+          net_spread_bps: Number(r.net_spread_bps),
+          gross_spread_bps: Number(r.gross_spread_bps),
+        }))
+        .sort((a, b) => b.net_spread_bps - a.net_spread_bps)
+        .slice(0, 5);
+      return { total: rows.length, profitable, executed, byReason, nearMisses };
+    },
+    { refreshInterval: 15_000 },
+  );
+  useEffect(() => subscribeTable('opportunities', () => void mutate()), [mutate]);
+  return data ?? { total: 0, profitable: 0, executed: 0, byReason: {}, nearMisses: [] };
+}
