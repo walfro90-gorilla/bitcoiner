@@ -73,6 +73,11 @@
 
 ---
 
+## 🎛️ Trade-offs (documentados + UI)
+- [x] `docs/TRADE-OFFS.md` — 9 trade-offs con opciones, elección y palanca
+- [x] Tabla resumen en README (Decisiones técnicas)
+- [x] **Comparador Maker vs Taker en vivo** en el dashboard (mismo motor, 100% navegador; verificado en preview)
+
 ## ✅ Resumen de lo ya accionado (este sprint)
 - Reset de P&L a $0 en modo **Real** (worker adoptó el cambio)
 - Fix del feed **Bitstamp** (5º exchange) — verificado en vivo
