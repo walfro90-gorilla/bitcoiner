@@ -110,7 +110,7 @@ export function Dashboard() {
       </div>
 
       <footer className="mt-8 text-center text-xs text-muted">
-        Clawbot — Coding Challenge México · datos de mercado en vivo (Binance · OKX · Kraken · Bitso)
+        Clawbot — Coding Challenge México · datos de mercado en vivo (Binance · OKX · Kraken · Bitso · Bitstamp)
       </footer>
 
       <Copilot />

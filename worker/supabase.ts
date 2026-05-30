@@ -20,6 +20,7 @@ export interface BotStateRow {
   max_position_usd: number;
   cumulative_pnl_usd: number;
   consecutive_losses: number;
+  inject_seq: number;
 }
 
 export async function loadExchanges(): Promise<Map<Venue, number>> {
@@ -67,7 +68,7 @@ export async function loadBotState(): Promise<BotStateRow | null> {
   if (!supabase) return null;
   const { data, error } = await supabase
     .from('bot_state')
-    .select('trading_enabled, demo_mode, min_net_bps, max_position_usd, cumulative_pnl_usd, consecutive_losses')
+    .select('trading_enabled, demo_mode, min_net_bps, max_position_usd, cumulative_pnl_usd, consecutive_losses, inject_seq')
     .eq('id', true)
     .single();
   if (error) console.error('[db] loadBotState:', error.message);

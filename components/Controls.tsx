@@ -14,6 +14,7 @@ export function Controls() {
 
   const enabled = botState?.trading_enabled ?? true;
   const demo = botState?.demo_mode ?? true;
+  const [injected, setInjected] = useState(false);
 
   async function post(patch: Record<string, unknown>) {
     setBusy(true);
@@ -24,6 +25,18 @@ export function Controls() {
     });
     await mutate();
     setBusy(false);
+  }
+
+  async function inject() {
+    setBusy(true);
+    await fetch('/api/controls', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ inject: true }),
+    });
+    setBusy(false);
+    setInjected(true);
+    setTimeout(() => setInjected(false), 4000);
   }
 
   return (
@@ -65,6 +78,14 @@ export function Controls() {
           set
         </button>
       </div>
+      <button
+        disabled={busy}
+        onClick={inject}
+        title="Reproduce el ejemplo del reto ($70,000→$70,250) por el pipeline real: detección → simulación → P&L"
+        className="rounded-md bg-blue/15 px-3 py-1.5 text-xs font-semibold text-blue transition-colors hover:bg-blue/25 disabled:opacity-50"
+      >
+        {injected ? '✓ inyectado' : '🧬 Reproducir ejemplo'}
+      </button>
     </div>
   );
 }

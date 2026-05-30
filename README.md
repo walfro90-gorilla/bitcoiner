@@ -1,6 +1,6 @@
 # 🦅 Clawbot — Bot de Arbitraje de Bitcoin en tiempo real
 
-> Sistema que **detecta oportunidades de arbitraje de BTC en tiempo real** entre Binance, OKX, Kraken y Bitso, calcula su **rentabilidad neta** (fees + withdrawal + slippage), **simula la ejecución** respetando la liquidez del order book, e incorpora **noticias de última hora + IA** en la gestión de riesgo. Construido para el **Coding Challenge México**.
+> Sistema que **detecta oportunidades de arbitraje de BTC en tiempo real** entre Binance, OKX, Kraken, Bitso y Bitstamp, calcula su **rentabilidad neta** (fees + withdrawal + slippage), **simula la ejecución** respetando la liquidez del order book, e incorpora **noticias de última hora + IA** en la gestión de riesgo. Construido para el **Coding Challenge México**.
 
 ## 🔗 Enlaces
 
@@ -88,7 +88,7 @@ Corazón: [`lib/core/profit.ts`](lib/core/profit.ts). Para comprar `V` BTC barat
 
 ## 🛡️ Gestión de riesgo (circuit breakers)
 
-`MIN_NET_BPS` · tamaño máx. por trade (BTC y USD) · rate limit (trades/min) · **halt por N pérdidas consecutivas** + cooldown · exclusión de feeds *stale*/desconectados · **wallet guard** (sin balances negativos → fuerza parciales) · **kill switch** + umbral en vivo desde el dashboard · **régimen risk-off por noticias** de alto impacto · **re-chequeo del libro** antes de cada fill (modela movimiento adverso por latencia).
+`MIN_NET_BPS` · tamaño máx. por trade (BTC y USD) · rate limit (trades/min) · **halt por N pérdidas consecutivas** + cooldown · exclusión de feeds *stale*/desconectados · **wallet guard** (sin balances negativos → fuerza parciales) · **kill switch** + umbral en vivo desde el dashboard · **régimen risk-off por noticias** de alto impacto · **slippage adverso** que descuenta el movimiento del libro durante la latencia detect→fill · **recapeo contra liquidez y balances actuales** antes de confirmar el fill (parciales).
 
 ## 📰 Noticias & sentimiento (IA)
 
@@ -117,7 +117,7 @@ Probado bajo carga agresiva contra Supabase de producción (metodología + cómo
 |---|---|
 | **1. Velocidad / eficiencia de detección** | **WebSockets** (no polling) + order books en RAM + loop event-driven con coalescing → **<1 ms** por evento, medido y mostrado. Worker en EU para baja latencia y sin geo-bloqueo. |
 | **2. Precisión del cálculo neto** | `computeNetProfit` depth-aware: VWAP sobre el libro + **fees por exchange** + **withdrawal** (amortizado) + **slippage** + **depeg** cross-quote. Descarta lo que es rentable en bruto pero negativo en neto. |
-| **3. Solidez / robustez** | Órdenes **parciales** por liquidez, **wallet guard**, suite de **circuit breakers**, halt por pérdidas, manejo de feeds stale + reconexión con backoff, y **re-chequeo del libro** antes de ejecutar. |
+| **3. Solidez / robustez** | Órdenes **parciales** por liquidez, **wallet guard**, suite de **circuit breakers**, halt por pérdidas, manejo de feeds stale + reconexión con backoff, **slippage adverso** (modela el movimiento del libro durante la latencia) y **recapeo contra balances/liquidez** antes del fill. |
 | **4. Estrategia e inteligencia** | **5 estrategias** (espacial, cross-quote, triangular, estadística, **regional Bitso MX**) + **régimen de riesgo por noticias con IA**. No toma "la primera": evalúa todos los pares y **prioriza por `net_usd`** (ejecuta la mejor del tick primero); el dashboard muestra el **desglose de P&L por estrategia**. |
 | **5. Arquitectura y código** | Separación worker/web, **núcleo TS puro reutilizado**, tipos compartidos, RLS estricta, capa LLM **pluggable**, migraciones versionadas. |
 | **6. Experiencia web** | Dashboard **en tiempo real** (Supabase Realtime + SWR) con P&L, oportunidades, trades, z-score, noticias, wallets, controles en vivo y **copiloto IA**. |
@@ -156,6 +156,8 @@ npm run dev        # dashboard en http://localhost:3000
 - **Modelo de inventario**: saldos en cada venue; el `withdrawal` se **amortiza** entre los trades que un rebalanceo soporta, no completo por trade.
 - **Cross-quote ≠ arbitraje puro**: USDT ≠ USD → costo de depeg configurable.
 - **IA fuera del hot-path**: copiloto + scoring de noticias (Gemini, pluggable) leen la DB y modulan riesgo; **nunca** deciden el trade en sí (eso es de microsegundos).
+- **5º exchange (Bitstamp)** + **inyector del ejemplo del reto**: el botón "🧬 Reproducir ejemplo" del dashboard empuja el escenario $70,000→$70,250 por el pipeline real (detección → simulación → P&L), para que el jurado vea el caso del brief ejecutarse en vivo.
+- **Tests**: `npm test` corre los unit tests del motor neto (`lib/core/profit.test.ts`), incluida la verificación del ejemplo del reto (**+$109.75/BTC**).
 
 ---
 

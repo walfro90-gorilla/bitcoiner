@@ -7,6 +7,7 @@ export const DEFAULT_FEES: FeeTable = {
   okx: { takerBps: 10, makerBps: 8, withdrawalBtc: 0.0004 },
   kraken: { takerBps: 40, makerBps: 25, withdrawalBtc: 0.00005 },
   bitso: { takerBps: 9.8, makerBps: 7.5, withdrawalBtc: 0.0003 },
+  bitstamp: { takerBps: 40, makerBps: 30, withdrawalBtc: 0.0001 },
 };
 
 /** Fee taker como fracción (0.001 = 0.10%). */

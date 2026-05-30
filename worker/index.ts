@@ -6,7 +6,9 @@ import { createBinanceFeed } from './feeds/binance';
 import { createOkxFeed } from './feeds/okx';
 import { createKrakenFeed } from './feeds/kraken';
 import { createBitsoFeed } from './feeds/bitso';
+import { createBitstampFeed } from './feeds/bitstamp';
 import { simulate } from './executor';
+import { computeNetProfit } from './core';
 import { startNewsPoller } from './news';
 import { RiskManager, type BotRuntimeState } from './risk';
 import { Writer } from './writer';
@@ -43,6 +45,7 @@ async function main(): Promise<void> {
     }
   }
   const bs = await loadBotState();
+  let lastInjectSeq = bs?.inject_seq ?? 0;
   const runtime: BotRuntimeState = {
     tradingEnabled: bs?.trading_enabled ?? true,
     demoMode: bs?.demo_mode ?? CONFIG.demoMode,
@@ -89,22 +92,24 @@ async function main(): Promise<void> {
     writer.queueOpportunity(buildOppRow(opp, t, false, reason));
   }
 
-  function handleOpp(opp: DetectedOpportunity, t: OppTiming): void {
+  function handleOpp(opp: DetectedOpportunity, t: OppTiming, force = false): void {
     const now = Date.now();
-    const wantExecute = runtime.demoMode ? opp.grossSpreadBps > 0 : opp.profitable;
+    const wantExecute = force || (runtime.demoMode ? opp.grossSpreadBps > 0 : opp.profitable);
 
     if (!wantExecute) {
       persistSeen(opp, t, 'below_threshold', false);
       return;
     }
-    if (runtime.newsRiskOff) {
+    if (!force && runtime.newsRiskOff) {
       persistSeen(opp, t, 'news_risk_off', opp.profitable);
       return;
     }
-    const block = risk.blockReason(now);
-    if (block) {
-      persistSeen(opp, t, block, opp.profitable);
-      return;
+    if (!force) {
+      const block = risk.blockReason(now);
+      if (block) {
+        persistSeen(opp, t, block, opp.profitable);
+        return;
+      }
     }
     const sim = simulate(opp, ledger);
     if (sim.status === 'rejected') {
@@ -138,6 +143,34 @@ async function main(): Promise<void> {
         `base=${sim.finalBase.toFixed(5)} netPnl=$${sim.netPnlUsd.toFixed(2)} ` +
         `${sim.partial ? '(parcial)' : ''} pnlAcum=$${runtime.cumulativePnlUsd.toFixed(2)}`,
     );
+  }
+
+  // Inyección del escenario del reto (botón del dashboard): reproduce el ejemplo exacto
+  // ($70,000 → $70,250) por el MISMO pipeline real (computeNetProfit → simulate → persist).
+  function injectScenario(): void {
+    const now = Date.now();
+    const buyBook: OrderBook = {
+      venue: 'kraken', base: 'BTC', quote: 'USDT', pair: 'BTC/USDT',
+      bids: [{ price: 69990, size: 5 }], asks: [{ price: 70000, size: 5 }], exchangeTs: 0, recvTs: now,
+    };
+    const sellBook: OrderBook = {
+      venue: 'binance', base: 'BTC', quote: 'USDT', pair: 'BTC/USDT',
+      bids: [{ price: 70250, size: 5 }], asks: [{ price: 70260, size: 5 }], exchangeTs: 0, recvTs: now,
+    };
+    const r = computeNetProfit(
+      {
+        buyBook, sellBook, fees, targetBase: CONFIG.maxBtcPerTrade,
+        slippageBps: CONFIG.slippageBps, withdrawalAmortizeTrades: CONFIG.withdrawalAmortizeTrades,
+      },
+      runtime.minNetBps,
+    );
+    const opp: DetectedOpportunity = {
+      strategy: 'spatial', buyVenue: 'kraken', sellVenue: 'binance', buyQuote: 'USDT', sellQuote: 'USDT',
+      pair: 'BTC/USDT (ejemplo del reto)', grossSpreadBps: r.grossSpreadBps, netSpreadBps: r.netSpreadBps,
+      grossUsd: r.grossUsd, netUsd: r.netUsd, maxExecBase: r.execBase, profitable: r.profitable, exec: r,
+    };
+    handleOpp(opp, { exchangeTs: 0, recvTs: now, detectedTs: now }, true);
+    console.log(`[inject] escenario del reto reproducido (net=$${r.netUsd.toFixed(2)} por ${r.execBase} BTC)`);
   }
 
   const engine = new Engine(handleOpp, (s) =>
@@ -185,6 +218,13 @@ async function main(): Promise<void> {
     feeds.push(bitsoMxn);
   }
   startFx();
+
+  // 5º exchange: Bitstamp BTC/USDT (snapshot-replace), entra directo a la matriz espacial.
+  const bitstamp = createBitstampFeed('BTC/USDT', engine.onBook);
+  if (bitstamp) {
+    bitstamp.start();
+    feeds.push(bitstamp);
+  }
 
   // 3) Muestreo de snapshots para replay/backtest (opt-in: solo si SNAPSHOT_SAMPLE_MS > 0).
   if (CONFIG.snapshotSampleMs > 0) {
@@ -244,6 +284,11 @@ async function main(): Promise<void> {
       runtime.minNetBps = +s.min_net_bps;
       runtime.maxPositionUsd = +s.max_position_usd;
       engine.setMinNetBps(runtime.minNetBps);
+      // Inyección de escenario solicitada desde el dashboard.
+      if (typeof s.inject_seq === 'number' && s.inject_seq > lastInjectSeq) {
+        lastInjectSeq = s.inject_seq;
+        injectScenario();
+      }
       // Si el panel admin reinició el P&L (DB=0) pero el worker tiene un valor en memoria, adoptar el reset.
       if (+s.cumulative_pnl_usd === 0 && runtime.cumulativePnlUsd !== 0) {
         runtime.cumulativePnlUsd = 0;
