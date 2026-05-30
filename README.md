@@ -169,6 +169,20 @@ npm run dev        # dashboard en http://localhost:3000
 - **Modelo de inventario**: saldos en cada venue; el `withdrawal` se **amortiza** entre los trades que un rebalanceo soporta, no completo por trade.
 - **Cross-quote ≠ arbitraje puro**: USDT ≠ USD → costo de depeg configurable.
 - **IA fuera del hot-path**: copiloto + scoring de noticias (Gemini, pluggable) leen la DB y modulan riesgo; **nunca** deciden el trade en sí (eso es de microsegundos).
+
+### ⚖️ Trade-offs explícitos
+
+Un buen sistema no esconde sus compensaciones: las hace explícitas y deja una **palanca** para cada una. Detalle completo en [`docs/TRADE-OFFS.md`](docs/TRADE-OFFS.md).
+
+| Trade-off | Opciones | Elección (palanca) |
+|---|---|---|
+| **Maker vs Taker** | Taker = fill garantizado · Maker = mejor precio + fee menor, con riesgo de no-fill | Taker default; maker opt-in (`MAKER_MODE`). En el ejemplo del reto: taker +$109.75 vs maker **+$199.88**/BTC |
+| **Velocidad vs Precisión** | Ejecutar al ver bruto · recalcular neto antes | Precisión (neto en <1 ms) |
+| **Real vs DEMO** | Disciplina (P&L ~$0) · actividad (llena tablas) | Real default; DEMO (`DEMO_MODE`) para demo en vivo |
+| **Snapshot vs Incremental** | Simple · eficiente pero con desync | Incremental + checksum CRC32 (OKX/Kraken) |
+| **Tamaño vs Slippage** | Orden grande gana más · mueve el precio | VWAP depth-aware + parciales (`MAX_BTC_PER_TRADE`) |
+| **Selectividad** | Umbral alto = seguro · bajo = más trades | `min_net_bps` configurable en vivo (default 5) |
+| **Datos vs Costo DB** | Guardar todo · retención agresiva | `pg_cron` → ~6% del free tier |
 - **5º exchange (Bitstamp)** + **inyector del ejemplo del reto**: el botón "🧬 Reproducir ejemplo" del dashboard empuja el escenario $70,000→$70,250 por el pipeline real (detección → simulación → P&L), para que el jurado vea el caso del brief ejecutarse en vivo.
 - **Tests**: `npm test` corre los unit tests del motor neto (`lib/core/profit.test.ts`), incluida la verificación del ejemplo del reto (**+$109.75/BTC**).
 
