@@ -36,7 +36,7 @@ Un **worker** corriendo en un servidor de **Frankfurt** mantiene conexiones **We
 8. **Wallets simuladas** — saldos por exchange y activo; se actualizan tras cada operación (y el *wallet guard* impide que se vuelvan negativos).
 9. **Copiloto 🦅 (abajo a la derecha)** — chat con IA (Gemini) que responde sobre P&L, por qué se ejecutó/descartó una operación, estado del mercado y noticias, **con datos reales** de la base de datos.
 
-> **Paneles de mercado (parte superior):** **Estado del mercado** (mejor bid/ask por exchange) + **Matriz de arbitraje** N×N que resalta dónde `ask(compra) < bid(venta)` · **Velocidad de detección** (avg/p50/p95/p99) · **Mejor oportunidad reciente** (priorización por neto) · **Desempeño por estrategia** (trades, win-rate y P&L de las 5).
+> **Paneles de mercado (parte superior):** **Estado del mercado** (mejor bid/ask por exchange) + **Matriz de arbitraje** N×N que resalta dónde `ask(compra) < bid(venta)` · **Profundidad del libro** (ladder de niveles por venue) · **Anatomía del ejemplo del reto** ($70,000→$70,250 = +$109.75/BTC) · **Velocidad de detección** (avg/p50/p95/p99) · **Mejor oportunidad reciente** (priorización por neto) · **Desempeño por estrategia** (trades, win-rate y P&L de las 5).
 
 ---
 

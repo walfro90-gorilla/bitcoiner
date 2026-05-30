@@ -1,6 +1,6 @@
 // lib/supabase/types.ts — Tipos de filas de la DB (para queries tipadas en la web).
 // NOTA: Postgres `numeric` se serializa como string vía PostgREST; coerce con Number() en UI.
-import type { FillLeg, StrategyType } from '@/lib/core/types';
+import type { FillLeg, Level, StrategyType } from '@/lib/core/types';
 
 export interface ExchangeRow {
   id: number;
@@ -115,6 +115,8 @@ export interface MarketTickRow {
   ask_size: number;
   mid: number;
   spread_bps: number;
+  bids: Level[];
+  asks: Level[];
   exchange_ts: number | null;
   ts: string;
 }

@@ -224,6 +224,8 @@ async function main(): Promise<void> {
           ask_size: round(b.asks[0]?.size ?? 0, 8),
           mid: round(mid, 8),
           spread_bps: mid > 0 ? round(((ask - bid) / mid) * 1e4, 4) : 0,
+          bids: b.bids.slice(0, 8),
+          asks: b.asks.slice(0, 8),
           exchange_ts: b.exchangeTs || null,
           ts: new Date(t).toISOString(),
         });
