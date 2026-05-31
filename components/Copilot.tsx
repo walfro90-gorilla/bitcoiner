@@ -16,7 +16,7 @@ export function Copilot() {
     {
       role: 'assistant',
       content:
-        '¡Hola! Soy el copiloto de Clawbot 🦅. Pregúntame por el P&L, por qué se ejecutó o descartó una operación, o el estado del mercado.',
+        '¡Hola! Soy el copiloto de Bitcoiner 🦅. Pregúntame por el P&L, por qué se ejecutó o descartó una operación, o el estado del mercado.',
     },
   ]);
   const [input, setInput] = useState('');
@@ -79,7 +79,7 @@ export function Copilot() {
       {open && (
         <div className="fixed bottom-36 right-4 z-50 flex h-[26rem] max-h-[70vh] w-[min(22rem,calc(100vw-2rem))] flex-col rounded-xl border border-border bg-card shadow-2xl sm:bottom-20 sm:right-5 sm:h-[28rem]">
           <div className="border-b border-border px-4 py-3 text-sm font-semibold">
-            Copiloto Clawbot <span className="text-xs font-normal text-muted">· Claude</span>
+            Copiloto Bitcoiner <span className="text-xs font-normal text-muted">· Claude</span>
           </div>
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-auto p-3">
             {msgs.map((m, i) => (

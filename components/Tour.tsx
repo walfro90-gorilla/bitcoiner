@@ -13,7 +13,7 @@ type Step = {
 const STEPS: Step[] = [
   {
     emoji: '🦅',
-    title: 'Bienvenido a Clawbot',
+    title: 'Bienvenido a Bitcoiner',
     body: 'Un bot que busca arbitraje de Bitcoin: comprar barato en un exchange y vender caro en otro, en tiempo real. Te muestro en 1 minuto cómo leer esta pantalla. Puedes salir cuando quieras.',
   },
   {
@@ -60,13 +60,13 @@ const STEPS: Step[] = [
   },
   {
     emoji: '📲',
-    title: 'Instala Clawbot como app',
+    title: 'Instala Bitcoiner como app',
     body: 'Puedes instalarlo en tu celular o PC como una app normal — abre en pantalla completa, con su ícono.',
   },
   {
     emoji: '✅',
     title: 'Listo',
-    body: 'Eso es todo. Recuerda: Clawbot no busca operar mucho, busca operar bien. Vuelve a ver el tour cuando quieras con el botón 🎯.',
+    body: 'Eso es todo. Recuerda: Bitcoiner no busca operar mucho, busca operar bien. Vuelve a ver el tour cuando quieras con el botón 🎯.',
   },
 ];
 

@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-const SYSTEM = `Eres el copiloto de "Clawbot", un bot de arbitraje de Bitcoin multi-exchange (Binance, OKX, Kraken, Bitso).
+const SYSTEM = `Eres el copiloto de "Bitcoiner", un bot de arbitraje de Bitcoin multi-exchange (Binance, OKX, Kraken, Bitso).
 Respondes en español, claro y conciso, como un analista cuantitativo.
 Usa EXCLUSIVAMENTE los datos del SNAPSHOT en vivo para responder; si algo no está en los datos, dilo.
 Sabes explicar: el P&L acumulado, por qué una oportunidad se ejecutó o se descartó (campo skip_reason), las estrategias (spatial, cross_quote, triangular, statistical), por qué el arbitraje entre exchanges líquidos rara vez es rentable (los fees taker ~20bps superan el spread), dónde sí aparece edge (Bitso regional, cross-quote USD/USDT), y cómo las noticias de alto impacto activan el régimen de riesgo.

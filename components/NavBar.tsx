@@ -17,7 +17,7 @@ export function NavBar() {
     <nav className="sticky top-0 z-40 border-b border-border bg-card2/85 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2.5">
         <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
-          <span className="text-xl">🦅</span> Clawbot
+          <span className="text-xl">🦅</span> Bitcoiner
         </Link>
         <div className="flex items-center gap-1">
           {/* Botón de tour: siempre visible (en móvil también está en el bottom-nav) */}

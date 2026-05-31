@@ -36,7 +36,7 @@ export function StatusHero() {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <h1 className="text-base font-bold tracking-tight sm:text-lg">
-              Clawbot está {trading ? 'activo' : 'en pausa'}
+              Bitcoiner está {trading ? 'activo' : 'en pausa'}
             </h1>
             <span
               className={`rounded-md px-1.5 py-0.5 text-xs font-semibold ${

@@ -337,7 +337,7 @@ async function main(): Promise<void> {
   });
 
   console.log(
-    `Clawbot worker iniciado | db=${HAS_SUPABASE} venues=${CONFIG.venues.join(',')} ` +
+    `Bitcoiner worker iniciado | db=${HAS_SUPABASE} venues=${CONFIG.venues.join(',')} ` +
       `pairs=${CONFIG.pairs.join(',')} minNetBps=${runtime.minNetBps} demo=${runtime.demoMode} ` +
       `pnlAcum=$${runtime.cumulativePnlUsd.toFixed(2)}`,
   );

@@ -10,10 +10,10 @@ const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Clawbot — Arbitraje BTC en tiempo real',
+  title: 'Bitcoiner — Arbitraje BTC en tiempo real',
   description: 'Bot de arbitraje de Bitcoin multi-exchange: detección, simulación y P&L en vivo.',
-  applicationName: 'Clawbot',
-  appleWebApp: { capable: true, title: 'Clawbot', statusBarStyle: 'black-translucent' },
+  applicationName: 'Bitcoiner',
+  appleWebApp: { capable: true, title: 'Bitcoiner', statusBarStyle: 'black-translucent' },
   icons: { apple: '/icons/apple-touch-icon.png' },
 };
 

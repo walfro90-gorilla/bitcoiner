@@ -40,7 +40,7 @@ export function Dashboard() {
           <div className="text-3xl">🦅</div>
           <div>
             <h1 className="text-lg font-bold tracking-tight">
-              Clawbot <span className="text-accent">·</span> Arbitraje BTC
+              Bitcoiner <span className="text-accent">·</span> Arbitraje BTC
             </h1>
             <p className="text-xs text-muted">Detección multi-exchange en tiempo real · simulación · P&amp;L</p>
           </div>
@@ -132,7 +132,7 @@ export function Dashboard() {
       </Section>
 
       <footer className="mt-8 pb-4 text-center text-xs text-muted">
-        Clawbot — Coding Challenge México · datos de mercado en vivo (Binance · OKX · Kraken · Bitso · Bitstamp)
+        Bitcoiner — Coding Challenge México · datos de mercado en vivo (Binance · OKX · Kraken · Bitso · Bitstamp)
       </footer>
 
       <Copilot />

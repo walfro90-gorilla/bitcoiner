@@ -3,8 +3,8 @@ import type { MetadataRoute } from 'next';
 // Next sirve esto en /manifest.webmanifest y lo enlaza automáticamente.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Clawbot — Arbitraje BTC',
-    short_name: 'Clawbot',
+    name: 'Bitcoiner — Arbitraje BTC',
+    short_name: 'Bitcoiner',
     description: 'Bot de arbitraje de Bitcoin multi-exchange: detección, simulación y P&L en vivo.',
     start_url: '/',
     scope: '/',

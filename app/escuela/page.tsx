@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Card } from '@/components/ui';
 
-export const metadata = { title: 'Escuelita — Clawbot' };
+export const metadata = { title: 'Escuelita — Bitcoiner' };
 
 function Lesson({ n, title, children }: { n: number; title: string; children: ReactNode }) {
   return (
@@ -21,7 +21,7 @@ export default function EscuelaPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Escuelita Clawbot 🎓</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Escuelita Bitcoiner 🎓</h1>
         <p className="text-sm text-muted">Arbitraje de cripto explicado desde cero — y cómo lo hace este bot.</p>
       </div>
 
@@ -41,7 +41,7 @@ export default function EscuelaPage() {
           </p>
           <p>
             Hay arbitraje cuando el <strong>Ask de un exchange &lt; Bid de otro</strong>: compras barato en el primero y
-            vendes caro en el segundo. Clawbot vigila esto en 4 exchanges en tiempo real.
+            vendes caro en el segundo. Bitcoiner vigila esto en 4 exchanges en tiempo real.
           </p>
         </Lesson>
 
@@ -52,12 +52,12 @@ export default function EscuelaPage() {
             ponderado por volumen).
           </p>
           <p>
-            Por eso Clawbot no mira solo el mejor precio: <strong>camina el libro</strong> para calcular cuánto costaría
+            Por eso Bitcoiner no mira solo el mejor precio: <strong>camina el libro</strong> para calcular cuánto costaría
             ejecutar X BTC de verdad, y hace <strong>órdenes parciales</strong> si la liquidez no alcanza.
           </p>
         </Lesson>
 
-        <Lesson n={4} title="Las 4 estrategias de Clawbot">
+        <Lesson n={4} title="Las 4 estrategias de Bitcoiner">
           <ul className="ml-4 list-disc space-y-1">
             <li>
               <strong>Espacial</strong>: mismo par entre dos exchanges (comprar barato en A, vender caro en B).
@@ -83,7 +83,7 @@ export default function EscuelaPage() {
           </p>
           <p>
             Un bot <em>promedio</em> ejecutaría y perdería. Un bot <em>bueno</em> calcula el <strong>neto</strong> y{' '}
-            <strong>rechaza</strong> lo que parece rentable en bruto pero pierde tras costos. Eso es lo que hace Clawbot.
+            <strong>rechaza</strong> lo que parece rentable en bruto pero pierde tras costos. Eso es lo que hace Bitcoiner.
           </p>
         </Lesson>
 
@@ -102,12 +102,12 @@ export default function EscuelaPage() {
               <strong>Depeg</strong>: USDT ≠ USD exacto; convertir tiene un costo.
             </li>
           </ul>
-          <p>Clawbot resta TODOS estos antes de decidir si ejecuta.</p>
+          <p>Bitcoiner resta TODOS estos antes de decidir si ejecuta.</p>
         </Lesson>
 
         <Lesson n={7} title="Gestión de riesgo (circuit breakers)">
           <p>
-            Igual que un coche tiene frenos, Clawbot tiene cortacircuitos: <strong>umbral mínimo neto</strong>, tope de
+            Igual que un coche tiene frenos, Bitcoiner tiene cortacircuitos: <strong>umbral mínimo neto</strong>, tope de
             tamaño por operación, límite de operaciones por minuto, <strong>halt</strong> tras varias pérdidas seguidas,{' '}
             <strong>wallet guard</strong> (nunca saldos negativos → fuerza parciales), y un <strong>kill switch</strong>{' '}
             global para apagar todo al instante.

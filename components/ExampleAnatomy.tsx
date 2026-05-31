@@ -56,7 +56,7 @@ export function ExampleAnatomy() {
           <span className="font-mono text-lg font-bold tabular-nums text-up">+{fmtUsd(net)}</span>
         </div>
         <p className="mt-3 text-xs leading-relaxed text-muted">
-          Spread bruto {grossPct.toFixed(2)}%. Clawbot calcula esto igual, pero sobre el <strong>VWAP real</strong> del
+          Spread bruto {grossPct.toFixed(2)}%. Bitcoiner calcula esto igual, pero sobre el <strong>VWAP real</strong> del
           libro (no top-of-book), con <strong>slippage</strong> y <strong>withdrawal</strong> incluidos y{' '}
           <strong>órdenes parciales</strong> si falta liquidez. En mercados eficientes este spread casi nunca aparece →
           por eso el bot <strong className="text-foreground/80">espera disciplinadamente</strong>.
