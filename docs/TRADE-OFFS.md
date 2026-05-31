@@ -1,6 +1,6 @@
-# ⚖️ Trade-offs de diseño — Clawbot
+# ⚖️ Trade-offs de diseño — Bitcoiner
 
-> Un **trade-off** es una decisión donde mejorar una dimensión empeora otra: no se pueden maximizar las dos a la vez. Un buen sistema no "elimina" los trade-offs — los hace **explícitos** y elige el balance de forma consciente y configurable. Este documento lista los trade-offs de Clawbot, las opciones de cada uno, y por qué elegimos lo que elegimos.
+> Un **trade-off** es una decisión donde mejorar una dimensión empeora otra: no se pueden maximizar las dos a la vez. Un buen sistema no "elimina" los trade-offs — los hace **explícitos** y elige el balance de forma consciente y configurable. Este documento lista los trade-offs de Bitcoiner, las opciones de cada uno, y por qué elegimos lo que elegimos.
 
 ---
 
@@ -111,4 +111,4 @@
 
 ## Resumen para el jurado
 
-> Clawbot no esconde sus trade-offs: cada uno tiene una **palanca** (`MAKER_MODE`, `min_net_bps`, `DEMO_MODE`, `MAX_BTC_PER_TRADE`, retención) y un **default conservador**. La filosofía: *empezar por lo honesto y seguro, y dejar el upside como una decisión explícita del operador*.
+> Bitcoiner no esconde sus trade-offs: cada uno tiene una **palanca** (`MAKER_MODE`, `min_net_bps`, `DEMO_MODE`, `MAX_BTC_PER_TRADE`, retención) y un **default conservador**. La filosofía: *empezar por lo honesto y seguro, y dejar el upside como una decisión explícita del operador*.

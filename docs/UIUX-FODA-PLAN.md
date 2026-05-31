@@ -1,4 +1,4 @@
-# 🎨 FODA UI/UX + Plan PWA — Clawbot
+# 🎨 FODA UI/UX + Plan PWA — Bitcoiner
 
 > Alcance: **solo frontend y aspecto**. No se toca lógica del worker, motor, ni base de datos.
 > Objetivo: que **cualquiera** entienda y maneje el dashboard, mobile-first, instalable como app (PWA),

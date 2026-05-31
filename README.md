@@ -1,4 +1,4 @@
-# 🦅 Clawbot — Bot de Arbitraje de Bitcoin en tiempo real
+# 🦅 Bitcoiner — Bot de Arbitraje de Bitcoin en tiempo real
 
 > Sistema que **detecta oportunidades de arbitraje de BTC en tiempo real** entre Binance, OKX, Kraken, Bitso y Bitstamp, calcula su **rentabilidad neta** (fees + withdrawal + slippage), **simula la ejecución** respetando la liquidez del order book, e incorpora **noticias de última hora + IA** en la gestión de riesgo. Construido para el **Coding Challenge México**.
 
@@ -107,7 +107,7 @@ Detección **event-driven** (no polling): cada mensaje WS re-evalúa solo los pa
 
 Los feeds de **OKX** (canal `books`, 400 niveles) y **Kraken** (`book` v2) son **incrementales**: tras un snapshot inicial se aplican solo los *deltas* (un nivel con tamaño 0 se borra). Mantener el libro en RAM aplicando deltas es lo que usan los sistemas reales — mucho más eficiente que recibir el libro completo cada vez.
 
-El riesgo de un libro incremental es el **desincronización** (perder un mensaje → libro corrupto → señales falsas). Por eso ambos exchanges publican un **checksum CRC32** y Clawbot lo **recalcula y verifica en cada tick**:
+El riesgo de un libro incremental es el **desincronización** (perder un mensaje → libro corrupto → señales falsas). Por eso ambos exchanges publican un **checksum CRC32** y Bitcoiner lo **recalcula y verifica en cada tick**:
 - **OKX:** CRC32 (int32 con signo) de los primeros 25 niveles alternando bid/ask con los strings crudos del wire.
 - **Kraken:** CRC32 de asks(10) + bids(10) con precio/cantidad formateados; la **precisión se auto-detecta** del primer snapshot.
 - Ante un **mismatch** → *resync* automático (re-suscribe y pide snapshot nuevo); nunca se emite un libro corrupto. El de OKX es **best-effort**: si tras 3 fallos no cuadra, degrada a incremental sin checksum en vez de caerse.
@@ -194,7 +194,7 @@ Un buen sistema no esconde sus compensaciones: las hace explícitas y deja una *
 
 ## 🎤 Guion de pitch (2 minutos)
 
-1. **(15s)** "Clawbot detecta arbitraje de Bitcoin en tiempo real entre 4 exchanges. El cerebro corre en Frankfurt con WebSockets; este dashboard refleja todo en vivo."
+1. **(15s)** "Bitcoiner detecta arbitraje de Bitcoin en tiempo real entre 4 exchanges. El cerebro corre en Frankfurt con WebSockets; este dashboard refleja todo en vivo."
 2. **(30s)** Señala las **Oportunidades** llegando y la **latencia <1 ms**. "Detectamos cada divergencia en sub-milisegundo."
 3. **(30s)** Abre una operación en el **blotter**: "Calculamos el neto real — fees, withdrawal, slippage — y caminamos el order book (VWAP), con **órdenes parciales** si falta liquidez."
 4. **(20s)** Toggle **DEMO → Real**: "En real el bot **descarta** lo que no es rentable tras costos. Esa precisión es la diferencia entre un bot promedio y uno bueno." (Cambio se aplica al worker remoto en 2.5 s.)

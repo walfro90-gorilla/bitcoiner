@@ -1,15 +1,15 @@
-# 🎤 Guion de pitch — Clawbot (2 min) · Coding Challenge México
+# 🎤 Guion de pitch — Bitcoiner (2 min) · Coding Challenge México
 
 > **Antes de empezar (checklist 30 s):** worker online (`pm2 list`) · dashboard abierto en modo **Real** · P&L en **$0** (resetea en el panel admin si hace falta) · pestaña del copiloto lista · este doc a un lado.
 
-> 💡 **La app se explica sola:** Clawbot es una **PWA instalable** (celular/PC) con un **tour guiado** (botón 🎯) que recorre todo esto en 1 min — útil si el jurado la abre por su cuenta. Si te quedas sin tiempo, di: *"pueden tocar 🎯 Tour y la app se explica sola."*
+> 💡 **La app se explica sola:** Bitcoiner es una **PWA instalable** (celular/PC) con un **tour guiado** (botón 🎯) que recorre todo esto en 1 min — útil si el jurado la abre por su cuenta. Si te quedas sin tiempo, di: *"pueden tocar 🎯 Tour y la app se explica sola."*
 
 ---
 
 ## ⏱️ Guion cronometrado (2:00)
 
 ### 0:00–0:15 · Gancho (qué es)
-> *"Clawbot es un bot de arbitraje de Bitcoin en tiempo real. El cerebro corre en un servidor en **Frankfurt** con conexiones **WebSocket** abiertas a **5 exchanges** —Binance, OKX, Kraken, Bitso y Bitstamp— y procesa cada cambio de precio en **menos de un milisegundo**. Este dashboard refleja todo en vivo, sin recargar."*
+> *"Bitcoiner es un bot de arbitraje de Bitcoin en tiempo real. El cerebro corre en un servidor en **Frankfurt** con conexiones **WebSocket** abiertas a **5 exchanges** —Binance, OKX, Kraken, Bitso y Bitstamp— y procesa cada cambio de precio en **menos de un milisegundo**. Este dashboard refleja todo en vivo, sin recargar."*
 
 👉 *Señala:* el dashboard completo, la barra de "Estado del mercado" con los 5 exchanges actualizándose.
 
@@ -42,7 +42,7 @@
 
 👉 *Acción:* en el copiloto escribe *"¿por qué no se ejecutan oportunidades?"* → deja que responda.
 
-> *"Velocidad, precisión y robustez — desplegado y corriendo 24/7. **Clawbot no busca operar mucho; busca operar bien.**"*
+> *"Velocidad, precisión y robustez — desplegado y corriendo 24/7. **Bitcoiner no busca operar mucho; busca operar bien.**"*
 
 ---
 
@@ -67,7 +67,7 @@ Tres piezas analíticas que demuestran profundidad — todas sobre **datos reale
 ## 🎯 Frases-ancla (memoriza estas 3)
 1. *"Cero ejecuciones no es un bug, es la precisión."*
 2. *"Un bot promedio detecta; uno bueno sabe cuándo NO operar."*
-3. *"Clawbot no busca operar mucho; busca operar bien."*
+3. *"Bitcoiner no busca operar mucho; busca operar bien."*
 
 ---
 

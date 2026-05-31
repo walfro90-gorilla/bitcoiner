@@ -5,7 +5,7 @@ Bitcoin en México suele cotizar con un **premio de ~1–3%** (a veces descuento
 global, por fricción de capital MXN↔USD, demanda local (remesas) y costos de rampas fiat. Ese premio
 vive en el libro **BTC/MXN** de Bitso (el más líquido), **no** en BTC/USDT. A diferencia del arbitraje
 entre exchanges líquidos (donde fees > spread), aquí el **premio bruto (100–300 bps) suele superar los
-costos** → es donde *sí* hay ganancia real. Clawbot ya tiene a Bitso integrado; esto lo lleva al nicho.
+costos** → es donde *sí* hay ganancia real. Bitcoiner ya tiene a Bitso integrado; esto lo lleva al nicho.
 
 ## Matemática
 ```

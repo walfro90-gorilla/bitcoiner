@@ -1,4 +1,4 @@
-# 🧪 Pruebas de estrés — Clawbot
+# 🧪 Pruebas de estrés — Bitcoiner
 
 Fecha: 2026-05-29 · Entorno: worker local (Node 20 + tsx) contra Supabase de producción · feeds en vivo (Binance, OKX, Kraken, Bitso).
 
