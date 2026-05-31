@@ -1,12 +1,16 @@
 // worker/fx.ts — Tasa de cambio USDT/MXN para el premio Bitso.
 // Fuente primaria: book usdt_mxn de Bitso (la tasa real de conversión). Fallback: API FX gratis sin key.
 import WebSocket from 'ws';
+import { CONFIG } from './config';
 
 let usdtMxn = 0;
 let lastUpdate = 0;
 
 /** USDT por 1 MXN... no: MXN por 1 USDT (precio de USDT en pesos). */
 export function getUsdtMxn(): number {
+  // Guard de FX stale (opt-in): si la tasa es más vieja que FX_MAX_AGE_MS, devuelve 0 (degradación
+  // segura: el motor y el heartbeat ya tratan 0 como "sin FX" y saltan el premio regional).
+  if (CONFIG.fxMaxAgeMs > 0 && Date.now() - lastUpdate > CONFIG.fxMaxAgeMs) return 0;
   return usdtMxn;
 }
 export function fxReady(): boolean {

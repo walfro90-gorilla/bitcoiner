@@ -40,6 +40,12 @@ export const CONFIG = {
   bitsoMxnFeeBps: num('BITSO_MXN_FEE_BPS', 65), // fee taker de Bitso en pares MXN
   fxSpreadBps: num('FX_SPREAD_BPS', 30), // costo de conversión MXN<->USD
 
+  // Optimización del premio regional — TODO neutro por default (no cambia el comportamiento actual).
+  regionalMakerMode: str('REGIONAL_MAKER_MODE', 'false').toLowerCase() === 'true', // maker en ambas patas del regional
+  bitsoMxnMakerFeeBps: num('BITSO_MXN_MAKER_FEE_BPS', 40), // fee maker Bitso MXN (solo si regionalMakerMode)
+  fxAmortizeTrades: num('FX_AMORTIZE_TRADES', 1), // amortiza el costo FX entre N trades (1 = sin amortizar)
+  fxMaxAgeMs: num('FX_MAX_AGE_MS', 0), // guard de FX stale: 0 = desactivado (comportamiento actual)
+
   // Modo maker: modela fills con órdenes límite pasivas (mejor precio + fee maker, con riesgo de no-fill).
   // Default OFF (taker, fills garantizados). Activar para mostrar el upside del market-making.
   makerMode: str('MAKER_MODE', 'false').toLowerCase() === 'true',

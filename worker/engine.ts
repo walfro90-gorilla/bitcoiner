@@ -151,6 +151,9 @@ export class Engine {
             usdtMxn,
             bitsoMxnFeeBps: CONFIG.bitsoMxnFeeBps,
             fxSpreadBps: CONFIG.fxSpreadBps,
+            maker: CONFIG.regionalMakerMode, // override explícito: regional usa SU flag, no el MAKER_MODE global
+            bitsoMxnMakerFeeBps: CONFIG.bitsoMxnMakerFeeBps,
+            fxAmortizeTrades: CONFIG.fxAmortizeTrades,
           }))
             candidates.push(o);
 

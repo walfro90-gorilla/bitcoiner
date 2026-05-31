@@ -3,7 +3,7 @@
 // en ambas direcciones, con modelo de costo MX (fee Bitso MXN + spread FX + withdrawal).
 import type { FeeTable, OrderBook, Quote, Venue } from '../types';
 import { totalSize, walkVwap } from '../orderbook';
-import { takerFee, withdrawalBtc } from '../fees';
+import { makerFee, takerFee, withdrawalBtc } from '../fees';
 import type { NetProfitResult } from '../profit';
 import type { DetectedOpportunity } from './common';
 
@@ -17,6 +17,10 @@ export interface RegionalParams {
   fxSpreadBps: number; // costo de conversión MXN<->USD
   withdrawalAmortizeTrades?: number;
   depthCap?: number;
+  // --- Optimización (opt-in; si no se pasan, el cálculo es idéntico al taker original) ---
+  maker?: boolean; // fills MAKER en ambas patas (órdenes límite pasivas): mejor precio + fee maker, con riesgo de no-fill
+  bitsoMxnMakerFeeBps?: number; // fee maker de Bitso MXN (solo si maker); fallback a bitsoMxnFeeBps
+  fxAmortizeTrades?: number; // amortiza el costo FX entre N trades (default 1 = sin amortizar)
 }
 
 function label(venue: Venue, quote: Quote): string {
@@ -32,19 +36,26 @@ function evalDirection(
   p: RegionalParams,
 ): DetectedOpportunity | null {
   const cap = p.depthCap;
-  const buyAsks = cap ? buyBook.asks.slice(0, cap) : buyBook.asks;
-  const sellBids = cap ? sellBook.bids.slice(0, cap) : sellBook.bids;
-  const execBase = Math.min(p.targetBase, totalSize(buyAsks), totalSize(sellBids));
+  const maker = p.maker ?? false;
+  // Taker: cruza el spread (compra al ask, vende al bid).
+  // Maker: orden límite pasiva que se une al lado propio (compra al bid, vende al ask) -> mejor precio.
+  const buyLevels = maker ? buyBook.bids : buyBook.asks;
+  const sellLevels = maker ? sellBook.asks : sellBook.bids;
+  const buySide = cap ? buyLevels.slice(0, cap) : buyLevels;
+  const sellSide = cap ? sellLevels.slice(0, cap) : sellLevels;
+  const execBase = Math.min(p.targetBase, totalSize(buySide), totalSize(sellSide));
   if (!(execBase > 1e-8)) return null;
 
   const slip = (p.slippageBps ?? 2) / 1e4;
   const fxSpread = p.fxSpreadBps / 1e4;
   const toUsd = (q: Quote, amt: number) => (q === 'MXN' ? amt / p.usdtMxn : amt);
   const feeRate = (venue: Venue, q: Quote) =>
-    q === 'MXN' && venue === 'bitso' ? p.bitsoMxnFeeBps / 1e4 : takerFee(p.fees, venue);
+    q === 'MXN' && venue === 'bitso'
+      ? (maker ? (p.bitsoMxnMakerFeeBps ?? p.bitsoMxnFeeBps) : p.bitsoMxnFeeBps) / 1e4
+      : (maker ? makerFee : takerFee)(p.fees, venue);
 
-  const vwapBuy = walkVwap(buyAsks, execBase).vwap; // en buyQuote
-  const vwapSell = walkVwap(sellBids, execBase).vwap; // en sellQuote
+  const vwapBuy = walkVwap(buySide, execBase).vwap; // en buyQuote
+  const vwapSell = walkVwap(sellSide, execBase).vwap; // en sellQuote
 
   // Bruto en USD (sin slippage ni fees).
   const spentUsdRaw = toUsd(buyQuote, vwapBuy * execBase);
@@ -60,7 +71,8 @@ function evalDirection(
   const recvUsd = toUsd(sellQuote, recvQuote);
   const buyFeeQuote = spentQuote * feeRate(buyBook.venue, buyQuote);
   const sellFeeQuote = recvQuote * feeRate(sellBook.venue, sellQuote);
-  const fxCost = (buyQuote === 'MXN' ? spentUsd : recvUsd) * fxSpread;
+  const fxAmortize = Math.max(1, p.fxAmortizeTrades ?? 1);
+  const fxCost = ((buyQuote === 'MXN' ? spentUsd : recvUsd) * fxSpread) / fxAmortize;
   const amortize = Math.max(1, p.withdrawalAmortizeTrades ?? 1);
   const withdrawalUsd = (withdrawalBtc(p.fees, buyBook.venue) * toUsd(buyQuote, vwapBuy)) / amortize;
   const netUsd =
@@ -97,7 +109,7 @@ function evalDirection(
     netSpreadBps,
     withdrawalQuote: withdrawalUsd,
     profitable: netSpreadBps >= p.minNetBps,
-    maker: false,
+    maker,
   };
 
   return {
