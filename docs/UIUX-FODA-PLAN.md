@@ -41,14 +41,16 @@
 
 ## Plan por fases (frontend puro)
 
-### Fase 1 — PWA (instalable como app)
+> **Estado:** Fase 1 ✅ (PWA) · Fase 2 ✅ (layout + mobile-first) · Fase 3 ⬜ (bottom-nav, toggle Simple/Experto)
+
+### Fase 1 — PWA (instalable como app) ✅
 - `app/manifest.ts` (Next genera `manifest.webmanifest`): name, short_name, theme/background color, display standalone, iconos.
 - Iconos en `/public/icons/`: 192, 512 y **maskable** (generados de un SVG con el águila sobre naranja BTC).
 - Meta en `layout.tsx`: `viewport` (width, initial-scale, viewport-fit cover), `themeColor`, `appleWebApp` (capable, title, status-bar).
 - Service worker mínimo que cachea el **app shell** (HTML/CSS/JS/iconos) con estrategia *network-first* para no servir datos viejos; los datos en vivo siguen por Realtime/SWR.
 - Verificar: build OK + Lighthouse "installable".
 
-### Fase 2 — Layout coherente + mobile-first
+### Fase 2 — Layout coherente + mobile-first ✅
 - Agrupar las ~16 tarjetas en **4 secciones con título**:
   1. **Resumen** — KPIs grandes + estado en lenguaje humano (hero).
   2. **Mercado en vivo** — Estado del mercado, Matriz, Profundidad.
