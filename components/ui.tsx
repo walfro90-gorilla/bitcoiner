@@ -8,6 +8,37 @@ export function Card({ className, children }: { className?: string; children: Re
 }
 
 /**
+ * Section — encabezado temático para agrupar tarjetas del dashboard.
+ * Da un "mapa mental" al usuario: número, título y una línea que explica de qué trata la sección.
+ */
+export function Section({
+  n,
+  title,
+  desc,
+  children,
+}: {
+  n: number;
+  title: string;
+  desc: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="mt-6 scroll-mt-20 first:mt-4">
+      <div className="mb-2 flex items-baseline gap-2 px-0.5">
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/15 text-[11px] font-bold text-accent">
+          {n}
+        </span>
+        <h2 className="text-sm font-semibold tracking-tight text-foreground">{title}</h2>
+        <span className="hidden truncate text-xs text-muted sm:inline">· {desc}</span>
+      </div>
+      {/* descripción visible en móvil debajo del título */}
+      <p className="mb-3 px-0.5 text-xs text-muted sm:hidden">{desc}</p>
+      {children}
+    </section>
+  );
+}
+
+/**
  * Ícono 'i' con tooltip explicativo al pasar el mouse (o tap en móvil).
  * Usa posición `fixed` calculada desde el ícono para no ser recortado por el `overflow-hidden` de las tarjetas.
  */

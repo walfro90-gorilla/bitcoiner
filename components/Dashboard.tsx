@@ -1,7 +1,8 @@
 'use client';
 import { useBotState, useCounts, useOpportunities } from '@/lib/hooks';
 import { fmtUsd, n } from '@/lib/format';
-import { Stat } from './ui';
+import { Section, Stat } from './ui';
+import { StatusHero } from './StatusHero';
 import { Controls } from './Controls';
 import { PnlChart } from './PnlChart';
 import { SpreadChart } from './SpreadChart';
@@ -47,7 +48,10 @@ export function Dashboard() {
         <Controls />
       </header>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      {/* Resumen: lo primero que ve cualquiera — estado en lenguaje humano + KPIs grandes */}
+      <StatusHero />
+
+      <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat
           label="P&L acumulado"
           value={fmtUsd(pnl)}
@@ -76,54 +80,56 @@ export function Dashboard() {
         />
       </div>
 
-      <div className="mt-3">
+      {/* 1 · Mercado en vivo */}
+      <Section n={1} title="Mercado en vivo" desc="Precios de los 5 exchanges y dónde podría haber arbitraje">
         <MarketView />
-      </div>
+        <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <DepthLadder />
+          <ExampleAnatomy />
+        </div>
+      </Section>
 
-      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <DepthLadder />
-        <ExampleAnatomy />
-      </div>
+      {/* 2 · Ejecución y P&L (lo más importante para el jurado, arriba) */}
+      <Section n={2} title="Ejecución y P&amp;L" desc="Qué ejecutó el bot, cuánto ganó y por qué descartó el resto">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <PnlChart />
+          <BestOpportunity />
+        </div>
+        <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <OpportunitiesTable />
+          <TradesTable />
+        </div>
+        <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <RejectionAnalysis />
+          <StrategyBreakdown />
+        </div>
+      </Section>
 
-      <div className="mt-3">
+      {/* 3 · Análisis (capa analítica sobre datos reales) */}
+      <Section n={3} title="Análisis" desc="Modelos y comparativas: maker/taker, backtest, régimen y velocidad">
         <MakerTakerCompare />
-      </div>
+        <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <PremiumPanel />
+          <BacktestPanel />
+        </div>
+        <div className="mt-3">
+          <MarkovPanel />
+        </div>
+        <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <LatencyPanel />
+          <SpreadChart />
+        </div>
+      </Section>
 
-      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <LatencyPanel />
-        <BestOpportunity />
-      </div>
+      {/* 4 · Inteligencia y saldos */}
+      <Section n={4} title="Inteligencia y saldos" desc="Noticias con IA que ajustan el riesgo, y las wallets simuladas">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <NewsPanel />
+          <WalletsPanel />
+        </div>
+      </Section>
 
-      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <PremiumPanel />
-        <BacktestPanel />
-      </div>
-
-      <div className="mt-3">
-        <MarkovPanel />
-      </div>
-
-      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <PnlChart />
-        <SpreadChart />
-      </div>
-
-      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <OpportunitiesTable />
-        <TradesTable />
-      </div>
-
-      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <RejectionAnalysis />
-        <StrategyBreakdown />
-      </div>
-
-      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <NewsPanel />
-        <WalletsPanel />
-      </div>
-
-      <footer className="mt-8 text-center text-xs text-muted">
+      <footer className="mt-8 pb-4 text-center text-xs text-muted">
         Clawbot — Coding Challenge México · datos de mercado en vivo (Binance · OKX · Kraken · Bitso · Bitstamp)
       </footer>
 

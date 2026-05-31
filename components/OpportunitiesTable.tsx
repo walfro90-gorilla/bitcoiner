@@ -16,7 +16,7 @@ export function OpportunitiesTable() {
         Oportunidades detectadas
       </SectionTitle>
       <div className="max-h-[420px] overflow-auto">
-        <table className="w-full text-sm">
+        <table className="w-full min-w-[560px] text-sm">
           <thead className="sticky top-0 bg-card text-xs text-muted">
             <tr className="[&>th]:px-3 [&>th]:py-2 [&>th]:text-left [&>th]:font-medium">
               <th>Hora</th>

@@ -22,7 +22,7 @@ export function MarketGrid() {
         Estado del mercado · mejor bid/ask por exchange
       </SectionTitle>
       <div className="max-h-[360px] overflow-auto">
-        <table className="w-full text-sm">
+        <table className="w-full min-w-[480px] text-sm">
           <thead className="sticky top-0 bg-card text-xs text-muted">
             <tr className="[&>th]:px-3 [&>th]:py-2 [&>th]:text-left [&>th]:font-medium">
               <th>Exchange</th>
@@ -75,7 +75,7 @@ export function SpreadMatrix() {
         {venues.length < 2 ? (
           <div className="px-3 py-8 text-center text-sm text-muted">Esperando ≥2 exchanges con {MATRIX_PAIR}…</div>
         ) : (
-          <table className="w-full text-xs">
+          <table className="w-full min-w-[360px] text-xs">
             <thead>
               <tr className="text-muted">
                 <th className="px-2 py-1 text-left font-medium">vende ↓ / compra →</th>
