@@ -2,6 +2,8 @@
 
 > **Antes de empezar (checklist 30 s):** worker online (`pm2 list`) · dashboard abierto en modo **Real** · P&L en **$0** (resetea en el panel admin si hace falta) · pestaña del copiloto lista · este doc a un lado.
 
+> 💡 **La app se explica sola:** Clawbot es una **PWA instalable** (celular/PC) con un **tour guiado** (botón 🎯) que recorre todo esto en 1 min — útil si el jurado la abre por su cuenta. Si te quedas sin tiempo, di: *"pueden tocar 🎯 Tour y la app se explica sola."*
+
 ---
 
 ## ⏱️ Guion cronometrado (2:00)
@@ -123,3 +125,4 @@ Tres piezas analíticas que demuestran profundidad — todas sobre **datos reale
 - Desplegado: **UpCloud Frankfurt** (worker 24/7) + **Vercel** (web) + **Supabase** (datos/realtime)
 - Tests: `npm test` → **19/19** (motor neto +$109.75 · CRC32 · Markov)
 - Trade-offs documentados: `docs/TRADE-OFFS.md`
+- **PWA instalable** (mobile-first, se ve bien en PC para análisis) + **tour guiado autoexplicativo** (🎯) con paso de instalación

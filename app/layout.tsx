@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { NavBar } from '@/components/NavBar';
+import { BottomNav } from '@/components/BottomNav';
+import { Tour } from '@/components/Tour';
 import { ServiceWorker } from '@/components/ServiceWorker';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
@@ -25,9 +27,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full">
+      <body className="min-h-full pb-[68px] sm:pb-0">
         <NavBar />
         {children}
+        <BottomNav />
+        <Tour />
         <ServiceWorker />
       </body>
     </html>

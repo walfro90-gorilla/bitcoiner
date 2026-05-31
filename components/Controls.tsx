@@ -81,6 +81,7 @@ export function Controls() {
       <button
         disabled={busy}
         onClick={inject}
+        data-tour="inject"
         title="Reproduce el ejemplo del reto ($70,000→$70,250) por el pipeline real: detección → simulación → P&L"
         className="rounded-md bg-blue/15 px-3 py-1.5 text-xs font-semibold text-blue transition-colors hover:bg-blue/25 disabled:opacity-50"
       >

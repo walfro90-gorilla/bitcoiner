@@ -69,14 +69,15 @@ export function Copilot() {
     <>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="fixed bottom-5 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-xl shadow-lg shadow-accent/20 transition-transform hover:scale-105"
+        data-tour="copilot"
+        className="fixed bottom-20 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-xl shadow-lg shadow-accent/20 transition-transform hover:scale-105 sm:bottom-5 sm:right-5"
         aria-label="Copiloto IA"
       >
         {open ? '×' : '🦅'}
       </button>
 
       {open && (
-        <div className="fixed bottom-20 right-5 z-50 flex h-[28rem] w-[22rem] flex-col rounded-xl border border-border bg-card shadow-2xl">
+        <div className="fixed bottom-36 right-4 z-50 flex h-[26rem] max-h-[70vh] w-[min(22rem,calc(100vw-2rem))] flex-col rounded-xl border border-border bg-card shadow-2xl sm:bottom-20 sm:right-5 sm:h-[28rem]">
           <div className="border-b border-border px-4 py-3 text-sm font-semibold">
             Copiloto Clawbot <span className="text-xs font-normal text-muted">· Claude</span>
           </div>

@@ -49,9 +49,11 @@ export function Dashboard() {
       </header>
 
       {/* Resumen: lo primero que ve cualquiera — estado en lenguaje humano + KPIs grandes */}
-      <StatusHero />
+      <div id="tour-resumen">
+        <StatusHero />
+      </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div id="tour-kpis" className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat
           label="P&L acumulado"
           value={fmtUsd(pnl)}
@@ -81,7 +83,7 @@ export function Dashboard() {
       </div>
 
       {/* 1 · Mercado en vivo */}
-      <Section n={1} title="Mercado en vivo" desc="Precios de los 5 exchanges y dónde podría haber arbitraje">
+      <Section id="tour-mercado" n={1} title="Mercado en vivo" desc="Precios de los 5 exchanges y dónde podría haber arbitraje">
         <MarketView />
         <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
           <DepthLadder />
@@ -90,7 +92,7 @@ export function Dashboard() {
       </Section>
 
       {/* 2 · Ejecución y P&L (lo más importante para el jurado, arriba) */}
-      <Section n={2} title="Ejecución y P&amp;L" desc="Qué ejecutó el bot, cuánto ganó y por qué descartó el resto">
+      <Section id="tour-ejecucion" n={2} title="Ejecución y P&amp;L" desc="Qué ejecutó el bot, cuánto ganó y por qué descartó el resto">
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <PnlChart />
           <BestOpportunity />
@@ -106,7 +108,7 @@ export function Dashboard() {
       </Section>
 
       {/* 3 · Análisis (capa analítica sobre datos reales) */}
-      <Section n={3} title="Análisis" desc="Modelos y comparativas: maker/taker, backtest, régimen y velocidad">
+      <Section id="tour-analisis" n={3} title="Análisis" desc="Modelos y comparativas: maker/taker, backtest, régimen y velocidad">
         <MakerTakerCompare />
         <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
           <PremiumPanel />
