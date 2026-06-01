@@ -1,7 +1,7 @@
 // app/api/chat/route.ts — Copiloto IA. Ensambla contexto en vivo desde Supabase y responde en streaming.
 // LLM pluggable (Gemini por defecto, Anthropic opcional). Fuera del hot-path: solo lee la DB.
 import { createAdminClient } from '@/lib/supabase/admin';
-import { hasLlmKey, streamChat, type ChatMessage } from '@/lib/llm';
+import { activeProvider, hasLlmKey, streamChat, type ChatMessage } from '@/lib/llm';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -58,6 +58,19 @@ export async function POST(req: Request) {
 
   // Diagnóstico opcional (no visible para usuarios): con header 'x-debug: 1' devuelve el error crudo.
   const debug = req.headers.get('x-debug') === '1';
+
+  // Reporte de configuración (sin revelar valores de las keys) para diagnosticar el provider activo.
+  if (req.headers.get('x-debug') === 'config') {
+    return Response.json({
+      activeProvider: activeProvider(),
+      LLM_PROVIDER: process.env.LLM_PROVIDER ?? null,
+      OPENAI_API_KEY: !!process.env.OPENAI_API_KEY,
+      OPENAI_MODEL: process.env.OPENAI_MODEL ?? null,
+      OPENAI_BASE_URL: process.env.OPENAI_BASE_URL ?? null,
+      GEMINI_API_KEY: !!process.env.GEMINI_API_KEY,
+      ANTHROPIC_API_KEY: !!process.env.ANTHROPIC_API_KEY,
+    });
+  }
 
   const snapshot = await buildSnapshot();
   const gen = streamChat({
