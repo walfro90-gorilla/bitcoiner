@@ -56,6 +56,9 @@ export async function POST(req: Request) {
   const messages = (body.messages ?? []).filter((m) => m.role && m.content).slice(-12);
   if (messages.length === 0) return new Response('Sin mensajes.', { status: 400 });
 
+  // Diagnóstico opcional (no visible para usuarios): con header 'x-debug: 1' devuelve el error crudo.
+  const debug = req.headers.get('x-debug') === '1';
+
   const snapshot = await buildSnapshot();
   const gen = streamChat({
     system: `${SYSTEM}\n\nSNAPSHOT (datos en vivo):\n${snapshot}`,
@@ -78,8 +81,10 @@ export async function POST(req: Request) {
         if (!emitted) {
           controller.enqueue(
             encoder.encode(
-              '⚠️ El copiloto no está disponible en este momento (el proveedor de IA rechazó la solicitud). ' +
-                'El resto del dashboard funciona con normalidad — los datos en vivo no dependen de la IA.',
+              debug
+                ? `[DEBUG] ${(err as Error).message}`
+                : '⚠️ El copiloto no está disponible en este momento (el proveedor de IA rechazó la solicitud). ' +
+                    'El resto del dashboard funciona con normalidad — los datos en vivo no dependen de la IA.',
             ),
           );
         }
