@@ -1,7 +1,7 @@
 // app/api/chat/route.ts — Copiloto IA. Ensambla contexto en vivo desde Supabase y responde en streaming.
 // LLM pluggable (Gemini por defecto, Anthropic opcional). Fuera del hot-path: solo lee la DB.
 import { createAdminClient } from '@/lib/supabase/admin';
-import { activeProvider, hasLlmKey, streamChat, type ChatMessage } from '@/lib/llm';
+import { hasLlmKey, streamChat, type ChatMessage } from '@/lib/llm';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -47,7 +47,7 @@ async function buildSnapshot(): Promise<string> {
 
 export async function POST(req: Request) {
   if (!hasLlmKey()) {
-    return new Response('No hay API key de LLM configurada (define GEMINI_API_KEY o ANTHROPIC_API_KEY).', {
+    return new Response('No hay API key de LLM configurada (define OPENAI_API_KEY, GEMINI_API_KEY o ANTHROPIC_API_KEY).', {
       status: 500,
     });
   }
@@ -55,22 +55,6 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as { messages?: ChatMessage[] };
   const messages = (body.messages ?? []).filter((m) => m.role && m.content).slice(-12);
   if (messages.length === 0) return new Response('Sin mensajes.', { status: 400 });
-
-  // Diagnóstico opcional (no visible para usuarios): con header 'x-debug: 1' devuelve el error crudo.
-  const debug = req.headers.get('x-debug') === '1';
-
-  // Reporte de configuración (sin revelar valores de las keys) para diagnosticar el provider activo.
-  if (req.headers.get('x-debug') === 'config') {
-    return Response.json({
-      activeProvider: activeProvider(),
-      LLM_PROVIDER: process.env.LLM_PROVIDER ?? null,
-      OPENAI_API_KEY: !!process.env.OPENAI_API_KEY,
-      OPENAI_MODEL: process.env.OPENAI_MODEL ?? null,
-      OPENAI_BASE_URL: process.env.OPENAI_BASE_URL ?? null,
-      GEMINI_API_KEY: !!process.env.GEMINI_API_KEY,
-      ANTHROPIC_API_KEY: !!process.env.ANTHROPIC_API_KEY,
-    });
-  }
 
   const snapshot = await buildSnapshot();
   const gen = streamChat({
@@ -94,10 +78,8 @@ export async function POST(req: Request) {
         if (!emitted) {
           controller.enqueue(
             encoder.encode(
-              debug
-                ? `[DEBUG] ${(err as Error).message}`
-                : '⚠️ El copiloto no está disponible en este momento (el proveedor de IA rechazó la solicitud). ' +
-                    'El resto del dashboard funciona con normalidad — los datos en vivo no dependen de la IA.',
+              '⚠️ El copiloto no está disponible en este momento (el proveedor de IA rechazó la solicitud). ' +
+                'El resto del dashboard funciona con normalidad — los datos en vivo no dependen de la IA.',
             ),
           );
         }
