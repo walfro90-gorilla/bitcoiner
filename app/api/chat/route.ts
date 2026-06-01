@@ -66,10 +66,23 @@ export async function POST(req: Request) {
   const encoder = new TextEncoder();
   const readable = new ReadableStream<Uint8Array>({
     async start(controller) {
+      let emitted = false;
       try {
-        for await (const text of gen) controller.enqueue(encoder.encode(text));
+        for await (const text of gen) {
+          emitted = true;
+          controller.enqueue(encoder.encode(text));
+        }
       } catch (err) {
-        controller.enqueue(encoder.encode(`\n[error: ${(err as Error).message}]`));
+        // No volcar el JSON crudo del proveedor: mensaje amigable + log para depurar en server.
+        console.error('[chat] LLM error:', (err as Error).message);
+        if (!emitted) {
+          controller.enqueue(
+            encoder.encode(
+              '⚠️ El copiloto no está disponible en este momento (el proveedor de IA rechazó la solicitud). ' +
+                'El resto del dashboard funciona con normalidad — los datos en vivo no dependen de la IA.',
+            ),
+          );
+        }
       } finally {
         controller.close();
       }
