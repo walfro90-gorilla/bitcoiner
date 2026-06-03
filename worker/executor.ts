@@ -33,14 +33,16 @@ function zeroResult(reason: string): SimResult {
   };
 }
 
-/** Simula la ejecución de una oportunidad y aplica los cambios al ledger en RAM. */
-export function simulate(opp: DetectedOpportunity, ledger: Ledger): SimResult {
+/** Simula la ejecución de una oportunidad y aplica los cambios al ledger en RAM.
+ *  `ignoreCaps` (solo para el inyector del ejemplo del reto): ejecuta el execBase completo
+ *  sin los topes de tamaño (maxBtcPerTrade/maxPositionUsd), manteniendo el wallet guard. */
+export function simulate(opp: DetectedOpportunity, ledger: Ledger, ignoreCaps = false): SimResult {
   if (opp.triangular) return simulateTriangular(opp, ledger);
-  if (opp.exec) return simulateTwoLeg(opp, ledger);
+  if (opp.exec) return simulateTwoLeg(opp, ledger, ignoreCaps);
   return zeroResult('no_exec_detail');
 }
 
-function simulateTwoLeg(opp: DetectedOpportunity, ledger: Ledger): SimResult {
+function simulateTwoLeg(opp: DetectedOpportunity, ledger: Ledger, ignoreCaps = false): SimResult {
   const ex = opp.exec!;
   const { buyVenue, sellVenue, buyQuote, sellQuote } = opp;
   const vwapBuy = ex.buy.vwap;
@@ -48,12 +50,14 @@ function simulateTwoLeg(opp: DetectedOpportunity, ledger: Ledger): SimResult {
   if (!(vwapBuy > 0) || !(ex.execBase > 0)) return zeroResult('invalid_quote');
 
   // Caps: posición máxima (USD), BTC por trade y wallet guard (balances disponibles).
+  // El inyector del ejemplo del reto pasa ignoreCaps=true para mostrar el +$109.75 a 1 BTC completo;
+  // el wallet guard (saldos disponibles) se respeta siempre.
   const availQuote = ledger.get(buyVenue, buyQuote);
   const availBtc = ledger.get(sellVenue, 'BTC');
   const finalBase = Math.min(
     ex.execBase,
-    CONFIG.maxBtcPerTrade,
-    CONFIG.maxPositionUsd / vwapBuy,
+    ignoreCaps ? Infinity : CONFIG.maxBtcPerTrade,
+    ignoreCaps ? Infinity : CONFIG.maxPositionUsd / vwapBuy,
     availQuote / vwapBuy,
     availBtc,
   );

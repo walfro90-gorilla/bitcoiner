@@ -14,7 +14,7 @@ import { RiskManager, type BotRuntimeState } from './risk';
 import { Writer } from './writer';
 import { Ledger } from './state';
 import { loadBotState, loadExchanges, loadFees, loadWallets } from './supabase';
-import { bestAsk, bestBid, midPrice, type DetectedOpportunity, type OrderBook, type Venue } from './core';
+import { bestAsk, bestBid, midPrice, type DetectedOpportunity, type FeeTable, type OrderBook, type Venue } from './core';
 import { getUsdtMxn, startFx } from './fx';
 
 type FeedBuilder = (pair: string, onBook: (b: OrderBook) => void) => Feed | null;
@@ -111,7 +111,9 @@ async function main(): Promise<void> {
         return;
       }
     }
-    const sim = simulate(opp, ledger);
+    // El inyector del ejemplo del reto (force=true) ejecuta sin topes de tamaño, para mostrar
+    // el +$109.75 a 1 BTC completo. Las operaciones normales conservan sus caps.
+    const sim = simulate(opp, ledger, force);
     if (sim.status === 'rejected') {
       persistSeen(opp, t, sim.rejectReason ?? 'rejected', opp.profitable);
       return;
@@ -145,24 +147,37 @@ async function main(): Promise<void> {
     );
   }
 
-  // Inyección del escenario del reto (botón del dashboard): reproduce el ejemplo exacto
-  // ($70,000 → $70,250) por el MISMO pipeline real (computeNetProfit → simulate → persist).
+  // Inyección del escenario del reto (botón del dashboard): reproduce el ejemplo EXACTO del enunciado
+  // (comprar Kraken $70,000, vender Binance $70,250, fees 0.1%, 1 BTC) por el MISMO pipeline real
+  // (computeNetProfit → simulate → persist), dando +$109.75/BTC como dice el reto.
+  //
+  // Usa los SUPUESTOS DEL RETO, no los fees reales del trading en vivo: el reto asume 0.1% en ambos
+  // lados, sin slippage ni withdrawal. Si usáramos los fees reales (Kraken 40 bps) el ejemplo daría
+  // negativo y dejaría de "reproducir el ejemplo". Esto NO afecta la detección real (usa `fees`).
+  const SCENARIO_FEES: FeeTable = {
+    binance: { takerBps: 10, makerBps: 10, withdrawalBtc: 0 },
+    okx: { takerBps: 10, makerBps: 10, withdrawalBtc: 0 },
+    kraken: { takerBps: 10, makerBps: 10, withdrawalBtc: 0 },
+    bitso: { takerBps: 10, makerBps: 10, withdrawalBtc: 0 },
+    bitstamp: { takerBps: 10, makerBps: 10, withdrawalBtc: 0 },
+  };
   function injectScenario(): void {
     const now = Date.now();
+    // Libros con liquidez >= 1 BTC al precio exacto del reto (top-of-book = precio del enunciado).
     const buyBook: OrderBook = {
       venue: 'kraken', base: 'BTC', quote: 'USDT', pair: 'BTC/USDT',
-      bids: [{ price: 69990, size: 5 }], asks: [{ price: 70000, size: 5 }], exchangeTs: 0, recvTs: now,
+      bids: [{ price: 69990, size: 10 }], asks: [{ price: 70000, size: 10 }], exchangeTs: 0, recvTs: now,
     };
     const sellBook: OrderBook = {
       venue: 'binance', base: 'BTC', quote: 'USDT', pair: 'BTC/USDT',
-      bids: [{ price: 70250, size: 5 }], asks: [{ price: 70260, size: 5 }], exchangeTs: 0, recvTs: now,
+      bids: [{ price: 70250, size: 10 }], asks: [{ price: 70260, size: 10 }], exchangeTs: 0, recvTs: now,
     };
     const r = computeNetProfit(
       {
-        buyBook, sellBook, fees, targetBase: CONFIG.maxBtcPerTrade,
-        slippageBps: CONFIG.slippageBps, withdrawalAmortizeTrades: CONFIG.withdrawalAmortizeTrades,
+        buyBook, sellBook, fees: SCENARIO_FEES, targetBase: 1, // 1 BTC, como el ejemplo del reto
+        slippageBps: 0, includeWithdrawal: false, // supuestos del enunciado (sin slippage ni retiro)
       },
-      runtime.minNetBps,
+      0, // umbral 0: el ejemplo del reto siempre se ejecuta para mostrar la mecánica
     );
     const opp: DetectedOpportunity = {
       strategy: 'spatial', buyVenue: 'kraken', sellVenue: 'binance', buyQuote: 'USDT', sellQuote: 'USDT',
