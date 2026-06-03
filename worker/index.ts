@@ -163,6 +163,11 @@ async function main(): Promise<void> {
   };
   function injectScenario(): void {
     const now = Date.now();
+    // El ejemplo del reto es DIDÁCTICO: garantiza el inventario necesario para 1 BTC, sin depender
+    // del balance real (que fluctúa por el drift del trading). Compra en Kraken (necesita USDT),
+    // vende en Binance (necesita BTC). Sembramos lo justo si falta.
+    if (ledger.get('kraken', 'USDT') < 71000) ledger.set('kraken', 'USDT', 100000);
+    if (ledger.get('binance', 'BTC') < 1) ledger.set('binance', 'BTC', 2);
     // Libros con liquidez >= 1 BTC al precio exacto del reto (top-of-book = precio del enunciado).
     const buyBook: OrderBook = {
       venue: 'kraken', base: 'BTC', quote: 'USDT', pair: 'BTC/USDT',
