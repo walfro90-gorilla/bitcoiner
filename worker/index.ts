@@ -46,6 +46,7 @@ async function main(): Promise<void> {
   }
   const bs = await loadBotState();
   let lastInjectSeq = bs?.inject_seq ?? 0;
+  let lastSeenPnl = bs ? +bs.cumulative_pnl_usd : 0; // último P&L que el worker escribió/leyó
   const runtime: BotRuntimeState = {
     tradingEnabled: bs?.trading_enabled ?? true,
     demoMode: bs?.demo_mode ?? CONFIG.demoMode,
@@ -119,6 +120,7 @@ async function main(): Promise<void> {
       return;
     }
     risk.recordTrade(now, sim.netPnlUsd);
+    lastSeenPnl = runtime.cumulativePnlUsd; // marca el P&L que el worker va a persistir (evita auto-reset en el poll)
     const tradeRowBase = {
       executed_at: new Date().toISOString(),
       pair: opp.pair,
@@ -309,10 +311,14 @@ async function main(): Promise<void> {
         lastInjectSeq = s.inject_seq;
         injectScenario();
       }
-      // Si el panel admin reinició el P&L (DB=0) pero el worker tiene un valor en memoria, adoptar el reset.
-      if (+s.cumulative_pnl_usd === 0 && runtime.cumulativePnlUsd !== 0) {
+      // Reset externo (panel admin): la DB cambió a 0 PERO no fue por el último escrito del worker.
+      // Comparamos contra lastSeenPnl (lo último que el worker dejó en la DB) para no pisar un
+      // P&L recién generado por un trade. Solo adoptamos el reset si el cambio vino de afuera.
+      const dbPnl = +s.cumulative_pnl_usd;
+      if (dbPnl === 0 && runtime.cumulativePnlUsd !== 0 && lastSeenPnl !== runtime.cumulativePnlUsd) {
         runtime.cumulativePnlUsd = 0;
         runtime.consecutiveLosses = 0;
+        lastSeenPnl = 0;
         console.log('[reset] P&L reiniciado desde el panel admin');
       }
     }, 2500);

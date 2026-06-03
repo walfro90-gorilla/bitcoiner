@@ -38,7 +38,7 @@ export function useOpportunities(limit = 60) {
         .limit(limit);
       return (data ?? []) as OpportunityRow[];
     },
-    { refreshInterval: 60_000 },
+    { refreshInterval: 5000 }, // opportunities ya no está en realtime → polling frecuente
   );
   useEffect(() => subscribeTable('opportunities', () => void mutate()), [mutate]);
   return { opportunities: data ?? [], isLoading };
@@ -55,7 +55,7 @@ export function useTrades(limit = 40) {
         .limit(limit);
       return (data ?? []) as TradeRow[];
     },
-    { refreshInterval: 60_000 },
+    { refreshInterval: 5000 },
   );
   useEffect(() => subscribeTable('trades', () => void mutate()), [mutate]);
   return { trades: data ?? [], isLoading };
@@ -77,7 +77,7 @@ export function usePnlSeries(limit = 500) {
         return { t: t.executed_at as string, pnl: Number(t.net_pnl_usd), cum };
       });
     },
-    { refreshInterval: 60_000 },
+    { refreshInterval: 5000 },
   );
   useEffect(() => subscribeTable('trades', () => void mutate()), [mutate]);
   return data ?? [];
@@ -103,7 +103,7 @@ export function useBotState() {
       const { data } = await sb().from('bot_state').select('*').eq('id', true).single();
       return (data as BotStateRow) ?? null;
     },
-    { refreshInterval: 30_000 },
+    { refreshInterval: 4000 }, // P&L acumulado / estado: refresco frecuente (no depende solo de realtime)
   );
   useEffect(() => subscribeTable('bot_state', () => void mutate()), [mutate]);
   return { botState: data ?? null, mutate };
@@ -121,7 +121,7 @@ export function useCounts() {
       const trades = trd.count ?? 0;
       return { opportunities: opp.count ?? 0, trades, executed: trades };
     },
-    { refreshInterval: 15_000 },
+    { refreshInterval: 5000 },
   );
   useEffect(() => {
     const a = subscribeTable('trades', () => void mutate());
