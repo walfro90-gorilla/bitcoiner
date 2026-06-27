@@ -5,7 +5,7 @@
 
 ## 1. Requisitos
 - **Node 20.x** (probado con v20.18.0, npm 10.8.2). Git.
-- Clona el repo en **`X:\Codes\bitcoiner`** (misma ruta). Importa: la auto-memoria de Claude Code se guarda por ruta del proyecto, en `~/.claude/projects/x--Codes-bitcoiner/`. Si clonas en otra ruta, esa memoria no se encuentra.
+- Clona el repo donde quieras (p.ej. `C:\Codes\bitcoiner`). El código funciona desde cualquier ruta. La ruta **solo** importa si quieres reusar la auto-memoria de Claude Code del laptop viejo (ver §5). Si el laptop nuevo no tiene disco `X:`, ignóralo: clona en `C:\` y listo.
 
 ## 2. Secretos (NO están en git — `.env*` está en `.gitignore`)
 Cópialos del laptop viejo, o recréalos desde `.env.example` con las llaves reales:
@@ -32,12 +32,11 @@ El sitio está **amurallado**: `proxy.ts` reescribe TODO a `/maintenance` (panta
 - Archivos: [`proxy.ts`](../proxy.ts) y [`app/maintenance/page.tsx`](../app/maintenance/page.tsx).
 
 ## 5. Memoria de Claude Code (opcional, para continuidad)
-No viaja por git. Para conservarla, copia del laptop viejo al nuevo:
-```
-~/.claude/projects/x--Codes-bitcoiner/memory/   →   misma ruta en el laptop nuevo
-```
-(En Windows: `C:\Users\<tu-usuario>\.claude\projects\x--Codes-bitcoiner\memory\`.)
-Si no la copias, Claude empieza limpio pero igual entiende el proyecto leyendo `AGENTS.md`, `README.md` y este `docs/`.
+No viaja por git. **Si no la copias, no pasa nada:** Claude entiende el proyecto leyendo `AGENTS.md`, `README.md` y este `docs/`. La reconstruye con el uso.
+
+Si quieres conservarla, el truco es que la carpeta se nombra según la ruta del proyecto (los `:` y `\` se vuelven `-`). En el laptop viejo está en `~/.claude/projects/x--Codes-bitcoiner/memory/`.
+- **Clonaste en `C:\Codes\bitcoiner`** (sin disco X:) → abre Claude Code ahí una vez; se creará `C:\Users\<usuario>\.claude\projects\c--Codes-bitcoiner\`. Copia el `memory/` viejo dentro de esa.
+- **Quieres la ruta exacta `X:` sin tener disco X:** → `subst X: C:\Codes` crea un X: falso apuntando a una carpeta real; luego clona en `X:\Codes\bitcoiner`. (`subst` se borra al reiniciar; re-córrelo o ponlo en un script de inicio.)
 
 ## 6. Deploy / worker (referencia)
 - **Web:** Vercel (import del repo). `worker/` se ignora vía `.vercelignore`.
