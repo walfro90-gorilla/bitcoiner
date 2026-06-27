@@ -19,7 +19,11 @@
       "WebFetch(domain:supabase.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:composio.dev)",
-      "WebFetch(domain:www.rconnect.tech)"
+      "WebFetch(domain:www.rconnect.tech)",
+      "Bash(node -p \"require\\('./node_modules/next/package.json'\\).version\")",
+      "Bash(node *)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"exit: $?\")"
     ]
   }
 }
