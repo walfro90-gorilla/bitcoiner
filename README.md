@@ -158,7 +158,7 @@ npm run dev        # dashboard en http://localhost:3000
 ## ☁️ Despliegue
 
 - **Worker** → **UpCloud VM región EU** (guía paso a paso: [`deploy/UPCLOUD.md`](deploy/UPCLOUD.md)); alternativas: Railway EU (`railway.json`) o Docker (`Dockerfile`). IP **no-US** para Binance/OKX.
-- **Web** → **Vercel** (import del repo). Env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`, `LLM_PROVIDER=gemini`. `worker/` se ignora con `.vercelignore`.
+- **Web** → **Vercel** (import del repo). Env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, y el LLM del copiloto — por defecto **Groq** (`LLM_PROVIDER=openai`, `OPENAI_API_KEY=gsk_…`, `OPENAI_MODEL=llama-3.3-70b-versatile`); alternativa: `GEMINI_API_KEY` + `LLM_PROVIDER=gemini`. `worker/` se ignora con `.vercelignore`.
 - **Supabase** → un proyecto compartido por worker y web.
 
 ## 🗄️ Esquema (Supabase / Postgres)
