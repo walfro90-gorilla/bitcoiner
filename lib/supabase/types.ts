@@ -120,3 +120,57 @@ export interface MarketTickRow {
   exchange_ts: number | null;
   ts: string;
 }
+
+// ── Parametrización TOTAL en vivo (migración 0012) ──
+export interface RuntimeConfigRow {
+  id: boolean;
+  slippage_bps: number;
+  depeg_bps: number;
+  withdrawal_amortize_trades: number;
+  fx_spread_bps: number;
+  fx_amortize_trades: number;
+  fx_max_age_ms: number;
+  bitso_mxn_fee_bps: number;
+  bitso_mxn_maker_fee_bps: number;
+  max_btc_per_trade: number;
+  max_trades_per_min: number;
+  consecutive_loss_halt: number;
+  loss_cooldown_ms: number;
+  stale_ms: number;
+  maker_mode: boolean;
+  regional_maker_mode: boolean;
+  news_poll_ms: number;
+  updated_at: string;
+}
+
+export interface StrategyConfigRow {
+  strategy: StrategyType;
+  enabled: boolean;
+  min_net_bps_override: number | null;
+  maker: boolean;
+  target_base: number | null;
+  notional_usd: number | null;
+  stat_entry: number | null;
+  stat_exit: number | null;
+  stat_stop: number | null;
+  updated_at: string;
+}
+
+export interface ConfigProfileRow {
+  id: number;
+  name: string;
+  description: string | null;
+  snapshot: Record<string, unknown>;
+  is_builtin: boolean;
+  created_at: string;
+}
+
+export interface ConfigAuditRow {
+  id: number;
+  ts: string;
+  actor: string;
+  scope: string;
+  field: string;
+  old_value: unknown;
+  new_value: unknown;
+}

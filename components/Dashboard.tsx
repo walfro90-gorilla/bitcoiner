@@ -22,6 +22,7 @@ import { RejectionAnalysis } from './RejectionAnalysis';
 import { MakerTakerCompare } from './MakerTakerCompare';
 import { BacktestPanel } from './BacktestPanel';
 import { MarkovPanel } from './MarkovPanel';
+import { ConfigCenter } from './config/ConfigCenter';
 
 export function Dashboard() {
   const { botState } = useBotState();
@@ -107,8 +108,13 @@ export function Dashboard() {
         </div>
       </Section>
 
-      {/* 3 · Análisis (capa analítica sobre datos reales) */}
-      <Section id="tour-analisis" n={3} title="Análisis" desc="Modelos y comparativas: maker/taker, backtest, régimen y velocidad">
+      {/* 3 · Configuración — parametrización TOTAL en vivo (diferenciador #1 del reto) */}
+      <Section id="tour-config" n={3} title="Configuración" desc="Ajusta TODO en vivo: costos, tamaños, breakers, estrategias y exchanges — el worker lo adopta en ~2.5s">
+        <ConfigCenter />
+      </Section>
+
+      {/* 4 · Análisis (capa analítica sobre datos reales) */}
+      <Section id="tour-analisis" n={4} title="Análisis" desc="Modelos y comparativas: maker/taker, backtest, régimen y velocidad">
         <MakerTakerCompare />
         <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
           <PremiumPanel />
@@ -124,7 +130,7 @@ export function Dashboard() {
       </Section>
 
       {/* 4 · Inteligencia y saldos */}
-      <Section n={4} title="Inteligencia y saldos" desc="Noticias con IA que ajustan el riesgo, y las wallets simuladas">
+      <Section n={5} title="Inteligencia y saldos" desc="Noticias con IA que ajustan el riesgo, y las wallets simuladas">
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <NewsPanel />
           <WalletsPanel />

@@ -6,10 +6,15 @@ import { getSupabaseBrowser } from '../supabase/client';
 import { subscribeTable } from '../realtime';
 import type {
   BotStateRow,
+  ConfigAuditRow,
+  ConfigProfileRow,
   ExchangeRow,
+  FeeConfigRow,
   MarketTickRow,
   NewsSignalRow,
   OpportunityRow,
+  RuntimeConfigRow,
+  StrategyConfigRow,
   TradeRow,
   WalletRow,
 } from '../supabase/types';
@@ -306,4 +311,48 @@ export function useRejectionStats(limit = 500) {
   );
   useEffect(() => subscribeTable('opportunities', () => void mutate()), [mutate]);
   return data ?? { total: 0, profitable: 0, executed: 0, byReason: {}, nearMisses: [] };
+}
+
+// ── Parametrización TOTAL en vivo (Centro de Configuración) ──
+export interface ConfigSnapshot {
+  runtime_config: RuntimeConfigRow | null;
+  strategy_config: StrategyConfigRow[];
+  exchanges: ExchangeRow[];
+  fee_config: FeeConfigRow[];
+  profiles: ConfigProfileRow[];
+  audit: ConfigAuditRow[];
+  bot_state: BotStateRow | null;
+}
+
+/** Snapshot completo de configuración (vía /api/config, service-role). Realtime en runtime/strategy. */
+export function useConfig() {
+  const { data, mutate, isLoading } = useSWR<ConfigSnapshot>(
+    'config',
+    async () => {
+      const r = await fetch('/api/config');
+      return (await r.json()) as ConfigSnapshot;
+    },
+    { refreshInterval: 8000 },
+  );
+  useEffect(() => {
+    const a = subscribeTable('runtime_config', () => void mutate());
+    const b = subscribeTable('strategy_config', () => void mutate());
+    const c = subscribeTable('bot_state', () => void mutate());
+    return () => {
+      a();
+      b();
+      c();
+    };
+  }, [mutate]);
+  return { config: data ?? null, mutate, isLoading };
+}
+
+/** POST a /api/config (patch de campo o acción de perfil). El llamador hace mutate() después. */
+export async function patchConfig(body: Record<string, unknown>): Promise<{ ok?: boolean; error?: string }> {
+  const r = await fetch('/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return (await r.json()) as { ok?: boolean; error?: string };
 }

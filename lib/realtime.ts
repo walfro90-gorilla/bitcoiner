@@ -4,7 +4,15 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 import { getSupabaseBrowser } from './supabase/client';
 
 type Cb = () => void;
-const REALTIME_TABLES = ['opportunities', 'trades', 'wallets', 'bot_state', 'news_signals'] as const;
+const REALTIME_TABLES = [
+  'opportunities',
+  'trades',
+  'wallets',
+  'bot_state',
+  'news_signals',
+  'runtime_config',
+  'strategy_config',
+] as const;
 const subscribers = new Map<string, Set<Cb>>();
 const pending = new Map<string, ReturnType<typeof setTimeout>>();
 let channel: RealtimeChannel | null = null;
