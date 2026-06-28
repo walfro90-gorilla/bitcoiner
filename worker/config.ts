@@ -54,6 +54,11 @@ export const CONFIG = {
   snapshotSampleMs: num('SNAPSHOT_SAMPLE_MS', 0), // 0 = desactivado (replay opt-in); evita ~700MB/día
   newsPollMs: num('NEWS_POLL_MS', 180000),
   demoMode: str('DEMO_MODE', 'false').toLowerCase() === 'true',
+
+  // Ejecución real-ready: arquitectura ExchangeAdapter. 'simulated' (default) | 'live' (Binance Spot Testnet, opt-in).
+  executionMode: str('EXECUTION_MODE', 'simulated'),
+  binanceTestnetKey: str('BINANCE_TESTNET_KEY'),
+  binanceTestnetSecret: str('BINANCE_TESTNET_SECRET'),
 };
 
 export const HAS_SUPABASE = Boolean(CONFIG.supabaseUrl && CONFIG.supabaseServiceKey);

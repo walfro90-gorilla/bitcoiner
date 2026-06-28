@@ -24,6 +24,8 @@ import {
 } from './supabase';
 import { applyRuntime, applyStrategy, effectiveTargetBase, RUNTIME, STRATEGIES } from './runtimeConfig';
 import { Rebalancer } from './rebalancer';
+import { SimulatedAdapter } from './execution/simulatedAdapter';
+import { LiveAdapter } from './execution/liveAdapter';
 import { bestAsk, bestBid, CandleAggregator, midPrice, type DetectedOpportunity, type FeeTable, type OrderBook, type Venue } from './core';
 import { getUsdtMxn, startFx } from './fx';
 
@@ -440,6 +442,32 @@ async function main(): Promise<void> {
     writer,
   );
   rebalancer.start();
+
+  // 4d) Self-test de la arquitectura de ejecución "real-ready" (ExchangeAdapter). Fuera del hot-path,
+  // con un ledger DESECHABLE (no afecta balances reales). Demuestra el adapter simulado siempre;
+  // si EXECUTION_MODE=live y hay keys de testnet, prueba el LiveAdapter contra Binance Spot Testnet.
+  async function executionSelfTest(): Promise<void> {
+    try {
+      const probe = new Ledger();
+      probe.set('binance', 'USDT', 100000);
+      probe.set('binance', 'BTC', 1);
+      const sim = new SimulatedAdapter('binance', engine.state, probe, () => currentFees);
+      const r = await sim.placeOrder({ venue: 'binance', symbol: 'BTCUSDT', side: 'buy', type: 'market', qty: 0.01 });
+      console.log(`[ADAPTER sim] BTCUSDT buy 0.01 -> ${r.state} avg=${r.avgPrice.toFixed(2)} fee=$${r.feeQuote.toFixed(2)}`);
+    } catch (e) {
+      console.error('[ADAPTER sim]', (e as Error).message);
+    }
+    if (CONFIG.executionMode === 'live' && CONFIG.binanceTestnetKey && CONFIG.binanceTestnetSecret) {
+      try {
+        const live = new LiveAdapter('binance', CONFIG.binanceTestnetKey, CONFIG.binanceTestnetSecret);
+        const bal = await live.getBalances();
+        console.log('[ADAPTER live] testnet OK:', bal.slice(0, 5).map((b) => `${b.asset}=${b.free}`).join(' '));
+      } catch (e) {
+        console.error('[ADAPTER live] testnet error:', (e as Error).message);
+      }
+    }
+  }
+  setTimeout(() => void executionSelfTest(), 8000);
 
   // 5) Heartbeat de consola.
   setInterval(() => {
