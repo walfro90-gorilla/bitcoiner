@@ -22,7 +22,7 @@ import {
   loadStrategyConfig,
   loadWallets,
 } from './supabase';
-import { applyRuntime, applyStrategy } from './runtimeConfig';
+import { applyRuntime, applyStrategy, effectiveTargetBase } from './runtimeConfig';
 import { bestAsk, bestBid, midPrice, type DetectedOpportunity, type FeeTable, type OrderBook, type Venue } from './core';
 import { getUsdtMxn, startFx } from './fx';
 
@@ -134,7 +134,7 @@ async function main(): Promise<void> {
     }
     // El inyector del ejemplo del reto (force=true) ejecuta sin topes de tamaño, para mostrar
     // el +$109.75 a 1 BTC completo. Las operaciones normales conservan sus caps.
-    const sim = simulate(opp, ledger, runtime.maxPositionUsd, force);
+    const sim = simulate(opp, ledger, runtime.maxPositionUsd, effectiveTargetBase(opp.strategy), force);
     if (sim.status === 'rejected') {
       persistSeen(opp, t, sim.rejectReason ?? 'rejected', opp.profitable);
       return;
@@ -318,7 +318,11 @@ async function main(): Promise<void> {
 
   // 4) Poll de bot_state (kill switch + umbral desde el dashboard).
   if (HAS_SUPABASE) {
+    let polling = false;
     setInterval(async () => {
+      if (polling) return; // guard de reentrancia: no solapar polls si la red a Supabase se pone lenta
+      polling = true;
+      try {
       const s = await loadBotState();
       if (!s) return;
       runtime.tradingEnabled = s.trading_enabled;
@@ -347,11 +351,14 @@ async function main(): Promise<void> {
         lastSeenPnl = 0;
         console.log('[reset] P&L reiniciado desde el panel admin');
       }
+      } finally {
+        polling = false;
+      }
     }, 2500);
   }
 
   // 4b) Poller de noticias -> régimen de riesgo (fuera del hot-path).
-  const newsTimer = startNewsPoller((r) => {
+  const news = startNewsPoller((r) => {
     runtime.newsRiskOff = r.riskOff;
     runtime.newsSentiment = r.sentiment;
     runtime.newsImpact = r.impact;
@@ -384,7 +391,7 @@ async function main(): Promise<void> {
     console.log('\nDeteniendo...');
     feeds.forEach((f) => f.stop());
     writer.stop();
-    clearInterval(newsTimer);
+    news.stop();
     process.exit(0);
   });
 

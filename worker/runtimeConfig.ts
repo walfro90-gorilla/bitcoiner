@@ -19,8 +19,6 @@ export interface RuntimeConfig {
   consecutiveLossHalt: number;
   lossCooldownMs: number;
   staleMs: number;
-  makerMode: boolean;
-  regionalMakerMode: boolean;
   newsPollMs: number;
 }
 
@@ -54,10 +52,10 @@ export const RUNTIME: RuntimeConfig = {
   consecutiveLossHalt: CONFIG.consecutiveLossHalt,
   lossCooldownMs: LOSS_COOLDOWN_MS_DEFAULT,
   staleMs: CONFIG.staleMs,
-  makerMode: CONFIG.makerMode,
-  regionalMakerMode: CONFIG.regionalMakerMode,
   newsPollMs: CONFIG.newsPollMs,
 };
+// Nota: el modo maker es POR ESTRATEGIA (STRATEGIES[s].maker). maker_mode/regional_maker_mode
+// del runtime_config solo siembran el default por-estrategia (abajo) cuando no hay override en DB.
 
 function defaultStrategy(maker: boolean): StrategyConfig {
   return {

@@ -1,5 +1,4 @@
 // worker/executor.ts — Ejecución simulada: fills VWAP, órdenes parciales, update de wallets.
-import { RUNTIME } from './runtimeConfig';
 import { Ledger } from './state';
 import type { DetectedOpportunity, FillLeg } from './core';
 
@@ -40,10 +39,11 @@ export function simulate(
   opp: DetectedOpportunity,
   ledger: Ledger,
   maxPositionUsd: number,
+  maxBtcPerTrade: number,
   ignoreCaps = false,
 ): SimResult {
   if (opp.triangular) return simulateTriangular(opp, ledger, maxPositionUsd);
-  if (opp.exec) return simulateTwoLeg(opp, ledger, maxPositionUsd, ignoreCaps);
+  if (opp.exec) return simulateTwoLeg(opp, ledger, maxPositionUsd, maxBtcPerTrade, ignoreCaps);
   return zeroResult('no_exec_detail');
 }
 
@@ -51,6 +51,7 @@ function simulateTwoLeg(
   opp: DetectedOpportunity,
   ledger: Ledger,
   maxPositionUsd: number,
+  maxBtcPerTrade: number,
   ignoreCaps = false,
 ): SimResult {
   const ex = opp.exec!;
@@ -66,7 +67,7 @@ function simulateTwoLeg(
   const availBtc = ledger.get(sellVenue, 'BTC');
   const finalBase = Math.min(
     ex.execBase,
-    ignoreCaps ? Infinity : RUNTIME.maxBtcPerTrade,
+    ignoreCaps ? Infinity : maxBtcPerTrade,
     ignoreCaps ? Infinity : maxPositionUsd / vwapBuy,
     availQuote / vwapBuy,
     availBtc,
@@ -90,7 +91,7 @@ function simulateTwoLeg(
   ledger.add(sellVenue, 'BTC', -finalBase);
   ledger.add(sellVenue, sellQuote, sellRecv - sellFee);
 
-  const targetCap = Math.min(ex.execBase, RUNTIME.maxBtcPerTrade);
+  const targetCap = Math.min(ex.execBase, maxBtcPerTrade);
   const partial = finalBase < targetCap - 1e-9;
   const legs: FillLeg[] = [
     { ...ex.buy, vwap: vwapBuy, filledBase: finalBase, quoteValue: buySpend, feeQuote: buyFee },

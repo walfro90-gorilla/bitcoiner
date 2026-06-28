@@ -110,8 +110,6 @@ export async function loadRuntimeConfig(): Promise<Partial<RuntimeConfig> | null
     consecutiveLossHalt: +(d.consecutive_loss_halt as number),
     lossCooldownMs: +(d.loss_cooldown_ms as number),
     staleMs: +(d.stale_ms as number),
-    makerMode: !!d.maker_mode,
-    regionalMakerMode: !!d.regional_maker_mode,
     newsPollMs: +(d.news_poll_ms as number),
   };
 }

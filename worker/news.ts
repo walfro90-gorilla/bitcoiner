@@ -1,6 +1,6 @@
 // worker/news.ts — Poller de noticias (CryptoPanic, fallback Google News RSS) -> scoring con Gemini
 // -> news_signals + régimen de riesgo en bot_state. Fuera del hot-path (poll cada NEWS_POLL_MS).
-import { CONFIG } from './config';
+import { RUNTIME } from './runtimeConfig';
 import { supabase } from './supabase';
 import { generateText, hasLlmKey } from '../lib/llm';
 
@@ -82,8 +82,12 @@ ${titles}`;
   }
 }
 
-/** Arranca el poller; llama onRegime con el régimen actual tras cada ciclo. */
-export function startNewsPoller(onRegime: (r: NewsRegime) => void): ReturnType<typeof setInterval> {
+/** Arranca el poller; llama onRegime con el régimen actual tras cada ciclo.
+ *  Usa setTimeout recursivo que lee RUNTIME.newsPollMs en cada ciclo → el intervalo es
+ *  configurable EN VIVO desde la UI sin reiniciar. Devuelve un handle con stop(). */
+export function startNewsPoller(onRegime: (r: NewsRegime) => void): { stop: () => void } {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let stopped = false;
   const run = async () => {
     const items = await fetchNews();
     if (!items.length) return;
@@ -117,6 +121,15 @@ export function startNewsPoller(onRegime: (r: NewsRegime) => void): ReturnType<t
       `[news] ${items.length} titulares | sentiment=${regime?.sentiment ?? 'n/a'} impact=${regime?.impact ?? 'n/a'} riskOff=${regime?.riskOff ?? false}`,
     );
   };
-  void run();
-  return setInterval(() => void run(), CONFIG.newsPollMs);
+  const loop = async () => {
+    await run();
+    if (!stopped) timer = setTimeout(() => void loop(), RUNTIME.newsPollMs);
+  };
+  void loop();
+  return {
+    stop: () => {
+      stopped = true;
+      if (timer) clearTimeout(timer);
+    },
+  };
 }

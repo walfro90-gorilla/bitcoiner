@@ -5,6 +5,7 @@ import { MarketState } from './state';
 import {
   computeNetProfit,
   DEFAULT_FEES,
+  DEFAULT_STAT_THRESHOLDS,
   RollingZScore,
   detectCrossQuote,
   detectRegional,
@@ -16,6 +17,7 @@ import {
   type FeeTable,
   type OrderBook,
   type Quote,
+  type StatThresholds,
   type StrategyType,
   type Venue,
 } from './core';
@@ -195,6 +197,7 @@ export class Engine {
           for (const o of detectTriangular(v, btcUsdt, ethBtc, ethUsdt, {
             fees: this.fees,
             minNetBps: effectiveMinNet('triangular', this.minNet),
+            notionalUsd: STRATEGIES.triangular.notionalUsd ?? undefined,
           }))
             candidates.push(o);
         }
@@ -219,6 +222,13 @@ export class Engine {
   }
 
   private evalStatistical(now: number, candidates: DetectedOpportunity[]): void {
+    // Umbrales z-score por estrategia (parametrización total): override por DB o defaults del código.
+    const sc = STRATEGIES.statistical;
+    const th: StatThresholds = {
+      entry: sc.statEntry ?? DEFAULT_STAT_THRESHOLDS.entry,
+      exit: sc.statExit ?? DEFAULT_STAT_THRESHOLDS.exit,
+      stop: sc.statStop ?? DEFAULT_STAT_THRESHOLDS.stop,
+    };
     for (const sp of STAT_PAIRS) {
       const a = this.state.get(sp.a);
       const b = this.state.get(sp.b);
@@ -229,7 +239,7 @@ export class Engine {
 
       const key = `${sp.a}|${sp.b}`;
       const stats = this.statState.get(key)!;
-      const sig = statSample(stats, sp.labelA, sp.labelB, midA, midB);
+      const sig = statSample(stats, sp.labelA, sp.labelB, midA, midB, th);
 
       // Persistir spread_history como mucho 1/seg por par (para la gráfica).
       if (now - (this.lastSpreadWrite.get(key) ?? 0) >= 1000) {
