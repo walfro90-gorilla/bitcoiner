@@ -1,0 +1,31 @@
+name: CI
+
+# Sello de calidad: typecheck (web + worker), tests, build y estrés en cada push/PR.
+on:
+  push:
+    branches: [main, 'feat/**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+      - name: Install
+        run: npm ci
+      - name: Lint (no bloqueante — hay hallazgos preexistentes conocidos)
+        run: npm run lint
+        continue-on-error: true
+      - name: Typecheck worker
+        run: npm run check:worker
+      - name: Tests (núcleo + worker)
+        run: npm test
+      - name: Stress (invariantes del núcleo, 0 violaciones)
+        run: npm run stress
+      - name: Build web
+        run: npm run build
