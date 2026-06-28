@@ -16,9 +16,11 @@ import {
   type FeeTable,
   type OrderBook,
   type Quote,
+  type StrategyType,
   type Venue,
 } from './core';
 import { getUsdtMxn } from './fx';
+import { RUNTIME, STRATEGIES, effectiveMinNet, effectiveTargetBase } from './runtimeConfig';
 
 export interface OppTiming {
   exchangeTs: number;
@@ -92,23 +94,25 @@ export class Engine {
   };
 
   private fresh(books: OrderBook[], now: number): OrderBook[] {
-    return books.filter((b) => now - b.recvTs <= CONFIG.staleMs);
+    return books.filter((b) => now - b.recvTs <= RUNTIME.staleMs);
   }
   private isFresh(b: OrderBook | undefined, now: number): b is OrderBook {
-    return !!b && now - b.recvTs <= CONFIG.staleMs;
+    return !!b && now - b.recvTs <= RUNTIME.staleMs;
   }
 
   private evaluate(): void {
     const now = Date.now();
     const trig = this.lastBook;
-    const baseParams = {
+    // Parámetros por estrategia (parametrización total): cada estrategia puede tener su propio
+    // umbral, tamaño y modo maker; si no, hereda los globales (RUNTIME + umbral global).
+    const paramsFor = (s: StrategyType) => ({
       fees: this.fees,
-      targetBase: CONFIG.maxBtcPerTrade,
-      minNetBps: this.minNet,
-      slippageBps: CONFIG.slippageBps,
-      withdrawalAmortizeTrades: CONFIG.withdrawalAmortizeTrades,
-      maker: CONFIG.makerMode,
-    };
+      targetBase: effectiveTargetBase(s),
+      minNetBps: effectiveMinNet(s, this.minNet),
+      slippageBps: RUNTIME.slippageBps,
+      withdrawalAmortizeTrades: RUNTIME.withdrawalAmortizeTrades,
+      maker: STRATEGIES[s].maker,
+    });
 
     // Buffer del tick: recolectamos TODAS las oportunidades y al final las emitimos
     // PRIORIZADAS (rentables primero, luego mayor net_usd) -> el bot ejecuta la MEJOR
@@ -116,29 +120,31 @@ export class Engine {
     const candidates: DetectedOpportunity[] = [];
 
     // 1) Espacial: misma quote, distinto venue.
-    for (const pair of this.dirtyPairs) {
-      const byQuote = new Map<string, OrderBook[]>();
-      for (const bk of this.fresh(this.state.byPair(pair), now)) {
-        const arr = byQuote.get(bk.quote) ?? [];
-        arr.push(bk);
-        byQuote.set(bk.quote, arr);
+    if (STRATEGIES.spatial.enabled)
+      for (const pair of this.dirtyPairs) {
+        const byQuote = new Map<string, OrderBook[]>();
+        for (const bk of this.fresh(this.state.byPair(pair), now)) {
+          const arr = byQuote.get(bk.quote) ?? [];
+          arr.push(bk);
+          byQuote.set(bk.quote, arr);
+        }
+        for (const books of byQuote.values()) {
+          if (books.length < 2) continue;
+          for (const o of detectSpatial(books, paramsFor('spatial'))) candidates.push(o);
+        }
       }
-      for (const books of byQuote.values()) {
-        if (books.length < 2) continue;
-        for (const o of detectSpatial(books, baseParams)) candidates.push(o);
-      }
-    }
 
     // 2) Cross-quote: BTC en quotes distintas (USDT vs USD).
-    if (this.dirtyBases.has('BTC')) {
+    if (STRATEGIES.cross_quote.enabled && this.dirtyBases.has('BTC')) {
       const btc = this.fresh(this.state.byBase('BTC'), now);
       if (new Set(btc.map((b) => b.quote)).size >= 2) {
-        for (const o of detectCrossQuote(btc, { ...baseParams, depegBps: CONFIG.depegBps })) candidates.push(o);
+        for (const o of detectCrossQuote(btc, { ...paramsFor('cross_quote'), depegBps: RUNTIME.depegBps }))
+          candidates.push(o);
       }
     }
 
     // 2b) Regional: premio Bitso MX (BTC/MXN vs BTC/USDT global).
-    if (this.dirtyPairs.has('BTC/MXN') || this.dirtyPairs.has('BTC/USDT')) {
+    if (STRATEGIES.regional.enabled && (this.dirtyPairs.has('BTC/MXN') || this.dirtyPairs.has('BTC/USDT'))) {
       const usdtMxn = getUsdtMxn();
       const bitsoMxn = this.state.get('bitso:BTC/MXN');
       if (usdtMxn > 0 && this.isFresh(bitsoMxn, now)) {
@@ -147,13 +153,12 @@ export class Engine {
         );
         if (globals.length) {
           for (const o of detectRegional(bitsoMxn, globals, {
-            ...baseParams,
+            ...paramsFor('regional'), // incluye maker = STRATEGIES.regional.maker (su propio flag)
             usdtMxn,
-            bitsoMxnFeeBps: CONFIG.bitsoMxnFeeBps,
-            fxSpreadBps: CONFIG.fxSpreadBps,
-            maker: CONFIG.regionalMakerMode, // override explícito: regional usa SU flag, no el MAKER_MODE global
-            bitsoMxnMakerFeeBps: CONFIG.bitsoMxnMakerFeeBps,
-            fxAmortizeTrades: CONFIG.fxAmortizeTrades,
+            bitsoMxnFeeBps: RUNTIME.bitsoMxnFeeBps,
+            fxSpreadBps: RUNTIME.fxSpreadBps,
+            bitsoMxnMakerFeeBps: RUNTIME.bitsoMxnMakerFeeBps,
+            fxAmortizeTrades: RUNTIME.fxAmortizeTrades,
           }))
             candidates.push(o);
 
@@ -178,20 +183,26 @@ export class Engine {
     }
 
     // 3) Triangular intra-exchange (USDT->BTC->ETH->USDT).
-    if (this.dirtyPairs.has('BTC/USDT') || this.dirtyPairs.has('ETH/BTC') || this.dirtyPairs.has('ETH/USDT')) {
+    if (
+      STRATEGIES.triangular.enabled &&
+      (this.dirtyPairs.has('BTC/USDT') || this.dirtyPairs.has('ETH/BTC') || this.dirtyPairs.has('ETH/USDT'))
+    ) {
       for (const v of TRI_VENUES) {
         const btcUsdt = this.state.get(`${v}:BTC/USDT`);
         const ethBtc = this.state.get(`${v}:ETH/BTC`);
         const ethUsdt = this.state.get(`${v}:ETH/USDT`);
         if (this.isFresh(btcUsdt, now) && this.isFresh(ethBtc, now) && this.isFresh(ethUsdt, now)) {
-          for (const o of detectTriangular(v, btcUsdt, ethBtc, ethUsdt, { fees: this.fees, minNetBps: this.minNet }))
+          for (const o of detectTriangular(v, btcUsdt, ethBtc, ethUsdt, {
+            fees: this.fees,
+            minNetBps: effectiveMinNet('triangular', this.minNet),
+          }))
             candidates.push(o);
         }
       }
     }
 
     // 4) Estadística: z-score del spread (registra spread_history + emite señales).
-    if (this.dirtyBases.has('BTC')) this.evalStatistical(now, candidates);
+    if (STRATEGIES.statistical.enabled && this.dirtyBases.has('BTC')) this.evalStatistical(now, candidates);
 
     this.dirtyPairs.clear();
     this.dirtyBases.clear();
@@ -242,7 +253,7 @@ export class Engine {
         const fx = fxFor(sellBook.quote, buyBook.quote);
         const r =
           // reutiliza el motor neto; depeg solo si cruzan quotes
-          detectStatExec(buyBook, sellBook, this.fees, this.minNet, fx, buyBook.quote !== sellBook.quote ? CONFIG.depegBps : 0);
+          detectStatExec(buyBook, sellBook, this.fees, effectiveMinNet('statistical', this.minNet), fx, buyBook.quote !== sellBook.quote ? RUNTIME.depegBps : 0);
         if (r && r.maxExecBase > 0)
           candidates.push({ ...r, pair: `${sp.labelA} ↔ ${sp.labelB} (z=${sig.z.toFixed(2)})` });
       }
@@ -264,9 +275,9 @@ function detectStatExec(
       buyBook,
       sellBook,
       fees,
-      targetBase: CONFIG.maxBtcPerTrade,
-      slippageBps: CONFIG.slippageBps,
-      withdrawalAmortizeTrades: CONFIG.withdrawalAmortizeTrades,
+      targetBase: effectiveTargetBase('statistical'),
+      slippageBps: RUNTIME.slippageBps,
+      withdrawalAmortizeTrades: RUNTIME.withdrawalAmortizeTrades,
       fxBuyToSell: fx,
       depegBps,
     },

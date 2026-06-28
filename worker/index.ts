@@ -13,7 +13,16 @@ import { startNewsPoller } from './news';
 import { RiskManager, type BotRuntimeState } from './risk';
 import { Writer } from './writer';
 import { Ledger } from './state';
-import { loadBotState, loadExchanges, loadFees, loadWallets } from './supabase';
+import {
+  loadBotState,
+  loadExchangeEnabled,
+  loadExchanges,
+  loadFees,
+  loadRuntimeConfig,
+  loadStrategyConfig,
+  loadWallets,
+} from './supabase';
+import { applyRuntime, applyStrategy } from './runtimeConfig';
 import { bestAsk, bestBid, midPrice, type DetectedOpportunity, type FeeTable, type OrderBook, type Venue } from './core';
 import { getUsdtMxn, startFx } from './fx';
 
@@ -34,6 +43,11 @@ async function main(): Promise<void> {
   // 1) Cargar configuración desde la DB (o defaults si no hay Supabase).
   const exMap = await loadExchanges();
   const fees = await loadFees(exMap);
+  // Parametrización TOTAL (0012): cargar config en caliente desde la DB sobre los defaults de CONFIG.*.
+  const rcInit = await loadRuntimeConfig();
+  if (rcInit) applyRuntime(rcInit);
+  for (const sc of await loadStrategyConfig()) applyStrategy(sc.strategy, sc.patch);
+  let exchangeEnabled = await loadExchangeEnabled();
   const ledger = new Ledger();
   await loadWallets(exMap, ledger);
   if (ledger.snapshot().length === 0) {
@@ -95,6 +109,12 @@ async function main(): Promise<void> {
 
   function handleOpp(opp: DetectedOpportunity, t: OppTiming, force = false): void {
     const now = Date.now();
+    // Gate de exchange deshabilitado (parametrización total): si cualquiera de las dos patas
+    // está en un exchange apagado desde la UI, se descarta (salvo el inyector del reto).
+    if (!force && (exchangeEnabled.get(opp.buyVenue) === false || exchangeEnabled.get(opp.sellVenue) === false)) {
+      persistSeen(opp, t, 'exchange_disabled', false);
+      return;
+    }
     const wantExecute = force || (runtime.demoMode ? opp.grossSpreadBps > 0 : opp.profitable);
 
     if (!wantExecute) {
@@ -114,7 +134,7 @@ async function main(): Promise<void> {
     }
     // El inyector del ejemplo del reto (force=true) ejecuta sin topes de tamaño, para mostrar
     // el +$109.75 a 1 BTC completo. Las operaciones normales conservan sus caps.
-    const sim = simulate(opp, ledger, force);
+    const sim = simulate(opp, ledger, runtime.maxPositionUsd, force);
     if (sim.status === 'rejected') {
       persistSeen(opp, t, sim.rejectReason ?? 'rejected', opp.profitable);
       return;
@@ -306,6 +326,12 @@ async function main(): Promise<void> {
       runtime.minNetBps = +s.min_net_bps;
       runtime.maxPositionUsd = +s.max_position_usd;
       engine.setMinNetBps(runtime.minNetBps);
+      // Parametrización TOTAL: recargar config en caliente (runtime/estrategias/fees/exchanges) sin reiniciar.
+      const rc = await loadRuntimeConfig();
+      if (rc) applyRuntime(rc);
+      for (const sc of await loadStrategyConfig()) applyStrategy(sc.strategy, sc.patch);
+      exchangeEnabled = await loadExchangeEnabled();
+      engine.setFees(await loadFees(exMap));
       // Inyección de escenario solicitada desde el dashboard.
       if (typeof s.inject_seq === 'number' && s.inject_seq > lastInjectSeq) {
         lastInjectSeq = s.inject_seq;

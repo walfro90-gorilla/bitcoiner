@@ -1,5 +1,5 @@
 // worker/executor.ts — Ejecución simulada: fills VWAP, órdenes parciales, update de wallets.
-import { CONFIG } from './config';
+import { RUNTIME } from './runtimeConfig';
 import { Ledger } from './state';
 import type { DetectedOpportunity, FillLeg } from './core';
 
@@ -36,13 +36,23 @@ function zeroResult(reason: string): SimResult {
 /** Simula la ejecución de una oportunidad y aplica los cambios al ledger en RAM.
  *  `ignoreCaps` (solo para el inyector del ejemplo del reto): ejecuta el execBase completo
  *  sin los topes de tamaño (maxBtcPerTrade/maxPositionUsd), manteniendo el wallet guard. */
-export function simulate(opp: DetectedOpportunity, ledger: Ledger, ignoreCaps = false): SimResult {
-  if (opp.triangular) return simulateTriangular(opp, ledger);
-  if (opp.exec) return simulateTwoLeg(opp, ledger, ignoreCaps);
+export function simulate(
+  opp: DetectedOpportunity,
+  ledger: Ledger,
+  maxPositionUsd: number,
+  ignoreCaps = false,
+): SimResult {
+  if (opp.triangular) return simulateTriangular(opp, ledger, maxPositionUsd);
+  if (opp.exec) return simulateTwoLeg(opp, ledger, maxPositionUsd, ignoreCaps);
   return zeroResult('no_exec_detail');
 }
 
-function simulateTwoLeg(opp: DetectedOpportunity, ledger: Ledger, ignoreCaps = false): SimResult {
+function simulateTwoLeg(
+  opp: DetectedOpportunity,
+  ledger: Ledger,
+  maxPositionUsd: number,
+  ignoreCaps = false,
+): SimResult {
   const ex = opp.exec!;
   const { buyVenue, sellVenue, buyQuote, sellQuote } = opp;
   const vwapBuy = ex.buy.vwap;
@@ -56,8 +66,8 @@ function simulateTwoLeg(opp: DetectedOpportunity, ledger: Ledger, ignoreCaps = f
   const availBtc = ledger.get(sellVenue, 'BTC');
   const finalBase = Math.min(
     ex.execBase,
-    ignoreCaps ? Infinity : CONFIG.maxBtcPerTrade,
-    ignoreCaps ? Infinity : CONFIG.maxPositionUsd / vwapBuy,
+    ignoreCaps ? Infinity : RUNTIME.maxBtcPerTrade,
+    ignoreCaps ? Infinity : maxPositionUsd / vwapBuy,
     availQuote / vwapBuy,
     availBtc,
   );
@@ -80,7 +90,7 @@ function simulateTwoLeg(opp: DetectedOpportunity, ledger: Ledger, ignoreCaps = f
   ledger.add(sellVenue, 'BTC', -finalBase);
   ledger.add(sellVenue, sellQuote, sellRecv - sellFee);
 
-  const targetCap = Math.min(ex.execBase, CONFIG.maxBtcPerTrade);
+  const targetCap = Math.min(ex.execBase, RUNTIME.maxBtcPerTrade);
   const partial = finalBase < targetCap - 1e-9;
   const legs: FillLeg[] = [
     { ...ex.buy, vwap: vwapBuy, filledBase: finalBase, quoteValue: buySpend, feeQuote: buyFee },
@@ -101,11 +111,11 @@ function simulateTwoLeg(opp: DetectedOpportunity, ledger: Ledger, ignoreCaps = f
   };
 }
 
-function simulateTriangular(opp: DetectedOpportunity, ledger: Ledger): SimResult {
+function simulateTriangular(opp: DetectedOpportunity, ledger: Ledger, maxPositionUsd: number): SimResult {
   const tri = opp.triangular!;
   const venue = tri.venue;
   const availUsdt = ledger.get(venue, 'USDT');
-  const notional = Math.min(tri.execNotionalUsd, CONFIG.maxPositionUsd, availUsdt);
+  const notional = Math.min(tri.execNotionalUsd, maxPositionUsd, availUsdt);
   if (!(notional > 1)) return zeroResult('insufficient_balance');
 
   const scale = notional / tri.execNotionalUsd;

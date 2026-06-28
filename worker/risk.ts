@@ -1,5 +1,5 @@
 // worker/risk.ts — Circuit breakers y gestión de riesgo del bot.
-import { CONFIG } from './config';
+import { RUNTIME } from './runtimeConfig';
 
 export interface BotRuntimeState {
   tradingEnabled: boolean;
@@ -25,7 +25,7 @@ export class RiskManager {
     if (now < this.haltedUntil) return 'cooldown_consecutive_losses';
     const windowStart = now - 60_000;
     this.tradeTimestamps = this.tradeTimestamps.filter((t) => t >= windowStart);
-    if (this.tradeTimestamps.length >= CONFIG.maxTradesPerMin) return 'max_trades_per_min';
+    if (this.tradeTimestamps.length >= RUNTIME.maxTradesPerMin) return 'max_trades_per_min';
     return null;
   }
 
@@ -35,8 +35,8 @@ export class RiskManager {
     this.state.cumulativePnlUsd += netPnlUsd;
     if (netPnlUsd < 0) {
       this.state.consecutiveLosses += 1;
-      if (this.state.consecutiveLosses >= CONFIG.consecutiveLossHalt) {
-        this.haltedUntil = now + 15_000; // cooldown 15s tras N pérdidas seguidas
+      if (this.state.consecutiveLosses >= RUNTIME.consecutiveLossHalt) {
+        this.haltedUntil = now + RUNTIME.lossCooldownMs; // cooldown configurable tras N pérdidas seguidas
         this.state.consecutiveLosses = 0;
       }
     } else {
