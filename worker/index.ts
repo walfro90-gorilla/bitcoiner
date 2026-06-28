@@ -10,6 +10,7 @@ import { createBitstampFeed } from './feeds/bitstamp';
 import { simulate } from './executor';
 import { computeNetProfit } from './core';
 import { startNewsPoller } from './news';
+import { alertTrade, alertRiskOff, alertLossHalt, alertBoot, alertsEnabled } from './alerts';
 import { RiskManager, type BotRuntimeState } from './risk';
 import { Writer } from './writer';
 import { Ledger } from './state';
@@ -176,6 +177,7 @@ async function main(): Promise<void> {
       persistSeen(opp, t, sim.rejectReason ?? 'rejected', opp.profitable);
       return;
     }
+    const wasHalted = risk.isHalted(now);
     risk.recordTrade(now, sim.netPnlUsd);
     lastSeenPnl = runtime.cumulativePnlUsd; // marca el P&L que el worker va a persistir (evita auto-reset en el poll)
     const tradeRowBase = {
@@ -199,6 +201,17 @@ async function main(): Promise<void> {
       walletSnapshot: ledger.snapshot(),
       botState: runtime,
     });
+    // Alertas Telegram (opt-in, fire-and-forget, throttled): trade ejecutado + cooldown por pérdidas.
+    alertTrade({
+      strategy: opp.strategy,
+      route: `${opp.buyVenue}→${opp.sellVenue}`,
+      pair: opp.pair,
+      base: sim.finalBase,
+      netPnlUsd: sim.netPnlUsd,
+      cumPnlUsd: runtime.cumulativePnlUsd,
+      partial: sim.partial,
+    });
+    if (!wasHalted && risk.isHalted(Date.now())) alertLossHalt(RUNTIME.consecutiveLossHalt, RUNTIME.lossCooldownMs);
     console.log(
       `[EXEC ${opp.strategy}] ${opp.buyVenue}->${opp.sellVenue} ${opp.pair} ` +
         `base=${sim.finalBase.toFixed(5)} netPnl=$${sim.netPnlUsd.toFixed(2)} ` +
@@ -420,7 +433,10 @@ async function main(): Promise<void> {
     runtime.newsRiskOff = r.riskOff;
     runtime.newsSentiment = r.sentiment;
     runtime.newsImpact = r.impact;
-    if (r.riskOff) console.log('[risk] NEWS RISK-OFF activo: ejecuciones en pausa por noticias.');
+    if (r.riskOff) {
+      console.log('[risk] NEWS RISK-OFF activo: ejecuciones en pausa por noticias.');
+      alertRiskOff({ sentiment: r.sentiment, impact: r.impact, summary: r.summary });
+    }
   });
 
   // 4c) Rebalanceo inteligente automatizado (fuera del hot-path; solo actúa si rebalance_auto ON).
@@ -442,6 +458,9 @@ async function main(): Promise<void> {
     writer,
   );
   rebalancer.start();
+
+  // Aviso de arranque (solo si las alertas Telegram están configuradas).
+  if (alertsEnabled()) alertBoot(runtime.demoMode ? 'DEMO' : 'Real', CONFIG.venues.length);
 
   // 4d) Self-test de la arquitectura de ejecución "real-ready" (ExchangeAdapter). Fuera del hot-path,
   // con un ledger DESECHABLE (no afecta balances reales). Demuestra el adapter simulado siempre;

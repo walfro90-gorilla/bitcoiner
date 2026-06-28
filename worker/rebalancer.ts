@@ -12,6 +12,7 @@ import {
 } from './core';
 import type { Ledger } from './state';
 import type { Writer } from './writer';
+import { alertRebalance } from './alerts';
 
 export interface RebalanceRuntime extends RebalanceConfig {
   auto: boolean;
@@ -80,6 +81,7 @@ export class Rebalancer {
       `[REBAL] ${p.fromVenue}->${p.toVenue} ${p.amount.toFixed(p.asset === 'BTC' ? 5 : 2)} ${p.asset} ` +
         `($${p.amountUsd.toFixed(0)}, costo $${p.costUsd.toFixed(2)}) en tránsito…`,
     );
+    alertRebalance({ from: p.fromVenue, to: p.toVenue, asset: p.asset, amount: p.amount, usd: p.amountUsd });
     setTimeout(() => {
       void this.complete(p, route, id, px);
     }, this.etaMs);
