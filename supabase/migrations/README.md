@@ -11,10 +11,13 @@ SQL versionado. **Regla:** nunca editar una migración aplicada; agregar una nue
 | # | Archivo | Qué crea | Línea de trabajo |
 |---|---|---|---|
 | **0012** | `0012_runtime_config.sql` | `runtime_config` (singleton), `strategy_config` (5 filas), `config_profiles`, `config_audit`. Seed **idéntico a `worker/config.ts` CONFIG.\*** | A · Parametrización TOTAL |
-| **0013** | `0013_candles.sql` | `candles` (OHLC) + retención 48h | B · Charts velas |
-| **0014** | `0014_rebalance.sql` | `transfers`, `rebalance_config`, cols `rebalance_*` en `bot_state` (`rebalance_auto=false`) | C · Rebalanceo |
-| **0015** | `0015_orders_abort.sql` | `orders`, `order_events` (lifecycle); cols `abort_*`/`fault_*` en `bot_state` (neutras) | D/E · Ejecución real-ready + ABORT |
-| **0016** | `0016_force_stale_venue.sql` | soporte para la demo de fault-injection (forzar feed stale) | G · Demo de robustez |
+| **0013** | `0013_candles.sql` | `candles` (OHLC) | B · Charts velas |
+| **0014** | `0014_rebalance.sql` | `transfers` + cols `rebalance_*` en `runtime_config` (`rebalance_auto=false`) | C · Rebalanceo |
+| **0015** | `0015_dynamic_slippage.sql` | col `dynamic_slippage` en `runtime_config` (Tarea 1) | D/E · Slippage dinámico |
+| **0016** | `0016_orders_abort.sql` | `orders`, `order_events` (lifecycle); cols `abort_*`/`fault_*` (neutras) | D/E · Ejecución real-ready + ABORT |
+| **0017** | `0017_force_stale_venue.sql` | soporte para la demo de fault-injection (forzar feed stale) | G · Demo de robustez |
+
+> Aplicadas vía MCP: 0012, 0013, 0014, 0015. Pendientes: 0016, 0017.
 
 **Realtime:** solo tablas chicas (`runtime_config`, `strategy_config`, `transfers`) entran a la publicación — NO `opportunities`/`order_events`/`candles` (restricción de egress free-tier).
 

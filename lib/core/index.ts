@@ -11,3 +11,4 @@ export * from './strategies/statistical';
 export * from './strategies/regional';
 export * from './candles';
 export * from './rebalance';
+export * from './precision';

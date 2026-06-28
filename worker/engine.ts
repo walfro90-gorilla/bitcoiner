@@ -112,6 +112,7 @@ export class Engine {
       targetBase: effectiveTargetBase(s),
       minNetBps: effectiveMinNet(s, this.minNet),
       slippageBps: RUNTIME.slippageBps,
+      dynamicSlippage: RUNTIME.dynamicSlippage,
       withdrawalAmortizeTrades: RUNTIME.withdrawalAmortizeTrades,
       maker: STRATEGIES[s].maker,
     });
@@ -287,6 +288,7 @@ function detectStatExec(
       fees,
       targetBase: effectiveTargetBase('statistical'),
       slippageBps: RUNTIME.slippageBps,
+      dynamicSlippage: RUNTIME.dynamicSlippage,
       withdrawalAmortizeTrades: RUNTIME.withdrawalAmortizeTrades,
       fxBuyToSell: fx,
       depegBps,

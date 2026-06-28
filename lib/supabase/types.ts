@@ -125,6 +125,7 @@ export interface MarketTickRow {
 export interface RuntimeConfigRow {
   id: boolean;
   slippage_bps: number;
+  dynamic_slippage: boolean;
   depeg_bps: number;
   withdrawal_amortize_trades: number;
   fx_spread_bps: number;

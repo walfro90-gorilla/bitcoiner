@@ -98,6 +98,7 @@ export async function loadRuntimeConfig(): Promise<Partial<RuntimeConfig> | null
   const d = data as Record<string, unknown>;
   return {
     slippageBps: +(d.slippage_bps as number),
+    dynamicSlippage: !!d.dynamic_slippage,
     depegBps: +(d.depeg_bps as number),
     withdrawalAmortizeTrades: +(d.withdrawal_amortize_trades as number),
     fxSpreadBps: +(d.fx_spread_bps as number),

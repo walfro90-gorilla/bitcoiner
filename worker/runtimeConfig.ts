@@ -7,6 +7,7 @@ import type { StrategyType } from './core';
 
 export interface RuntimeConfig {
   slippageBps: number;
+  dynamicSlippage: boolean;
   depegBps: number;
   withdrawalAmortizeTrades: number;
   fxSpreadBps: number;
@@ -46,6 +47,7 @@ const LOSS_COOLDOWN_MS_DEFAULT = 15_000; // antes hardcodeado en risk.ts
 /** Config global en caliente — init desde CONFIG.* (cero regresión sin DB). */
 export const RUNTIME: RuntimeConfig = {
   slippageBps: CONFIG.slippageBps,
+  dynamicSlippage: false,
   depegBps: CONFIG.depegBps,
   withdrawalAmortizeTrades: CONFIG.withdrawalAmortizeTrades,
   fxSpreadBps: CONFIG.fxSpreadBps,

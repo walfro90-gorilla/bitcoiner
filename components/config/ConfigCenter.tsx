@@ -132,7 +132,7 @@ export function ConfigCenter() {
     await mutate();
     return r;
   }
-  const setRuntime = (field: string, value: number) => patch({ scope: 'runtime', field, value });
+  const setRuntime = (field: string, value: number | boolean) => patch({ scope: 'runtime', field, value });
   const setBot = (field: string, value: number | boolean) => patch({ scope: 'bot_state', field, value });
   const setStrat = (key: string, field: string, value: number | boolean | null) =>
     patch({ scope: 'strategy', key, field, value });
@@ -202,7 +202,16 @@ export function ConfigCenter() {
 
           {/* Costos */}
           <Group title="💸 Costos de ejecución">
-            <NumField label="Slippage" value={rc?.slippage_bps ?? null} onSet={(v) => setRuntime('slippage_bps', v ?? 0)} suffix="bps" />
+            <NumField label="Slippage base" value={rc?.slippage_bps ?? null} onSet={(v) => setRuntime('slippage_bps', v ?? 0)} suffix="bps" />
+            <label className="flex items-center justify-between gap-2 py-1 text-xs">
+              <span className="text-muted">Slippage dinámico (impacto por liquidez)</span>
+              <Toggle
+                on={rc?.dynamic_slippage ?? false}
+                onToggle={() => setRuntime('dynamic_slippage', !(rc?.dynamic_slippage ?? false))}
+                onLabel="dinámico"
+                offLabel="fijo"
+              />
+            </label>
             <NumField label="Depeg (cross-quote)" value={rc?.depeg_bps ?? null} onSet={(v) => setRuntime('depeg_bps', v ?? 0)} suffix="bps" />
             <NumField label="Withdrawal amortizado en N trades" value={rc?.withdrawal_amortize_trades ?? null} onSet={(v) => setRuntime('withdrawal_amortize_trades', v ?? 1)} />
             <NumField label="Spread FX (MXN↔USD)" value={rc?.fx_spread_bps ?? null} onSet={(v) => setRuntime('fx_spread_bps', v ?? 0)} suffix="bps" />

@@ -12,7 +12,7 @@ type Val = number | boolean | null;
 
 // Whitelist de campos editables por scope (seguridad: solo estas columnas se pueden tocar).
 const RUNTIME_FIELDS: Record<string, FieldType> = {
-  slippage_bps: 'number', depeg_bps: 'number', withdrawal_amortize_trades: 'number',
+  slippage_bps: 'number', dynamic_slippage: 'boolean', depeg_bps: 'number', withdrawal_amortize_trades: 'number',
   fx_spread_bps: 'number', fx_amortize_trades: 'number', fx_max_age_ms: 'number',
   bitso_mxn_fee_bps: 'number', bitso_mxn_maker_fee_bps: 'number', max_btc_per_trade: 'number',
   max_trades_per_min: 'number', consecutive_loss_halt: 'number', loss_cooldown_ms: 'number',

@@ -63,6 +63,15 @@ test('el slippage estimado reduce el neto', () => {
 });
 
 // ── Maker fills: mejor precio (entra al bid/ask) + fee maker menor ──
+test('slippage dinámico: a mayor fracción del libro consumida, más slippage (menor neto)', () => {
+  // Libro delgado (size 1 por lado) → execBase 1 consume el 100% → frac=1 → slip = base×2.
+  const buyBook = book('kraken', 'USDT', [{ price: 69990, size: 5 }], [{ price: 70000, size: 1 }]);
+  const sellBook = book('binance', 'USDT', [{ price: 70250, size: 1 }], [{ price: 70260, size: 5 }]);
+  const fijo = computeNetProfit({ buyBook, sellBook, fees: fees10, targetBase: 1, slippageBps: 5 }, 0);
+  const din = computeNetProfit({ buyBook, sellBook, fees: fees10, targetBase: 1, slippageBps: 5, dynamicSlippage: true }, 0);
+  assert.ok(din.netUsd < fijo.netUsd, 'el impacto dinámico reduce más el neto en libros delgados');
+});
+
 test('maker captura mejor neto que taker (mejor precio + fee menor)', () => {
   const buyBook = book('kraken', 'USDT', [{ price: 69990, size: 5 }], [{ price: 70000, size: 5 }]);
   const sellBook = book('binance', 'USDT', [{ price: 70250, size: 5 }], [{ price: 70260, size: 5 }]);

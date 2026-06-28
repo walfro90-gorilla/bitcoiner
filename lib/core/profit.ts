@@ -16,6 +16,7 @@ export interface NetProfitInput {
   includeWithdrawal?: boolean; // cobrar withdrawal del BTC comprado (default true)
   withdrawalAmortizeTrades?: number; // amortizar el withdrawal entre N trades (rebalanceo); default 1
   maker?: boolean; // si true: modela fills MAKER (entra al mejor precio del lado contrario, paga fee maker)
+  dynamicSlippage?: boolean; // si true: el slippage escala con la fracción del libro consumida (impacto de mercado)
 }
 
 export interface NetProfitResult {
@@ -38,7 +39,7 @@ const SLIP_DEFAULT = 2;
  * `minNetBps` define el umbral de rentabilidad (circuit breaker MIN_NET_BPS).
  */
 export function computeNetProfit(i: NetProfitInput, minNetBps = 0): NetProfitResult {
-  const slip = (i.slippageBps ?? SLIP_DEFAULT) / 1e4;
+  const baseSlip = (i.slippageBps ?? SLIP_DEFAULT) / 1e4;
   const fx = i.fxBuyToSell ?? 1;
   const depeg = (i.depegBps ?? 0) / 1e4;
   const cap = i.depthCap ?? Infinity;
@@ -55,6 +56,12 @@ export function computeNetProfit(i: NetProfitInput, minNetBps = 0): NetProfitRes
   const liqBuy = totalSize(buySide);
   const liqSell = totalSize(sellSide);
   const execBase = Math.min(i.targetBase, liqBuy, liqSell);
+
+  // Slippage DINÁMICO (opt-in): el movimiento adverso crece con la fracción del libro consumida
+  // (impacto de mercado + riesgo de latencia). dynamicSlippage=false → modelo fijo de siempre.
+  const thinner = Math.min(liqBuy, liqSell);
+  const consumedFrac = i.dynamicSlippage && thinner > 0 ? Math.min(1, execBase / thinner) : 0;
+  const slip = baseSlip * (1 + consumedFrac);
 
   // 2) y 3) VWAP de compra y venta caminando el lado correspondiente.
   const buyW = walkVwap(buySide, execBase);
