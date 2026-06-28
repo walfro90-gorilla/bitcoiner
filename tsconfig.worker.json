@@ -6,6 +6,6 @@
     "module": "esnext",
     "moduleResolution": "bundler"
   },
-  "include": ["worker/**/*.ts", "lib/**/*.ts"],
+  "include": ["worker/**/*.ts", "lib/**/*.ts", "scripts/**/*.ts"],
   "exclude": ["node_modules", ".next"]
 }

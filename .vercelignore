@@ -1,3 +1,5 @@
-# El worker se despliega en Railway, no en Vercel.
+# El worker se despliega en la VM, no en Vercel.
 worker/
+# Harness de estrés (dev-only, corre con tsx; importa worker/ → fuera del build web).
+scripts/
 *.output
