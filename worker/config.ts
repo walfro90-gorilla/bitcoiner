@@ -59,6 +59,9 @@ export const CONFIG = {
   executionMode: str('EXECUTION_MODE', 'simulated'),
   binanceTestnetKey: str('BINANCE_TESTNET_KEY'),
   binanceTestnetSecret: str('BINANCE_TESTNET_SECRET'),
+  // Demo LIVE en testnet (opt-in): coloca una orden real chica NO-marketable y la cancela; queda en el panel de órdenes.
+  testnetLiveOrderEnabled: str('TESTNET_LIVE_ORDER_ENABLED', 'false').toLowerCase() === 'true',
+  testnetOrderSizeUsd: num('TESTNET_ORDER_SIZE_USD', 10),
 };
 
 export const HAS_SUPABASE = Boolean(CONFIG.supabaseUrl && CONFIG.supabaseServiceKey);

@@ -211,3 +211,32 @@ export interface TransferRow {
   auto: boolean;
   completed_at: string | null;
 }
+
+export interface OrderRow {
+  id: number;
+  trade_id: number | null;
+  venue: string;
+  symbol: string;
+  side: string; // buy | sell
+  type: string; // market | limit
+  qty: number;
+  limit_price: number | null;
+  order_id: string | null;
+  state: string; // NEW|SENT|PARTIALLY_FILLED|FILLED|REJECTED|CANCELED|EXPIRED
+  filled_qty: number;
+  avg_price: number;
+  fee_quote: number;
+  source: string; // sim | selftest | testnet
+  reject_reason: string | null;
+  created_at: string;
+}
+
+export interface OrderEventRow {
+  id: number;
+  order_id: number;
+  ts: number;
+  from_state: string | null;
+  to_state: string;
+  reason: string | null;
+  created_at: string;
+}

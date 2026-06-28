@@ -13,6 +13,8 @@ import type {
   MarketTickRow,
   NewsSignalRow,
   OpportunityRow,
+  OrderRow,
+  OrderEventRow,
   RuntimeConfigRow,
   StrategyConfigRow,
   TradeRow,
@@ -117,6 +119,42 @@ export function useTransfers(limit = 15) {
     { refreshInterval: 5000 },
   );
   useEffect(() => subscribeTable('transfers', () => void mutate()), [mutate]);
+  return data ?? [];
+}
+
+/** Órdenes recientes (panel "Órdenes en vivo"). Realtime + refresh corto. */
+export function useOrders(limit = 12) {
+  const { data, mutate } = useSWR(
+    ['orders', limit],
+    async () => {
+      const { data } = await sb()
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      return (data ?? []) as OrderRow[];
+    },
+    { refreshInterval: 3000 },
+  );
+  useEffect(() => subscribeTable('orders', () => void mutate()), [mutate]);
+  return data ?? [];
+}
+
+/** Eventos (transiciones de la FSM) de las órdenes recientes; el panel los agrupa por order_id. */
+export function useOrderEvents(limit = 120) {
+  const { data, mutate } = useSWR(
+    ['order_events', limit],
+    async () => {
+      const { data } = await sb()
+        .from('order_events')
+        .select('*')
+        .order('id', { ascending: false })
+        .limit(limit);
+      return (data ?? []) as OrderEventRow[];
+    },
+    { refreshInterval: 3000 },
+  );
+  useEffect(() => subscribeTable('order_events', () => void mutate()), [mutate]);
   return data ?? [];
 }
 

@@ -27,7 +27,8 @@ import { applyRuntime, applyStrategy, effectiveTargetBase, RUNTIME, STRATEGIES }
 import { Rebalancer } from './rebalancer';
 import { SimulatedAdapter } from './execution/simulatedAdapter';
 import { LiveAdapter } from './execution/liveAdapter';
-import { bestAsk, bestBid, CandleAggregator, midPrice, type DetectedOpportunity, type FeeTable, type OrderBook, type Venue } from './core';
+import { OrderLifecycle, isTerminal } from './execution/order';
+import { bestAsk, bestBid, CandleAggregator, conformOrder, midPrice, type DetectedOpportunity, type FeeTable, type OrderBook, type Venue } from './core';
 import { getUsdtMxn, startFx } from './fx';
 
 type FeedBuilder = (pair: string, onBook: (b: OrderBook) => void) => Feed | null;
@@ -66,6 +67,7 @@ async function main(): Promise<void> {
   const bs = await loadBotState();
   let lastInjectSeq = bs?.inject_seq ?? 0;
   let lastSeenPnl = bs ? +bs.cumulative_pnl_usd : 0; // último P&L que el worker escribió/leyó
+  let lastSimOrderPersistTs = 0; // throttle de persistencia de órdenes derivadas de trades (panel "Órdenes en vivo")
   const runtime: BotRuntimeState = {
     tradingEnabled: bs?.trading_enabled ?? true,
     demoMode: bs?.demo_mode ?? CONFIG.demoMode,
@@ -110,6 +112,30 @@ async function main(): Promise<void> {
     if (!force && now - (seenThrottle.get(key) ?? 0) < SEEN_MS) return;
     seenThrottle.set(key, now);
     writer.queueOpportunity(buildOppRow(opp, t, false, reason));
+  }
+
+  // Deriva las 2 patas de un trade simulado como órdenes con su FSM (NEW→SENT→FILLED/PARTIALLY_FILLED)
+  // y las persiste para el panel "Órdenes en vivo". NO rutea por un adapter (handleOpp sigue síncrono):
+  // reconstruye el lifecycle a partir del SimResult ya calculado. Throttled en handleOpp para acotar egress.
+  function persistSimOrders(opp: DetectedOpportunity, sim: ReturnType<typeof simulate>): void {
+    const symbol = opp.pair.replace('/', '');
+    const fillState = sim.partial ? 'PARTIALLY_FILLED' : 'FILLED';
+    const mkEvents = () => {
+      const lc = new OrderLifecycle();
+      lc.to('SENT');
+      lc.to(fillState);
+      return lc.events;
+    };
+    void writer.persistOrder({
+      venue: opp.buyVenue, symbol, side: 'buy', type: 'market', qty: sim.finalBase,
+      state: fillState, filledQty: sim.finalBase, avgPrice: sim.vwapBuy, feeQuote: sim.buyFeeUsd,
+      source: 'sim', events: mkEvents(),
+    });
+    void writer.persistOrder({
+      venue: opp.sellVenue, symbol, side: 'sell', type: 'market', qty: sim.finalBase,
+      state: fillState, filledQty: sim.finalBase, avgPrice: sim.vwapSell, feeQuote: sim.sellFeeUsd,
+      source: 'sim', events: mkEvents(),
+    });
   }
 
   // ABORT por inversión de spread (Pilar 2: el mercado se mueve durante la ejecución).
@@ -212,6 +238,11 @@ async function main(): Promise<void> {
       partial: sim.partial,
     });
     if (!wasHalted && risk.isHalted(Date.now())) alertLossHalt(RUNTIME.consecutiveLossHalt, RUNTIME.lossCooldownMs);
+    // Persiste el lifecycle de las órdenes para el panel (throttled: ≤1 trade cada 10s, acota egress).
+    if (now - lastSimOrderPersistTs >= 10_000) {
+      lastSimOrderPersistTs = now;
+      persistSimOrders(opp, sim);
+    }
     console.log(
       `[EXEC ${opp.strategy}] ${opp.buyVenue}->${opp.sellVenue} ${opp.pair} ` +
         `base=${sim.finalBase.toFixed(5)} netPnl=$${sim.netPnlUsd.toFixed(2)} ` +
@@ -473,6 +504,11 @@ async function main(): Promise<void> {
       const sim = new SimulatedAdapter('binance', engine.state, probe, () => currentFees);
       const r = await sim.placeOrder({ venue: 'binance', symbol: 'BTCUSDT', side: 'buy', type: 'market', qty: 0.01 });
       console.log(`[ADAPTER sim] BTCUSDT buy 0.01 -> ${r.state} avg=${r.avgPrice.toFixed(2)} fee=$${r.feeQuote.toFixed(2)}`);
+      void writer.persistOrder({
+        venue: 'binance', symbol: 'BTCUSDT', side: 'buy', type: 'market', qty: 0.01,
+        state: r.state, filledQty: r.filledQty, avgPrice: r.avgPrice, feeQuote: r.feeQuote,
+        source: 'selftest', events: r.events,
+      });
     } catch (e) {
       console.error('[ADAPTER sim]', (e as Error).message);
     }
@@ -481,12 +517,39 @@ async function main(): Promise<void> {
         const live = new LiveAdapter('binance', CONFIG.binanceTestnetKey, CONFIG.binanceTestnetSecret);
         const bal = await live.getBalances();
         console.log('[ADAPTER live] testnet OK:', bal.slice(0, 5).map((b) => `${b.asset}=${b.free}`).join(' '));
+        // Demo "opera de verdad" (opt-in): orden LÍMITE no-marketable (~10% bajo el bid) → no se llena → la cancelamos.
+        if (CONFIG.testnetLiveOrderEnabled) {
+          const f = await live.filters('BTCUSDT');
+          const book = await live.getOrderBook('BTCUSDT');
+          const bid = bestBid(book) ?? 0;
+          const c = bid > 0 ? conformOrder(bid * 0.9, CONFIG.testnetOrderSizeUsd / (bid * 0.9), f) : null;
+          if (c && c.ok) {
+            const placed = await live.placeOrder({ venue: 'binance', symbol: 'BTCUSDT', side: 'buy', type: 'limit', qty: c.qty, limitPrice: c.price });
+            console.log(`[ADAPTER live] orden testnet ${placed.state} id=${placed.orderId} ${c.qty}@${c.price}`);
+            const events = [...placed.events];
+            let finalState: string = placed.state;
+            if (placed.orderId && !isTerminal(placed.state)) {
+              await live.cancelOrder('BTCUSDT', placed.orderId);
+              events.push({ ts: Date.now(), from: placed.state, to: 'CANCELED', reason: 'demo: cancelación automática' });
+              finalState = 'CANCELED';
+            }
+            void writer.persistOrder({
+              venue: 'binance', symbol: 'BTCUSDT', side: 'buy', type: 'limit', qty: c.qty, limitPrice: c.price,
+              orderId: placed.orderId, state: finalState, filledQty: placed.filledQty, avgPrice: placed.avgPrice,
+              feeQuote: placed.feeQuote, source: 'testnet', events,
+            });
+          } else {
+            console.warn('[ADAPTER live] testnet: orden no conforme a filtros (sube TESTNET_ORDER_SIZE_USD).');
+          }
+        }
       } catch (e) {
         console.error('[ADAPTER live] testnet error:', (e as Error).message);
       }
     }
   }
   setTimeout(() => void executionSelfTest(), 8000);
+  setInterval(() => void executionSelfTest(), 60_000); // heartbeat de ejecución → alimenta el panel "Órdenes en vivo"
+  setInterval(() => void writer.pruneOrders(24), 15 * 60_000); // retención: órdenes ≤24h (tabla acotada)
 
   // 5) Heartbeat de consola.
   setInterval(() => {

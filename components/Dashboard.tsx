@@ -25,6 +25,7 @@ import { MarkovPanel } from './MarkovPanel';
 import { ConfigCenter } from './config/ConfigCenter';
 import { CandleChart } from './CandleChart';
 import { InventoryPanel } from './InventoryPanel';
+import { LiveOrdersPanel } from './LiveOrdersPanel';
 
 export function Dashboard() {
   const { botState } = useBotState();
@@ -110,6 +111,9 @@ export function Dashboard() {
         <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
           <RejectionAnalysis />
           <StrategyBreakdown />
+        </div>
+        <div className="mt-3">
+          <LiveOrdersPanel />
         </div>
       </Section>
 

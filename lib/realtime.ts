@@ -13,6 +13,8 @@ const REALTIME_TABLES = [
   'runtime_config',
   'strategy_config',
   'transfers',
+  'orders',
+  'order_events',
 ] as const;
 const subscribers = new Map<string, Set<Cb>>();
 const pending = new Map<string, ReturnType<typeof setTimeout>>();

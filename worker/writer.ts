@@ -1,6 +1,25 @@
 // worker/writer.ts — Escritura a Supabase. Cola batched (opps/spread/snapshots) + ejecución inmediata.
 import { supabase } from './supabase';
 import type { Asset, Venue } from './core';
+import type { OrderEvent } from './execution/order';
+
+export interface OrderPersist {
+  venue: string;
+  symbol: string;
+  side: string;
+  type: string;
+  qty: number;
+  limitPrice?: number;
+  orderId?: string;
+  state: string;
+  filledQty: number;
+  avgPrice: number;
+  feeQuote: number;
+  source: string; // 'sim' | 'selftest' | 'testnet'
+  rejectReason?: string;
+  events: OrderEvent[];
+  tradeId?: number | null;
+}
 
 type Row = Record<string, unknown>;
 
@@ -71,6 +90,55 @@ export class Writer {
     if (!supabase) return;
     const { error } = await supabase.from('transfers').update(patch).eq('id', id);
     if (error) console.error('[db] transfer update:', error.message);
+  }
+
+  /** Persiste una orden + su ciclo de vida (order_events) para el panel "Órdenes en vivo". */
+  async persistOrder(o: OrderPersist): Promise<void> {
+    if (!supabase) return;
+    const { data, error } = await supabase
+      .from('orders')
+      .insert({
+        trade_id: o.tradeId ?? null,
+        venue: o.venue,
+        symbol: o.symbol,
+        side: o.side,
+        type: o.type,
+        qty: o.qty,
+        limit_price: o.limitPrice ?? null,
+        order_id: o.orderId ?? null,
+        state: o.state,
+        filled_qty: o.filledQty,
+        avg_price: o.avgPrice,
+        fee_quote: o.feeQuote,
+        source: o.source,
+        reject_reason: o.rejectReason ?? null,
+      })
+      .select('id')
+      .single();
+    if (error || !data) {
+      console.error('[db] order insert:', error?.message);
+      return;
+    }
+    const id = (data as { id: number }).id;
+    if (o.events.length) {
+      const rows = o.events.map((e) => ({
+        order_id: id,
+        ts: e.ts,
+        from_state: e.from,
+        to_state: e.to,
+        reason: e.reason ?? null,
+      }));
+      const { error: eErr } = await supabase.from('order_events').insert(rows);
+      if (eErr) console.error('[db] order_events insert:', eErr.message);
+    }
+  }
+
+  /** Retención: borra órdenes (y sus eventos en cascada) más viejas que `hours`. Tabla acotada. */
+  async pruneOrders(hours = 24): Promise<void> {
+    if (!supabase) return;
+    const cutoff = new Date(Date.now() - hours * 3_600_000).toISOString();
+    const { error } = await supabase.from('orders').delete().lt('created_at', cutoff);
+    if (error) console.error('[db] orders prune:', error.message);
   }
 
   /** Persiste el snapshot de wallets (tras un rebalanceo). */
