@@ -20,6 +20,12 @@ export interface RuntimeConfig {
   lossCooldownMs: number;
   staleMs: number;
   newsPollMs: number;
+  // Rebalanceo inteligente automatizado (Pilar 3)
+  rebalanceAuto: boolean;
+  rebalanceMinOperatingUsd: number;
+  rebalanceRunwayTrades: number;
+  rebalanceMinTransferUsd: number;
+  rebalanceMaxTransferUsd: number;
 }
 
 export interface StrategyConfig {
@@ -53,6 +59,11 @@ export const RUNTIME: RuntimeConfig = {
   lossCooldownMs: LOSS_COOLDOWN_MS_DEFAULT,
   staleMs: CONFIG.staleMs,
   newsPollMs: CONFIG.newsPollMs,
+  rebalanceAuto: false, // OFF por defecto (no cambia el comportamiento desplegado)
+  rebalanceMinOperatingUsd: 20_000,
+  rebalanceRunwayTrades: 3,
+  rebalanceMinTransferUsd: 500,
+  rebalanceMaxTransferUsd: 50_000,
 };
 // Nota: el modo maker es POR ESTRATEGIA (STRATEGIES[s].maker). maker_mode/regional_maker_mode
 // del runtime_config solo siembran el default por-estrategia (abajo) cuando no hay override en DB.

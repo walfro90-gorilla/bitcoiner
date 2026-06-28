@@ -22,7 +22,8 @@ import {
   loadStrategyConfig,
   loadWallets,
 } from './supabase';
-import { applyRuntime, applyStrategy, effectiveTargetBase } from './runtimeConfig';
+import { applyRuntime, applyStrategy, effectiveTargetBase, RUNTIME } from './runtimeConfig';
+import { Rebalancer } from './rebalancer';
 import { bestAsk, bestBid, CandleAggregator, midPrice, type DetectedOpportunity, type FeeTable, type OrderBook, type Venue } from './core';
 import { getUsdtMxn, startFx } from './fx';
 
@@ -43,6 +44,7 @@ async function main(): Promise<void> {
   // 1) Cargar configuración desde la DB (o defaults si no hay Supabase).
   const exMap = await loadExchanges();
   const fees = await loadFees(exMap);
+  let currentFees = fees; // referencia mutable para el rebalancer (se recarga en el poll)
   // Parametrización TOTAL (0012): cargar config en caliente desde la DB sobre los defaults de CONFIG.*.
   const rcInit = await loadRuntimeConfig();
   if (rcInit) applyRuntime(rcInit);
@@ -355,7 +357,8 @@ async function main(): Promise<void> {
       if (rc) applyRuntime(rc);
       for (const sc of await loadStrategyConfig()) applyStrategy(sc.strategy, sc.patch);
       exchangeEnabled = await loadExchangeEnabled();
-      engine.setFees(await loadFees(exMap));
+      currentFees = await loadFees(exMap);
+      engine.setFees(currentFees);
       // Inyección de escenario solicitada desde el dashboard.
       if (typeof s.inject_seq === 'number' && s.inject_seq > lastInjectSeq) {
         lastInjectSeq = s.inject_seq;
@@ -385,6 +388,26 @@ async function main(): Promise<void> {
     if (r.riskOff) console.log('[risk] NEWS RISK-OFF activo: ejecuciones en pausa por noticias.');
   });
 
+  // 4c) Rebalanceo inteligente automatizado (fuera del hot-path; solo actúa si rebalance_auto ON).
+  const rebalancer = new Rebalancer(
+    ledger,
+    () => {
+      const b = engine.state.get('binance:BTC/USDT');
+      return b ? midPrice(b) ?? 0 : 0;
+    },
+    () => currentFees,
+    () => ({
+      auto: RUNTIME.rebalanceAuto,
+      minOperatingUsd: RUNTIME.rebalanceMinOperatingUsd,
+      runwayTrades: RUNTIME.rebalanceRunwayTrades,
+      maxPositionUsd: runtime.maxPositionUsd,
+      minTransferUsd: RUNTIME.rebalanceMinTransferUsd,
+      maxTransferUsd: RUNTIME.rebalanceMaxTransferUsd,
+    }),
+    writer,
+  );
+  rebalancer.start();
+
   // 5) Heartbeat de consola.
   setInterval(() => {
     const books = engine.state.all();
@@ -412,6 +435,7 @@ async function main(): Promise<void> {
     feeds.forEach((f) => f.stop());
     writer.stop();
     news.stop();
+    rebalancer.stop();
     process.exit(0);
   });
 

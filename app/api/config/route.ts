@@ -17,6 +17,8 @@ const RUNTIME_FIELDS: Record<string, FieldType> = {
   bitso_mxn_fee_bps: 'number', bitso_mxn_maker_fee_bps: 'number', max_btc_per_trade: 'number',
   max_trades_per_min: 'number', consecutive_loss_halt: 'number', loss_cooldown_ms: 'number',
   stale_ms: 'number', maker_mode: 'boolean', regional_maker_mode: 'boolean', news_poll_ms: 'number',
+  rebalance_auto: 'boolean', rebalance_min_operating_usd: 'number', rebalance_runway_trades: 'number',
+  rebalance_min_transfer_usd: 'number', rebalance_max_transfer_usd: 'number',
 };
 const STRATEGY_FIELDS: Record<string, FieldType> = {
   enabled: 'boolean', min_net_bps_override: 'number_or_null', maker: 'boolean',

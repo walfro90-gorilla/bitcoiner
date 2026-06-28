@@ -24,6 +24,7 @@ import { BacktestPanel } from './BacktestPanel';
 import { MarkovPanel } from './MarkovPanel';
 import { ConfigCenter } from './config/ConfigCenter';
 import { CandleChart } from './CandleChart';
+import { InventoryPanel } from './InventoryPanel';
 
 export function Dashboard() {
   const { botState } = useBotState();
@@ -134,9 +135,12 @@ export function Dashboard() {
       </Section>
 
       {/* 4 · Inteligencia y saldos */}
-      <Section n={5} title="Inteligencia y saldos" desc="Noticias con IA que ajustan el riesgo, y las wallets simuladas">
+      <Section n={5} title="Inteligencia y saldos" desc="Noticias con IA que ajustan el riesgo, rebalanceo de inventario y wallets">
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <NewsPanel />
+          <InventoryPanel />
+        </div>
+        <div className="mt-3">
           <WalletsPanel />
         </div>
       </Section>

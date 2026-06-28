@@ -55,6 +55,36 @@ export class Writer {
     if (error) console.error('[db] candles upsert:', error.message);
   }
 
+  /** Inserta una transferencia (rebalanceo) y devuelve su id, o null sin DB/error. */
+  async insertTransfer(row: Row): Promise<number | null> {
+    if (!supabase) return null;
+    const { data, error } = await supabase.from('transfers').insert(row).select('id').single();
+    if (error) {
+      console.error('[db] transfer insert:', error.message);
+      return null;
+    }
+    return (data as { id: number }).id;
+  }
+
+  /** Actualiza el estado de una transferencia (in_transit -> completed). */
+  async updateTransfer(id: number, patch: Row): Promise<void> {
+    if (!supabase) return;
+    const { error } = await supabase.from('transfers').update(patch).eq('id', id);
+    if (error) console.error('[db] transfer update:', error.message);
+  }
+
+  /** Persiste el snapshot de wallets (tras un rebalanceo). */
+  async upsertWallets(snapshot: Array<{ venue: Venue; asset: Asset; balance: number }>): Promise<void> {
+    if (!supabase) return;
+    const now = new Date().toISOString();
+    const rows = snapshot
+      .map((w) => ({ exchange_id: this.exId(w.venue), asset: w.asset, balance: w.balance, updated_at: now }))
+      .filter((r) => r.exchange_id != null);
+    if (!rows.length) return;
+    const { error } = await supabase.from('wallets').upsert(rows, { onConflict: 'exchange_id,asset' });
+    if (error) console.error('[db] wallets upsert (rebal):', error.message);
+  }
+
   private async flush(): Promise<void> {
     if (!supabase) {
       this.oppQueue.length = 0;

@@ -140,6 +140,11 @@ export interface RuntimeConfigRow {
   maker_mode: boolean;
   regional_maker_mode: boolean;
   news_poll_ms: number;
+  rebalance_auto: boolean;
+  rebalance_min_operating_usd: number;
+  rebalance_runway_trades: number;
+  rebalance_min_transfer_usd: number;
+  rebalance_max_transfer_usd: number;
   updated_at: string;
 }
 
@@ -185,4 +190,21 @@ export interface CandleRow {
   l: number;
   c: number;
   updated_at: string;
+}
+
+/** Transferencia de rebalanceo simulada (migración 0014). */
+export interface TransferRow {
+  id: number;
+  created_at: string;
+  from_exchange_id: number | null;
+  to_exchange_id: number | null;
+  asset: string;
+  amount: number;
+  amount_usd: number;
+  cost_usd: number;
+  status: string; // in_transit | completed | cancelled
+  reason: string | null;
+  eta_ms: number;
+  auto: boolean;
+  completed_at: string | null;
 }

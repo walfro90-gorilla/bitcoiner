@@ -12,6 +12,7 @@ const REALTIME_TABLES = [
   'news_signals',
   'runtime_config',
   'strategy_config',
+  'transfers',
 ] as const;
 const subscribers = new Map<string, Set<Cb>>();
 const pending = new Map<string, ReturnType<typeof setTimeout>>();

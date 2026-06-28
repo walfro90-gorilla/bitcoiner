@@ -16,6 +16,7 @@ import type {
   RuntimeConfigRow,
   StrategyConfigRow,
   TradeRow,
+  TransferRow,
   WalletRow,
 } from '../supabase/types';
 
@@ -98,6 +99,24 @@ export function useWallets() {
     { refreshInterval: 60_000 },
   );
   useEffect(() => subscribeTable('wallets', () => void mutate()), [mutate]);
+  return data ?? [];
+}
+
+/** Transferencias de rebalanceo (en tránsito / completadas), en vivo. */
+export function useTransfers(limit = 15) {
+  const { data, mutate } = useSWR(
+    ['transfers', limit],
+    async () => {
+      const { data } = await sb()
+        .from('transfers')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      return (data ?? []) as TransferRow[];
+    },
+    { refreshInterval: 5000 },
+  );
+  useEffect(() => subscribeTable('transfers', () => void mutate()), [mutate]);
   return data ?? [];
 }
 

@@ -111,6 +111,11 @@ export async function loadRuntimeConfig(): Promise<Partial<RuntimeConfig> | null
     lossCooldownMs: +(d.loss_cooldown_ms as number),
     staleMs: +(d.stale_ms as number),
     newsPollMs: +(d.news_poll_ms as number),
+    rebalanceAuto: !!d.rebalance_auto,
+    rebalanceMinOperatingUsd: +(d.rebalance_min_operating_usd as number),
+    rebalanceRunwayTrades: +(d.rebalance_runway_trades as number),
+    rebalanceMinTransferUsd: +(d.rebalance_min_transfer_usd as number),
+    rebalanceMaxTransferUsd: +(d.rebalance_max_transfer_usd as number),
   };
 }
 
