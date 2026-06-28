@@ -7,10 +7,13 @@ export function book(venue: Venue, quote: Quote, bids: Level[], asks: Level[]): 
   return { venue, base: 'BTC', quote, pair: `BTC/${quote}`, bids, asks, exchangeTs: 0, recvTs: Date.now() };
 }
 
-/** FeeTable plana: mismo taker/maker/withdrawal en los 5 venues. */
+/** FeeTable plana: mismo taker/maker/withdrawal en todos los venues. */
 export function flatFees(takerBps: number, makerBps = takerBps, withdrawalBtc = 0): FeeTable {
   const f: FeeConfig = { takerBps, makerBps, withdrawalBtc };
-  return { binance: { ...f }, okx: { ...f }, kraken: { ...f }, bitso: { ...f }, bitstamp: { ...f } };
+  return {
+    binance: { ...f }, okx: { ...f }, kraken: { ...f }, bitso: { ...f },
+    bitstamp: { ...f }, coinbase: { ...f }, bybit: { ...f },
+  };
 }
 
 /** Fees a 0.1% en todos los venues, sin withdrawal — iguala el supuesto del ejemplo del reto. */

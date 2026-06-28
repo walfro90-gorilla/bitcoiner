@@ -22,7 +22,7 @@ export const CONFIG = {
   supabaseUrl: str('SUPABASE_URL'),
   supabaseServiceKey: str('SUPABASE_SERVICE_ROLE_KEY'),
 
-  venues: list('WORKER_VENUES', 'binance,okx,kraken,bitso'),
+  venues: list('WORKER_VENUES', 'binance,okx,kraken,bitso,coinbase,bybit'),
   pairs: list('WORKER_PAIRS', 'BTC/USDT,BTC/USD'),
 
   // Riesgo / circuit breakers

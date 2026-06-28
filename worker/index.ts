@@ -7,6 +7,8 @@ import { createOkxFeed } from './feeds/okx';
 import { createKrakenFeed } from './feeds/kraken';
 import { createBitsoFeed } from './feeds/bitso';
 import { createBitstampFeed } from './feeds/bitstamp';
+import { createCoinbaseFeed } from './feeds/coinbase';
+import { createBybitFeed } from './feeds/bybit';
 import { simulate } from './executor';
 import { computeNetProfit } from './core';
 import { startNewsPoller } from './news';
@@ -37,6 +39,8 @@ const BUILDERS: Record<string, FeedBuilder> = {
   okx: createOkxFeed,
   kraken: createKrakenFeed,
   bitso: createBitsoFeed,
+  coinbase: createCoinbaseFeed,
+  bybit: createBybitFeed,
 };
 
 function round(n: number, dp: number): number {
@@ -263,6 +267,8 @@ async function main(): Promise<void> {
     kraken: { takerBps: 10, makerBps: 10, withdrawalBtc: 0 },
     bitso: { takerBps: 10, makerBps: 10, withdrawalBtc: 0 },
     bitstamp: { takerBps: 10, makerBps: 10, withdrawalBtc: 0 },
+    coinbase: { takerBps: 10, makerBps: 10, withdrawalBtc: 0 },
+    bybit: { takerBps: 10, makerBps: 10, withdrawalBtc: 0 },
   };
   function injectScenario(): void {
     const now = Date.now();

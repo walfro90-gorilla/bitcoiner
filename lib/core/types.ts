@@ -1,6 +1,6 @@
 // lib/core/types.ts — Tipos compartidos por el worker y la web. TS puro, sin dependencias.
 
-export type Venue = 'binance' | 'okx' | 'kraken' | 'bitso' | 'bitstamp';
+export type Venue = 'binance' | 'okx' | 'kraken' | 'bitso' | 'bitstamp' | 'coinbase' | 'bybit';
 export type Quote = 'USDT' | 'USD' | 'MXN';
 export type Asset = 'BTC' | 'ETH' | 'USDT' | 'USD' | 'MXN';
 export type StrategyType = 'spatial' | 'cross_quote' | 'triangular' | 'statistical' | 'regional';

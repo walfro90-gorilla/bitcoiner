@@ -25,6 +25,8 @@ function compute(takerBps: number, makerBps: number, maker: boolean) {
     okx: { takerBps, makerBps, withdrawalBtc: 0 },
     bitso: { takerBps, makerBps, withdrawalBtc: 0 },
     bitstamp: { takerBps, makerBps, withdrawalBtc: 0 },
+    coinbase: { takerBps, makerBps, withdrawalBtc: 0 },
+    bybit: { takerBps, makerBps, withdrawalBtc: 0 },
   };
   return computeNetProfit({ buyBook: BUY, sellBook: SELL, fees, targetBase: 1, slippageBps: 0, maker }, 0);
 }

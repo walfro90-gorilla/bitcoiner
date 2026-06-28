@@ -8,6 +8,8 @@ export const DEFAULT_FEES: FeeTable = {
   kraken: { takerBps: 40, makerBps: 25, withdrawalBtc: 0.00005 },
   bitso: { takerBps: 9.8, makerBps: 7.5, withdrawalBtc: 0.0003 },
   bitstamp: { takerBps: 40, makerBps: 30, withdrawalBtc: 0.0001 },
+  coinbase: { takerBps: 60, makerBps: 40, withdrawalBtc: 0.0001 }, // Coinbase retail es caro → refuerza la narrativa de honestidad
+  bybit: { takerBps: 10, makerBps: 10, withdrawalBtc: 0.0002 },
 };
 
 /** Fee taker como fracción (0.001 = 0.10%). */
