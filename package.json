@@ -10,6 +10,7 @@
     "test": "node --import tsx --test \"lib/**/*.test.ts\" \"worker/**/*.test.ts\"",
     "test:core": "node --import tsx --test lib/core/profit.test.ts worker/feeds/crc32.test.ts lib/core/markov.test.ts",
     "check:worker": "tsc --noEmit -p tsconfig.worker.json",
+    "stress": "tsx scripts/stress.ts",
     "gen:icons": "node scripts/gen-icons.mjs",
     "worker": "tsx worker/index.ts",
     "worker:watch": "tsx watch worker/index.ts"
