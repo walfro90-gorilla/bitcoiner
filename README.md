@@ -187,7 +187,7 @@ Un buen sistema no esconde sus compensaciones: las hace explícitas y deja una *
 | **Selectividad** | Umbral alto = seguro · bajo = más trades | `min_net_bps` configurable en vivo (default 5) |
 | **Datos vs Costo DB** | Guardar todo · retención agresiva | `pg_cron` → ~6% del free tier |
 - **5º exchange (Bitstamp)** + **inyector del ejemplo del reto**: el botón "🧬 Reproducir ejemplo" del dashboard empuja el escenario $70,000→$70,250 por el pipeline real (detección → simulación → P&L), para que el jurado vea el caso del brief ejecutarse en vivo.
-- **Tests**: `npm test` corre **19 unit tests** — motor neto (`profit.test.ts`, incl. ejemplo del reto **+$109.75/BTC** y maker/taker), **checksum CRC32** (`crc32.test.ts`) y **modelo de régimen Markov** (`markov.test.ts`).
+- **Tests**: `npm test` corre **27 unit tests** — motor neto (`profit.test.ts`, incl. ejemplo del reto **+$109.75/BTC** y maker/taker), **régimen Markov** (`markov.test.ts`), **checksum CRC32** (`crc32.test.ts`), **parametrización en vivo** (`runtimeConfig.test.ts`) e **integración del motor** (`engine.test.ts`: gating y umbral por estrategia). Detalle y metodología en [`docs/PRUEBAS.md`](docs/PRUEBAS.md) (+ hard test en [`docs/HARDTEST-PARAM.md`](docs/HARDTEST-PARAM.md)).
 - **Capa analítica (web-only, datos reales)**: comparador **maker/taker**, **backtest** histórico del premio Bitso y **cadena de Markov** de régimen — todo en el navegador sobre datos ya capturados, sin tocar el worker ni el hot-path. Trade-offs en [`docs/TRADE-OFFS.md`](docs/TRADE-OFFS.md).
 
 ---
