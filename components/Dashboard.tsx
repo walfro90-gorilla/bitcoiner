@@ -26,6 +26,7 @@ import { ConfigCenter } from './config/ConfigCenter';
 import { CandleChart } from './CandleChart';
 import { InventoryPanel } from './InventoryPanel';
 import { LiveOrdersPanel } from './LiveOrdersPanel';
+import { SectionNav } from './SectionNav';
 
 export function Dashboard() {
   const { botState } = useBotState();
@@ -86,6 +87,9 @@ export function Dashboard() {
         />
       </div>
 
+      {/* Índice de secciones pegajoso — navega la página sin ocultar nada (ideal para el jurado) */}
+      <SectionNav />
+
       {/* 1 · Mercado en vivo */}
       <Section id="tour-mercado" n={1} title="Mercado en vivo" desc="Precios de los 5 exchanges y dónde podría haber arbitraje">
         <div className="mb-3">
@@ -138,8 +142,8 @@ export function Dashboard() {
         </div>
       </Section>
 
-      {/* 4 · Inteligencia y saldos */}
-      <Section n={5} title="Inteligencia y saldos" desc="Noticias con IA que ajustan el riesgo, rebalanceo de inventario y wallets">
+      {/* 5 · Inteligencia y saldos */}
+      <Section id="tour-inteligencia" n={5} title="Inteligencia y saldos" desc="Noticias con IA que ajustan el riesgo, rebalanceo de inventario y wallets">
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <NewsPanel />
           <InventoryPanel />

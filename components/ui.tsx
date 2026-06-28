@@ -29,7 +29,7 @@ export function Section({
   id?: string;
 }) {
   return (
-    <section id={id} className="mt-6 scroll-mt-20 first:mt-4">
+    <section id={id} className="mt-6 scroll-mt-28 first:mt-4">
       <div className="mb-2 flex items-baseline gap-2 px-0.5">
         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/15 text-[11px] font-bold text-accent">
           {n}

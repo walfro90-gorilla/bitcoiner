@@ -15,7 +15,7 @@ export function NavBar() {
 
   return (
     <nav className="sticky top-0 z-40 border-b border-border bg-card2/85 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2.5">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
           <span className="text-xl">🦅</span> Bitcoiner
         </Link>
