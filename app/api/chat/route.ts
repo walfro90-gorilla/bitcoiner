@@ -1,20 +1,20 @@
 // app/api/chat/route.ts — Copiloto IA. Ensambla contexto en vivo desde Supabase y responde en streaming.
 // LLM pluggable (Gemini por defecto, Anthropic opcional). Fuera del hot-path: solo lee la DB.
 import { createAdminClient } from '@/lib/supabase/admin';
-import { hasLlmKey, streamChat, type ChatMessage } from '@/lib/llm';
+import { hasLlmKey, streamChatWithTools, type ChatMessage } from '@/lib/llm';
+import { runCopilotTool, toolSchemas, type ReadSb } from '@/lib/copilot/tools';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-const SYSTEM = `Eres el copiloto de "Bitcoiner", un bot de arbitraje de Bitcoin multi-exchange (Binance, OKX, Kraken, Bitso).
+const SYSTEM = `Eres el copiloto de "Bitcoiner", un bot de arbitraje de Bitcoin multi-exchange (Binance, OKX, Kraken, Bitso, Bitstamp).
 Respondes en español, claro y conciso, como un analista cuantitativo.
-Usa EXCLUSIVAMENTE los datos del SNAPSHOT en vivo para responder; si algo no está en los datos, dilo.
-Sabes explicar: el P&L acumulado, por qué una oportunidad se ejecutó o se descartó (campo skip_reason), las estrategias (spatial, cross_quote, triangular, statistical), por qué el arbitraje entre exchanges líquidos rara vez es rentable (los fees taker ~20bps superan el spread), dónde sí aparece edge (Bitso regional, cross-quote USD/USDT), y cómo las noticias de alto impacto activan el régimen de riesgo.
+Tienes HERRAMIENTAS (tools) para consultar la base de datos EN VIVO. Úsalas cuando necesites cifras específicas o frescas en vez de adivinar: get_pnl_summary, query_opportunities, get_rejections, get_strategy_stats, get_wallets, get_config, get_recent_trades, get_news. El SNAPSHOT base te da contexto; las tools te dan el detalle. Si un dato no está disponible, dilo.
+Sabes explicar: el P&L acumulado, por qué una oportunidad se ejecutó o se descartó (campo skip_reason), las estrategias (spatial, cross_quote, triangular, statistical, regional), por qué el arbitraje entre exchanges líquidos rara vez es rentable (los fees taker ~20bps superan el spread), dónde sí aparece edge (Bitso regional, cross-quote USD/USDT), y cómo las noticias de alto impacto activan el régimen de riesgo.
 Da números concretos (bps, USD) cuando los tengas. Sé breve salvo que pidan detalle.`;
 
-async function buildSnapshot(): Promise<string> {
-  const sb = createAdminClient();
+async function buildSnapshot(sb: ReturnType<typeof createAdminClient>): Promise<string> {
   const [opps, trades, wallets, bot, exchanges, news] = await Promise.all([
     sb
       .from('opportunities')
@@ -56,10 +56,13 @@ export async function POST(req: Request) {
   const messages = (body.messages ?? []).filter((m) => m.role && m.content).slice(-12);
   if (messages.length === 0) return new Response('Sin mensajes.', { status: 400 });
 
-  const snapshot = await buildSnapshot();
-  const gen = streamChat({
-    system: `${SYSTEM}\n\nSNAPSHOT (datos en vivo):\n${snapshot}`,
+  const sb = createAdminClient();
+  const snapshot = await buildSnapshot(sb);
+  const gen = streamChatWithTools({
+    system: `${SYSTEM}\n\nSNAPSHOT base (datos en vivo; usa las tools para el detalle):\n${snapshot}`,
     messages,
+    tools: toolSchemas(),
+    executeTool: (name, args) => runCopilotTool(name, args, sb as unknown as ReadSb),
     maxTokens: 1024,
   });
 

@@ -116,6 +116,109 @@ export async function* streamChat(opts: {
   }
 }
 
+export interface ToolSpec {
+  name: string;
+  description: string;
+  parameters: object; // JSON Schema
+}
+
+/**
+ * Chat con TOOL-USE en streaming. El modelo puede invocar tools (READ-ONLY) para consultar datos
+ * en vivo y luego responde con cifras reales. Emite líneas de estado "🔧 <tool>" mientras consulta
+ * y al final el texto de la respuesta. OpenAI-compatible (Groq, prod) + Anthropic; otros proveedores
+ * (Gemini) degradan a `streamChat` (sin tools — el `system` ya trae el snapshot base).
+ */
+export async function* streamChatWithTools(opts: {
+  system: string;
+  messages: ChatMessage[];
+  tools: ToolSpec[];
+  executeTool: (name: string, args: Record<string, unknown>) => Promise<unknown>;
+  maxTokens?: number;
+  maxRounds?: number;
+}): AsyncGenerator<string> {
+  const maxTokens = opts.maxTokens ?? 1024;
+  const maxRounds = opts.maxRounds ?? 4;
+  const provider = activeProvider();
+
+  // Branch OpenAI-compatible (Groq, prod): function-calling estándar de /chat/completions.
+  if (provider === 'openai') {
+    const oaTools = opts.tools.map((t) => ({ type: 'function', function: t }));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const convo: any[] = [{ role: 'system', content: opts.system }, ...opts.messages];
+    for (let round = 0; round < maxRounds; round++) {
+      const last = round === maxRounds - 1;
+      const res = await fetch(`${OPENAI_BASE_URL}/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.OPENAI_API_KEY!}` },
+        body: JSON.stringify({
+          model: OPENAI_MODEL,
+          max_tokens: maxTokens,
+          messages: convo,
+          // En la última ronda forzamos respuesta (sin tools) para no quedarnos sin contestar.
+          ...(last ? {} : { tools: oaTools, tool_choice: 'auto' }),
+        }),
+      });
+      if (!res.ok) throw new Error(`LLM ${res.status}: ${(await res.text().catch(() => '')).slice(0, 200)}`);
+      const json = await res.json();
+      const msg = json.choices?.[0]?.message;
+      const calls = msg?.tool_calls;
+      if (!last && Array.isArray(calls) && calls.length) {
+        convo.push(msg);
+        for (const tc of calls) {
+          const name = tc.function?.name as string;
+          let args: Record<string, unknown> = {};
+          try { args = JSON.parse(tc.function?.arguments || '{}'); } catch { /* args inválidos */ }
+          yield `🔧 ${name}\n`;
+          let out: unknown;
+          try { out = await opts.executeTool(name, args); } catch (e) { out = { error: (e as Error).message }; }
+          convo.push({ role: 'tool', tool_call_id: tc.id, content: JSON.stringify(out).slice(0, 6000) });
+        }
+        continue;
+      }
+      if (msg?.content) yield msg.content as string;
+      return;
+    }
+    return;
+  }
+
+  // Anthropic: tool-use nativo del SDK.
+  if (provider === 'anthropic') {
+    const { default: Anthropic } = await import('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const aTools = opts.tools.map((t) => ({ name: t.name, description: t.description, input_schema: t.parameters as any }));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const convo: any[] = opts.messages.map((m) => ({ role: m.role, content: m.content }));
+    for (let round = 0; round < maxRounds; round++) {
+      const res = await client.messages.create({
+        model: ANTHROPIC_MODEL,
+        max_tokens: maxTokens,
+        system: opts.system,
+        messages: convo,
+        tools: aTools,
+      });
+      for (const b of res.content) if (b.type === 'text' && b.text) yield b.text;
+      const toolUses = res.content.filter((b) => b.type === 'tool_use');
+      if (!toolUses.length) return;
+      convo.push({ role: 'assistant', content: res.content });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const results: any[] = [];
+      for (const tu of toolUses) {
+        const t = tu as { id: string; name: string; input: Record<string, unknown> };
+        yield `🔧 ${t.name}\n`;
+        let out: unknown;
+        try { out = await opts.executeTool(t.name, t.input); } catch (e) { out = { error: (e as Error).message }; }
+        results.push({ type: 'tool_result', tool_use_id: t.id, content: JSON.stringify(out).slice(0, 6000) });
+      }
+      convo.push({ role: 'user', content: results });
+    }
+    return;
+  }
+
+  // Gemini / otros: sin tool-use → respuesta directa (el system ya incluye el snapshot base).
+  yield* streamChat({ system: opts.system, messages: opts.messages, maxTokens });
+}
+
 /** Generación de una sola respuesta (para scoring de noticias). `json: true` fuerza salida JSON. */
 export async function generateText(opts: {
   system?: string;
