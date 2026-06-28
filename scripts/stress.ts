@@ -2,6 +2,10 @@
 // Complementa docs/PRUEBAS-ESTRES.md (que mide el worker en vivo). Corre: `npm run stress`.
 // Mide throughput del motor event-driven y verifica INVARIANTES del núcleo bajo carga masiva.
 import { Engine } from '../worker/engine';
+import { SimulatedAdapter } from '../worker/execution/simulatedAdapter';
+import { Ledger, type MarketState } from '../worker/state';
+import { canTransition, isTerminal } from '../worker/execution/order';
+import { L2Book } from '../worker/feeds/l2book';
 import {
   CandleAggregator,
   DEFAULT_FEES,
@@ -41,7 +45,7 @@ async function engineThroughput(n: number) {
   });
   engine.setFees(DEFAULT_FEES);
   engine.setMinNetBps(5);
-  const venues: Venue[] = ['binance', 'okx', 'kraken', 'bitstamp'];
+  const venues: Venue[] = ['binance', 'okx', 'kraken', 'bitstamp', 'coinbase', 'bybit'];
   const t0 = performance.now();
   for (let i = 0; i < n; i++) {
     engine.onBook(synthBook(venues[i % venues.length], 'USDT', between(59_000, 61_000)));
@@ -72,7 +76,7 @@ function coreInvariants(m: number) {
 
 function rebalanceInvariants(k: number) {
   const cfg: RebalanceConfig = { minOperatingUsd: 20_000, runwayTrades: 3, maxPositionUsd: 10_000, minTransferUsd: 500, maxTransferUsd: 50_000 };
-  const venues: Venue[] = ['binance', 'okx', 'kraken', 'bitstamp', 'bitso'];
+  const venues: Venue[] = ['binance', 'okx', 'kraken', 'bitstamp', 'bitso', 'coinbase', 'bybit'];
   let violations = 0;
   for (let i = 0; i < k; i++) {
     const btcUsd = between(40_000, 90_000);
@@ -106,6 +110,62 @@ function precisionInvariants(m: number) {
   return { m, violations };
 }
 
+// Libro adversarial: a veces vacío, a veces 1–4 niveles delgados (estresa el manejo de poca liquidez).
+function thinBook(mid: number): OrderBook {
+  const n = Math.floor(between(0, 4.999));
+  const side = (sign: number) => Array.from({ length: n }, (_, i) => ({ price: mid + sign * (i + 1) * between(0.5, 5), size: between(0, 2) }));
+  return { venue: 'binance', base: 'BTC', quote: 'USDT', pair: 'BTC/USDT', bids: side(-1), asks: side(1), exchangeTs: 0, recvTs: Date.now() };
+}
+
+// FSM bajo fault storm: órdenes aleatorias (incl. qty 0, libros vacíos/delgados) por el SimulatedAdapter.
+// Invariante: el estado final SIEMPRE es terminal y cada transición de la FSM es válida (nunca un salto ilegal).
+async function fsmFaultStorm(k: number) {
+  let violations = 0;
+  for (let i = 0; i < k; i++) {
+    const ledger = new Ledger();
+    ledger.set('binance', 'USDT', between(0, 200_000));
+    ledger.set('binance', 'BTC', between(0, 5));
+    const books = new Map<string, OrderBook>();
+    if (r() > 0.15) books.set('binance:BTC/USDT', thinBook(between(50, 120_000))); // 15% sin libro
+    const state = { get: (key: string) => books.get(key) } as unknown as MarketState;
+    const adapter = new SimulatedAdapter('binance', state, ledger, () => DEFAULT_FEES);
+    const res = await adapter.placeOrder({
+      venue: 'binance',
+      symbol: 'BTCUSDT',
+      side: r() > 0.5 ? 'buy' : 'sell',
+      type: r() > 0.5 ? 'market' : 'limit',
+      qty: between(0, 2),
+      limitPrice: between(50, 120_000),
+    });
+    // Un placeOrder concluye en FILLED, REJECTED (terminales) o PARTIALLY_FILLED (descansa esperando más fill).
+    const validEnd = isTerminal(res.state) || res.state === 'PARTIALLY_FILLED';
+    if (!validEnd) violations++;
+    for (let j = 1; j < res.events.length; j++) {
+      const e = res.events[j];
+      if (e.from && !canTransition(e.from, e.to)) violations++; // transición ilegal de la FSM
+    }
+  }
+  return { k, violations };
+}
+
+// L2Book incremental (Coinbase/Bybit): snapshot/delta/borrados aleatorios. Invariante: el top siempre
+// queda ordenado (bids desc, asks asc) y sin tamaños no positivos.
+function l2BookStorm(k: number) {
+  const lb = new L2Book();
+  let violations = 0;
+  for (let i = 0; i < k; i++) {
+    if (r() < 0.04) lb.reset();
+    lb.apply(r() > 0.5 ? 'bid' : 'ask', between(50, 120_000), r() < 0.12 ? 0 : between(0, 10)); // 12% borra (size 0)
+    if (i % 40 === 0) {
+      const { bids, asks } = lb.top(20);
+      for (let j = 1; j < bids.length; j++) if (bids[j].price > bids[j - 1].price) violations++;
+      for (let j = 1; j < asks.length; j++) if (asks[j].price < asks[j - 1].price) violations++;
+      for (const l of [...bids, ...asks]) if (!(l.size > 0)) violations++;
+    }
+  }
+  return { k, violations };
+}
+
 function candleInvariants(n: number) {
   const agg = new CandleAggregator(60_000);
   let violations = 0;
@@ -128,17 +188,21 @@ async function main() {
   const reb = rebalanceInvariants(20_000);
   const prec = precisionInvariants(200_000);
   const cand = candleInvariants(200_000);
+  const fsm = await fsmFaultStorm(50_000);
+  const l2 = l2BookStorm(200_000);
 
   const rows = [
-    ['Engine throughput', `${eng.n} updates · ${eng.ms} ms · ${eng.perSec.toLocaleString()} eval/s · ${eng.opps} opps · RSS ${eng.rssMb} MB`],
+    ['Engine throughput (7 venues)', `${eng.n} updates · ${eng.ms} ms · ${eng.perSec.toLocaleString()} eval/s · ${eng.opps} opps · RSS ${eng.rssMb} MB`],
     ['Núcleo neto (invariantes)', `${core.m.toLocaleString()} cálculos · ${core.violations} violaciones · ${core.nonFinite} no-finitos`],
     ['Rebalanceo (invariantes)', `${reb.k.toLocaleString()} escenarios · ${reb.violations} violaciones`],
     ['Precisión (invariantes)', `${prec.m.toLocaleString()} órdenes · ${prec.violations} violaciones`],
     ['Velas OHLC (invariantes)', `${cand.n.toLocaleString()} muestras · ${cand.violations} violaciones`],
+    ['FSM fault storm (ejecución)', `${fsm.k.toLocaleString()} órdenes adversariales · ${fsm.violations} violaciones`],
+    ['Libro L2 incremental', `${l2.k.toLocaleString()} ops snapshot/delta · ${l2.violations} violaciones`],
   ];
-  for (const [k, v] of rows) console.log(`  ${k.padEnd(28)} ${v}`);
+  for (const [k, v] of rows) console.log(`  ${k.padEnd(30)} ${v}`);
 
-  const totalViol = core.violations + core.nonFinite + reb.violations + prec.violations + cand.violations;
+  const totalViol = core.violations + core.nonFinite + reb.violations + prec.violations + cand.violations + fsm.violations + l2.violations;
   console.log(`\n  TOTAL violaciones: ${totalViol}  →  ${totalViol === 0 ? '✅ TODAS LAS INVARIANTES SE CUMPLEN' : '❌ REVISAR'}`);
   process.exit(totalViol === 0 ? 0 : 1);
 }

@@ -2,7 +2,7 @@
 
 Fecha: 2026-05-29 · Entorno: worker local (Node 20 + tsx) contra Supabase de producción · feeds en vivo (Binance, OKX, Kraken, Bitso).
 
-Se evaluaron **5 dimensiones** (4 en vivo contra Supabase + 1 determinista in-process, añadida en la fase final). **Veredicto: el sistema es robusto** — latencia sub-3 ms bajo carga, ~96k evaluaciones/s en el harness in-process, memoria ~130 MB, circuit breakers que cortan ~90% del trading cuando deben, órdenes parciales correctas, DB acotada, **0 violaciones de invariantes en >600k iteraciones** y 0 crashes.
+Se evaluaron **7 dimensiones** (4 en vivo contra Supabase + 3 deterministas in-process, añadidas/ampliadas en la fase final). **Veredicto: el sistema es robusto** — latencia sub-3 ms bajo carga, decenas de miles de evaluaciones/s en el harness in-process (con 7 venues), memoria ~90–130 MB, circuit breakers que cortan ~90% del trading cuando deben, órdenes parciales correctas, DB acotada, **0 violaciones de invariantes en ~890k iteraciones** y 0 crashes. Además, **property-based testing** (fast-check) verifica las mismas invariantes sobre miles de entradas generadas (ver §6).
 
 ---
 
@@ -61,21 +61,35 @@ Se evaluaron **5 dimensiones** (4 en vivo contra Supabase + 1 determinista in-pr
 
 | Dimensión | Carga | Resultado |
 |---|---|---|
-| **Throughput del motor** | 20,000 updates → 1 `evaluate()` por update (presión máxima) | **~96,000 evaluaciones/s** · 120k oportunidades · RSS ~91 MB · **0 crashes** |
+| **Throughput del motor (7 venues)** | 20,000 updates → 1 `evaluate()` por update (presión máxima) | **~70,000 evaluaciones/s** · ~300k oportunidades · RSS ~91 MB · **0 crashes** |
 | **Invariantes del neto** | 200,000 cálculos con precios ($50–$120k) y volúmenes extremos | neto ≤ bruto · todo finito (sin NaN/∞) · **0 violaciones** |
-| **Invariantes de rebalanceo** | 20,000 inventarios aleatorios | rutas válidas (origen≠destino, montos>0, respeta el tope) · **0 violaciones** |
+| **Invariantes de rebalanceo (7 venues)** | 20,000 inventarios aleatorios | rutas válidas (origen≠destino, montos>0, respeta el tope) · **0 violaciones** |
 | **Invariantes de precisión** | 200,000 órdenes conformadas | múltiplos exactos de tickSize/stepSize + minNotional · **0 violaciones** |
 | **Invariantes de velas OHLC** | 200,000 muestras | low ≤ {open,close} ≤ high · **0 violaciones** |
+| **FSM bajo fault storm (ejecución)** | 50,000 órdenes adversariales (qty 0, libros vacíos/delgados) por el `SimulatedAdapter` | estado final siempre válido (FILLED/PARTIAL/REJECTED) · cada transición de la FSM legal · **0 violaciones** |
+| **Libro L2 incremental (Coinbase/Bybit)** | 200,000 ops snapshot/delta/borrado | el top siempre ordenado (bids desc, asks asc), sin tamaños no positivos · **0 violaciones** |
 
-**Conclusión:** el motor sostiene **~10⁵ evaluaciones/segundo** (sub-microsegundo por evento) y el núcleo cumple sus invariantes financieras bajo **>600,000 iteraciones** con entradas extremas — sin un solo NaN, neto-mayor-que-bruto, ni saldo imposible. Es la base que respalda la latencia sub-ms que se ve en vivo.
+**Conclusión:** el motor sostiene **decenas de miles de evaluaciones/segundo** incluso con **7 venues** (más superficie por evento), y todos los subsistemas (núcleo financiero, rebalanceo, precisión, velas, **la FSM de ejecución bajo fallos** y **el libro L2 incremental de los venues nuevos**) cumplen sus invariantes bajo **~890,000 iteraciones** con entradas extremas — sin un solo NaN, neto-mayor-que-bruto, saldo imposible, transición ilegal ni libro desordenado. Es la base que respalda la latencia sub-ms en vivo.
+
+## 6) Property-based testing (fast-check · 2026-07)
+
+> En vez de casos puntuales, se **generan miles de entradas aleatorias** y se verifican INVARIANTES que deben cumplirse SIEMPRE. Corre en CI con el resto de la suite (`npm test`). Encontró (y se corrigió) un caso de tolerancia numérica en el chequeo de múltiplos a gran magnitud — exactamente para lo que existe el método.
+
+| Propiedad | Generador | Invariante |
+|---|---|---|
+| **`computeNetProfit`** | libros + fees + slippage aleatorios (~700 casos) | salidas finitas · `execBase ∈ [0, target]` · neto ≤ bruto · (sin costos ⇒ neto = bruto) |
+| **`precision`** | precios/cantidades/filtros aleatorios (~1500 casos) | precio múltiplo de tick · qty múltiplo de step · `ok ⇒ notional ≥ minNotional` · satoshis round-trip ≤ 1 sat |
+| **`rebalance`** | inventarios + configs aleatorios (~600 casos) | rutas válidas · montos>0 · respeta `maxTransfer` · `worthwhile ⇒ ≥ minTransfer` |
+
+**Conclusión:** las invariantes financieras y de ejecución se mantienen no solo en los casos elegidos a mano, sino sobre el espacio de entradas explorado por el generador. Complementa el harness determinista (§5).
 
 ---
 
 ## Cómo reproducir
 ```bash
-# 5) Estrés del núcleo (determinista, sin DB) — reporte completo con números
+# 5) Estrés del núcleo (determinista, sin DB) — reporte completo con números (7 dimensiones)
 npm run stress
-# Invariantes en CI (incluidas en la suite de 55 tests)
+# 6) Invariantes + property-based (fast-check) en CI — incluidas en la suite de 79 tests
 npm test
 
 # 1) Carga / throughput (worker en vivo)
