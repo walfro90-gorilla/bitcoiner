@@ -27,6 +27,9 @@ export interface RuntimeConfig {
   rebalanceRunwayTrades: number;
   rebalanceMinTransferUsd: number;
   rebalanceMaxTransferUsd: number;
+  // ABORT por inversión de spread (Pilar 2)
+  abortMinNetBps: number;
+  abortExtraSlippageBps: number;
 }
 
 export interface StrategyConfig {
@@ -66,6 +69,8 @@ export const RUNTIME: RuntimeConfig = {
   rebalanceRunwayTrades: 3,
   rebalanceMinTransferUsd: 500,
   rebalanceMaxTransferUsd: 50_000,
+  abortMinNetBps: 0, // aborta si el neto re-chequeado cae por debajo de 0 bps
+  abortExtraSlippageBps: 0, // movimiento adverso modelado/inyectado (0 = sin cambio)
 };
 // Nota: el modo maker es POR ESTRATEGIA (STRATEGIES[s].maker). maker_mode/regional_maker_mode
 // del runtime_config solo siembran el default por-estrategia (abajo) cuando no hay override en DB.

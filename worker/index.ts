@@ -22,7 +22,7 @@ import {
   loadStrategyConfig,
   loadWallets,
 } from './supabase';
-import { applyRuntime, applyStrategy, effectiveTargetBase, RUNTIME } from './runtimeConfig';
+import { applyRuntime, applyStrategy, effectiveTargetBase, RUNTIME, STRATEGIES } from './runtimeConfig';
 import { Rebalancer } from './rebalancer';
 import { bestAsk, bestBid, CandleAggregator, midPrice, type DetectedOpportunity, type FeeTable, type OrderBook, type Venue } from './core';
 import { getUsdtMxn, startFx } from './fx';
@@ -109,6 +109,34 @@ async function main(): Promise<void> {
     writer.queueOpportunity(buildOppRow(opp, t, false, reason));
   }
 
+  // ABORT por inversión de spread (Pilar 2: el mercado se mueve durante la ejecución).
+  // Re-evalúa el libro FRESCO con un movimiento adverso modelado (abort_extra_slippage_bps); si el
+  // neto cae por debajo de abort_min_net_bps, se ABORTA antes de comprometer (no se ejecuta a pérdida).
+  // Aplica a estrategias de dos venues con base BTC (spatial / cross_quote / statistical).
+  function recheckAbort(opp: DetectedOpportunity): boolean {
+    if (!opp.exec) return false;
+    if (opp.strategy !== 'spatial' && opp.strategy !== 'cross_quote' && opp.strategy !== 'statistical') return false;
+    const bb = engine.state.get(`${opp.buyVenue}:BTC/${opp.buyQuote}`);
+    const sb = engine.state.get(`${opp.sellVenue}:BTC/${opp.sellQuote}`);
+    if (!bb || !sb) return false; // sin libro fresco → conservador: no abortar
+    const crossQuote = opp.buyQuote !== opp.sellQuote;
+    const re = computeNetProfit(
+      {
+        buyBook: bb,
+        sellBook: sb,
+        fees: currentFees,
+        targetBase: opp.maxExecBase,
+        slippageBps: RUNTIME.slippageBps + RUNTIME.abortExtraSlippageBps,
+        dynamicSlippage: RUNTIME.dynamicSlippage,
+        withdrawalAmortizeTrades: RUNTIME.withdrawalAmortizeTrades,
+        depegBps: crossQuote ? RUNTIME.depegBps : 0,
+        maker: STRATEGIES[opp.strategy].maker,
+      },
+      0,
+    );
+    return re.netSpreadBps < RUNTIME.abortMinNetBps;
+  }
+
   function handleOpp(opp: DetectedOpportunity, t: OppTiming, force = false): void {
     const now = Date.now();
     // Gate de exchange deshabilitado (parametrización total): si cualquiera de las dos patas
@@ -133,6 +161,11 @@ async function main(): Promise<void> {
         persistSeen(opp, t, block, opp.profitable);
         return;
       }
+    }
+    // ABORT por inversión de spread: re-chequeo con libro fresco antes de comprometer la ejecución.
+    if (!force && recheckAbort(opp)) {
+      persistSeen(opp, t, 'spread_inverted', opp.profitable);
+      return;
     }
     // El inyector del ejemplo del reto (force=true) ejecuta sin topes de tamaño, para mostrar
     // el +$109.75 a 1 BTC completo. Las operaciones normales conservan sus caps.

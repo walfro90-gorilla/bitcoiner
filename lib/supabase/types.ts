@@ -146,6 +146,8 @@ export interface RuntimeConfigRow {
   rebalance_runway_trades: number;
   rebalance_min_transfer_usd: number;
   rebalance_max_transfer_usd: number;
+  abort_min_net_bps: number;
+  abort_extra_slippage_bps: number;
   updated_at: string;
 }
 

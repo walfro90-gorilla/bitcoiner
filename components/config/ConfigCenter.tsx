@@ -225,6 +225,8 @@ export function ConfigCenter() {
             <NumField label="Halt tras N pérdidas seguidas" value={rc?.consecutive_loss_halt ?? null} onSet={(v) => setRuntime('consecutive_loss_halt', v ?? 1)} />
             <NumField label="Cooldown tras halt" value={rc?.loss_cooldown_ms ?? null} onSet={(v) => setRuntime('loss_cooldown_ms', v ?? 0)} suffix="ms" width="w-20" />
             <NumField label="Feed stale (descarta libros viejos)" value={rc?.stale_ms ?? null} onSet={(v) => setRuntime('stale_ms', v ?? 1000)} suffix="ms" width="w-20" />
+            <NumField label="ABORT si neto re-chequeado <" value={rc?.abort_min_net_bps ?? null} onSet={(v) => setRuntime('abort_min_net_bps', v ?? 0)} suffix="bps" />
+            <NumField label="Movimiento adverso (fault → demo ABORT)" value={rc?.abort_extra_slippage_bps ?? null} onSet={(v) => setRuntime('abort_extra_slippage_bps', v ?? 0)} suffix="bps" />
           </Group>
 
           {/* Estrategias */}

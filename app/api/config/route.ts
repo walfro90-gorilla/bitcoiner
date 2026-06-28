@@ -19,6 +19,7 @@ const RUNTIME_FIELDS: Record<string, FieldType> = {
   stale_ms: 'number', maker_mode: 'boolean', regional_maker_mode: 'boolean', news_poll_ms: 'number',
   rebalance_auto: 'boolean', rebalance_min_operating_usd: 'number', rebalance_runway_trades: 'number',
   rebalance_min_transfer_usd: 'number', rebalance_max_transfer_usd: 'number',
+  abort_min_net_bps: 'number', abort_extra_slippage_bps: 'number',
 };
 const STRATEGY_FIELDS: Record<string, FieldType> = {
   enabled: 'boolean', min_net_bps_override: 'number_or_null', maker: 'boolean',

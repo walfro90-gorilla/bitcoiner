@@ -14,10 +14,11 @@ SQL versionado. **Regla:** nunca editar una migración aplicada; agregar una nue
 | **0013** | `0013_candles.sql` | `candles` (OHLC) | B · Charts velas |
 | **0014** | `0014_rebalance.sql` | `transfers` + cols `rebalance_*` en `runtime_config` (`rebalance_auto=false`) | C · Rebalanceo |
 | **0015** | `0015_dynamic_slippage.sql` | col `dynamic_slippage` en `runtime_config` (Tarea 1) | D/E · Slippage dinámico |
-| **0016** | `0016_orders_abort.sql` | `orders`, `order_events` (lifecycle); cols `abort_*`/`fault_*` (neutras) | D/E · Ejecución real-ready + ABORT |
+| **0016** | `0016_abort.sql` | cols `abort_min_net_bps` / `abort_extra_slippage_bps` en `runtime_config` (ABORT por inversión de spread) | D/E · Robustez (Pilar 2) |
 | **0017** | `0017_force_stale_venue.sql` | soporte para la demo de fault-injection (forzar feed stale) | G · Demo de robustez |
 
-> Aplicadas vía MCP: 0012, 0013, 0014, 0015. Pendientes: 0016, 0017.
+> Aplicadas vía MCP: 0012–0016. Pendientes: 0017.
+> La arquitectura `ExchangeAdapter` + máquina de estados de orden vive en `worker/execution/` (código, sin migración). La persistencia del lifecycle (`orders`/`order_events`) es stretch.
 
 **Realtime:** solo tablas chicas (`runtime_config`, `strategy_config`, `transfers`) entran a la publicación — NO `opportunities`/`order_events`/`candles` (restricción de egress free-tier).
 
