@@ -23,7 +23,7 @@ import {
   loadWallets,
 } from './supabase';
 import { applyRuntime, applyStrategy, effectiveTargetBase } from './runtimeConfig';
-import { bestAsk, bestBid, midPrice, type DetectedOpportunity, type FeeTable, type OrderBook, type Venue } from './core';
+import { bestAsk, bestBid, CandleAggregator, midPrice, type DetectedOpportunity, type FeeTable, type OrderBook, type Venue } from './core';
 import { getUsdtMxn, startFx } from './fx';
 
 type FeedBuilder = (pair: string, onBook: (b: OrderBook) => void) => Feed | null;
@@ -284,6 +284,8 @@ async function main(): Promise<void> {
 
   // 3b) Estado de mercado en vivo: upsert del mejor bid/ask por venue+pair (~cada 1.5s).
   //     Tabla acotada (1 fila por venue+pair) que alimenta la vista de mercado del dashboard.
+  //     De paso agrega el mid de binance:BTC/USDT en velas OHLC 1m para el chart institucional.
+  const candleAgg = new CandleAggregator(60_000);
   if (HAS_SUPABASE) {
     setInterval(() => {
       const t = Date.now();
@@ -313,6 +315,24 @@ async function main(): Promise<void> {
         });
       }
       if (rows.length) void writer.upsertMarketTicks(rows);
+
+      // Vela OHLC 1m del mid de binance:BTC/USDT (upsert de la vela en formación).
+      const ref = engine.state.get('binance:BTC/USDT');
+      const refMid = ref && t - ref.recvTs <= CONFIG.staleMs ? midPrice(ref) : null;
+      if (refMid && refMid > 0) {
+        candleAgg.add(refMid, t);
+        const cur = candleAgg.current();
+        if (cur)
+          void writer.upsertCandle({
+            pair: 'BTC/USDT',
+            t: new Date(cur.t * 1000).toISOString(),
+            o: cur.o,
+            h: cur.h,
+            l: cur.l,
+            c: cur.c,
+            updated_at: new Date(t).toISOString(),
+          });
+      }
     }, 1500);
   }
 

@@ -9,3 +9,4 @@ export * from './strategies/crossQuote';
 export * from './strategies/triangular';
 export * from './strategies/statistical';
 export * from './strategies/regional';
+export * from './candles';

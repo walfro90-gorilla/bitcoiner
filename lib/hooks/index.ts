@@ -356,3 +356,36 @@ export async function patchConfig(body: Record<string, unknown>): Promise<{ ok?:
   });
   return (await r.json()) as { ok?: boolean; error?: string };
 }
+
+/** Velas OHLC para lightweight-charts (time en segundos, orden ascendente). */
+export interface CandlePoint {
+  time: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+}
+export function useCandles(pair = 'BTC/USDT', limit = 240): CandlePoint[] {
+  const { data } = useSWR(
+    ['candles', pair, limit],
+    async () => {
+      const { data } = await sb()
+        .from('candles')
+        .select('t, o, h, l, c')
+        .eq('pair', pair)
+        .order('t', { ascending: false })
+        .limit(limit);
+      return ((data ?? []) as Array<{ t: string; o: number; h: number; l: number; c: number }>)
+        .map((r) => ({
+          time: Math.floor(Date.parse(r.t) / 1000),
+          open: Number(r.o),
+          high: Number(r.h),
+          low: Number(r.l),
+          close: Number(r.c),
+        }))
+        .reverse();
+    },
+    { refreshInterval: 4000 },
+  );
+  return data ?? [];
+}

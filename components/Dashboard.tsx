@@ -23,6 +23,7 @@ import { MakerTakerCompare } from './MakerTakerCompare';
 import { BacktestPanel } from './BacktestPanel';
 import { MarkovPanel } from './MarkovPanel';
 import { ConfigCenter } from './config/ConfigCenter';
+import { CandleChart } from './CandleChart';
 
 export function Dashboard() {
   const { botState } = useBotState();
@@ -85,6 +86,9 @@ export function Dashboard() {
 
       {/* 1 · Mercado en vivo */}
       <Section id="tour-mercado" n={1} title="Mercado en vivo" desc="Precios de los 5 exchanges y dónde podría haber arbitraje">
+        <div className="mb-3">
+          <CandleChart />
+        </div>
         <MarketView />
         <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
           <DepthLadder />

@@ -174,3 +174,15 @@ export interface ConfigAuditRow {
   old_value: unknown;
   new_value: unknown;
 }
+
+/** Vela OHLC 1m (migración 0013). `t` es timestamptz (inicio del bucket). */
+export interface CandleRow {
+  id: number;
+  pair: string;
+  t: string;
+  o: number;
+  h: number;
+  l: number;
+  c: number;
+  updated_at: string;
+}

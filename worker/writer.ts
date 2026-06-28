@@ -48,6 +48,13 @@ export class Writer {
     if (error) console.error('[db] market_ticks upsert:', error.message);
   }
 
+  /** Upsert de la vela OHLC en formación (1 fila por pair+minuto). Para el chart de velas. */
+  async upsertCandle(row: Row): Promise<void> {
+    if (!supabase) return;
+    const { error } = await supabase.from('candles').upsert(row, { onConflict: 'pair,t' });
+    if (error) console.error('[db] candles upsert:', error.message);
+  }
+
   private async flush(): Promise<void> {
     if (!supabase) {
       this.oppQueue.length = 0;
