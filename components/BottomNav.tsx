@@ -28,7 +28,7 @@ export function BottomNav() {
               key={it.href}
               href={it.href}
               className={cn(
-                'flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors',
+                'flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-ui',
                 active ? 'text-accent' : 'text-muted',
               )}
             >
@@ -39,7 +39,7 @@ export function BottomNav() {
         })}
         <button
           onClick={startTour}
-          className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-muted transition-colors active:text-accent"
+          className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-muted transition-ui active:text-accent"
         >
           <span className="text-lg leading-none">🎯</span>
           Tour

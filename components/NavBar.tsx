@@ -20,10 +20,10 @@ export function NavBar() {
           <span className="text-xl">🦅</span> Bitcoiner
         </Link>
         <div className="flex items-center gap-1">
-          {/* Botón de tour: siempre visible (en móvil también está en el bottom-nav) */}
+          {/* Botón de tour: solo en desktop (en móvil ya está en el bottom-nav → evita duplicado) */}
           <button
             onClick={startTour}
-            className="rounded-md px-2.5 py-1.5 text-sm font-medium text-accent transition-colors hover:bg-accent/10"
+            className="hidden rounded-md px-2.5 py-2 text-sm font-medium text-accent transition-ui hover:bg-accent/10 sm:inline-block"
             aria-label="Iniciar tour guiado"
           >
             🎯 <span className="hidden sm:inline">Tour</span>
@@ -37,8 +37,8 @@ export function NavBar() {
                   key={l.href}
                   href={l.href}
                   className={cn(
-                    'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-                    active ? 'bg-accent/15 text-accent' : 'text-muted hover:bg-foreground/5 hover:text-foreground',
+                    'rounded-md px-3 py-2 text-sm font-medium transition-ui',
+                    active ? 'bg-accent/15 text-accent' : 'text-muted hover:bg-foreground/10 hover:text-foreground',
                   )}
                 >
                   {l.label}

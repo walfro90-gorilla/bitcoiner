@@ -20,7 +20,7 @@ export function PnlChart() {
       >
         P&amp;L acumulado
       </SectionTitle>
-      <div className="h-64 p-2">
+      <div className="h-(--chart-h) p-3">
         {data.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 px-8 text-center">
             <div className="text-sm font-medium text-foreground/80">Sin operaciones todavía</div>

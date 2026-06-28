@@ -17,7 +17,7 @@ export function SpreadChart() {
       >
         Arbitraje estadístico (z-score)
       </SectionTitle>
-      <div className="h-56 p-2">
+      <div className="h-(--chart-h) p-3">
         {data.length === 0 ? (
           <div className="flex h-full items-center justify-center text-sm text-muted">
             Acumulando historial de spread…

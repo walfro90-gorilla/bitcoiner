@@ -70,10 +70,13 @@ export function Copilot() {
       <button
         onClick={() => setOpen((o) => !o)}
         data-tour="copilot"
-        className="fixed bottom-20 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-xl shadow-lg shadow-accent/20 transition-transform hover:scale-105 sm:bottom-5 sm:right-5"
+        className="focus-ring fixed bottom-20 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-xl shadow-xl shadow-accent/30 transition-transform hover:scale-105 sm:bottom-5 sm:right-5"
         aria-label="Copiloto IA"
       >
         {open ? '×' : '🦅'}
+        {!open && (
+          <span className="live-dot absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-up ring-2 ring-background" />
+        )}
       </button>
 
       {open && (
@@ -100,7 +103,7 @@ export function Copilot() {
                   <button
                     key={s}
                     onClick={() => send(s)}
-                    className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted hover:bg-foreground/5"
+                    className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted transition-ui hover:border-accent hover:bg-accent/15 hover:text-accent"
                   >
                     {s}
                   </button>
@@ -119,11 +122,11 @@ export function Copilot() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Pregúntale al bot…"
-              className="flex-1 rounded-md bg-card2 px-3 py-2 text-xs outline-none placeholder:text-muted"
+              className="focus-ring flex-1 rounded-md bg-card2 px-3 py-2 text-xs placeholder:text-muted"
             />
             <button
               disabled={busy}
-              className="rounded-md bg-accent px-3 py-2 text-xs font-semibold text-black disabled:opacity-50"
+              className="focus-ring rounded-md bg-accent px-3 py-2 text-xs font-semibold text-black transition-ui hover:bg-accent/90 disabled:opacity-50"
             >
               {busy ? '…' : '↑'}
             </button>

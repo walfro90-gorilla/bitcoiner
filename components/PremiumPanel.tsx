@@ -23,7 +23,7 @@ export function PremiumPanel() {
       >
         🇲🇽 Premio Bitso MX — BTC en Bitso vs precio global
       </SectionTitle>
-      <div className="h-56 p-2">
+      <div className="h-(--chart-h) p-3">
         {data.length === 0 ? (
           <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted">
             Esperando datos del premio… (requiere el worker con el feed BTC/MXN desplegado)

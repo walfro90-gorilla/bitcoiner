@@ -30,7 +30,7 @@ export function StatusHero() {
   const dot = tone === 'up' ? 'bg-up' : tone === 'accent' ? 'bg-accent' : 'bg-muted';
 
   return (
-    <Card className="overflow-hidden p-4 sm:p-5">
+    <Card className="overflow-hidden p-5 sm:p-6">
       <div className="flex items-start gap-3">
         <span className={`live-dot mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${dot}`} />
         <div className="min-w-0">

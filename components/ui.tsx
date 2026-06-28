@@ -4,7 +4,11 @@ import { useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
-  return <div className={cn('rounded-xl border border-border bg-card', className)}>{children}</div>;
+  return (
+    <div className={cn('rounded-(--radius-card) border border-border bg-card shadow-(--shadow-card)', className)}>
+      {children}
+    </div>
+  );
 }
 
 /**
@@ -83,7 +87,7 @@ export function InfoTip({ text }: { text: string }) {
         <span
           role="tooltip"
           style={{ left: pos.x, top: pos.y }}
-          className="pointer-events-none fixed z-[100] w-64 max-w-[80vw] -translate-x-1/2 rounded-lg border border-border bg-card p-3 text-left text-xs font-normal leading-relaxed text-foreground/80 shadow-2xl"
+          className="pointer-events-none fixed z-[100] w-64 max-w-[80vw] -translate-x-1/2 rounded-lg border border-border bg-card p-3 text-left text-xs font-normal leading-relaxed text-foreground-secondary shadow-(--shadow-modal)"
         >
           {text}
         </span>
@@ -112,7 +116,15 @@ const toneClass: Record<Tone, string> = {
   muted: 'text-muted bg-muted/10',
   accent: 'text-accent bg-accent/10',
   blue: 'text-blue bg-blue/10',
-  default: 'text-foreground/80 bg-foreground/10',
+  default: 'text-foreground-secondary bg-foreground/10',
+};
+
+// Tinte de fondo muy sutil por tono para las Stat cards del KPI grid (identidad visual sin saturar).
+const statTint: Partial<Record<Tone, string>> = {
+  up: 'bg-up/5',
+  down: 'bg-down/5',
+  accent: 'bg-accent/5',
+  blue: 'bg-blue/5',
 };
 
 export function Badge({ tone = 'default', children }: { tone?: Tone; children: ReactNode }) {
@@ -139,7 +151,7 @@ export function Stat({
   const valTone =
     tone === 'up' ? 'text-up' : tone === 'down' ? 'text-down' : tone === 'accent' ? 'text-accent' : 'text-foreground';
   return (
-    <Card className="p-4">
+    <Card className={cn('p-4', statTint[tone])}>
       <div className="flex items-center gap-1.5 text-xs text-muted">
         {label}
         {info ? <InfoTip text={info} /> : null}

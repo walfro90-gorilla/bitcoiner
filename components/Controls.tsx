@@ -40,13 +40,13 @@ export function Controls() {
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
       <button
         disabled={busy}
         onClick={() => post({ trading_enabled: !enabled })}
         className={cn(
-          'rounded-md px-3 py-1.5 text-xs font-semibold transition-colors',
-          enabled ? 'bg-up/15 text-up hover:bg-up/25' : 'bg-down/15 text-down hover:bg-down/25',
+          'rounded-md px-3 py-1.5 text-xs font-semibold transition-ui',
+          enabled ? 'bg-up/20 text-up hover:bg-up/25' : 'bg-down/20 text-down hover:bg-down/25',
         )}
       >
         {enabled ? '● Trading ON' : '■ Trading OFF'}
@@ -56,8 +56,8 @@ export function Controls() {
         onClick={() => post({ demo_mode: !demo })}
         title="DEMO ejecuta divergencias reales aunque el neto sea pequeño"
         className={cn(
-          'rounded-md px-3 py-1.5 text-xs font-semibold transition-colors',
-          demo ? 'bg-accent/15 text-accent hover:bg-accent/25' : 'bg-muted/15 text-muted hover:bg-muted/25',
+          'rounded-md px-3 py-1.5 text-xs font-semibold transition-ui',
+          demo ? 'bg-accent/20 text-accent hover:bg-accent/25' : 'bg-muted/20 text-muted hover:bg-muted/25',
         )}
       >
         {demo ? '◐ DEMO' : '○ Real'}
@@ -67,13 +67,13 @@ export function Controls() {
         <input
           value={bps}
           onChange={(e) => setBps(e.target.value)}
-          className="w-10 bg-transparent text-right font-mono text-xs outline-none"
+          className="focus-ring w-10 rounded-sm bg-transparent text-right font-mono text-xs"
         />
         <span className="text-xs text-muted">bps</span>
         <button
           disabled={busy}
           onClick={() => post({ min_net_bps: Number(bps) })}
-          className="ml-1 text-xs text-blue hover:underline"
+          className="focus-ring ml-1 rounded-(--radius-btn) px-1.5 py-0.5 text-xs font-medium text-blue transition-ui hover:bg-blue/15 disabled:opacity-50"
         >
           set
         </button>
@@ -83,7 +83,7 @@ export function Controls() {
         onClick={inject}
         data-tour="inject"
         title="Reproduce el ejemplo del reto ($70,000→$70,250) por el pipeline real: detección → simulación → P&L"
-        className="rounded-md bg-blue/15 px-3 py-1.5 text-xs font-semibold text-blue transition-colors hover:bg-blue/25 disabled:opacity-50"
+        className="rounded-md bg-blue/15 px-3 py-1.5 text-xs font-semibold text-blue transition-ui hover:bg-blue/25 disabled:opacity-50"
       >
         {injected ? '✓ inyectado' : '🧬 Reproducir ejemplo'}
       </button>

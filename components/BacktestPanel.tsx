@@ -49,7 +49,7 @@ export function BacktestPanel() {
         <Mini label="Premio máx" value={`${maxPremium.toFixed(1)} bps`} />
       </div>
 
-      <div className="h-48 p-2">
+      <div className="h-(--chart-h) p-3">
         {equity.length === 0 ? (
           <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted">
             Acumulando historial del premio… (el worker registra el premio cada segundo)

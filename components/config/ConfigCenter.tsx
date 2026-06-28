@@ -53,7 +53,7 @@ function NumField({
   }
 
   return (
-    <label className="flex items-center justify-between gap-2 py-1 text-xs">
+    <label className="flex items-center justify-between gap-2 py-1.5 text-xs">
       <span className="text-muted">{label}</span>
       <span className="flex items-center gap-1">
         <input
@@ -64,14 +64,14 @@ function NumField({
           inputMode="decimal"
           className={cn(
             width,
-            'rounded border border-border bg-transparent px-1.5 py-0.5 text-right font-mono outline-none focus:border-accent',
+            'focus-ring rounded border border-foreground/20 bg-foreground/5 px-1.5 py-0.5 text-right font-mono transition-ui focus:border-accent',
           )}
         />
         {suffix ? <span className="w-7 text-muted">{suffix}</span> : null}
         <button
           disabled={busy || !dirty}
           onClick={() => void set()}
-          className={cn('w-7 text-left', dirty ? 'text-blue hover:underline' : 'text-muted/30')}
+          className={cn('w-8 rounded-(--radius-btn) text-left transition-ui', dirty ? 'text-blue hover:bg-blue/15' : 'text-muted/30')}
         >
           set
         </button>
@@ -115,7 +115,7 @@ function Toggle({
 function Group({ title, children, open = false }: { title: string; children: React.ReactNode; open?: boolean }) {
   return (
     <details open={open} className="border-b border-border last:border-0">
-      <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-2.5 text-xs font-semibold text-foreground/80 hover:text-foreground [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-2.5 text-xs font-semibold text-foreground-secondary transition-ui hover:text-accent [&::-webkit-details-marker]:hidden">
         <span>{title}</span>
         <span className="text-muted">▾</span>
       </summary>

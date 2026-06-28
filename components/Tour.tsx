@@ -227,7 +227,7 @@ export function Tour() {
 
       {/* Tarjeta del paso */}
       <div
-        className="absolute w-[min(22rem,calc(100vw-1.5rem))] rounded-xl border border-border bg-card p-4 shadow-2xl"
+        className="absolute w-[min(22rem,calc(100vw-1.5rem))] rounded-xl border border-accent/30 bg-card p-4 shadow-(--shadow-modal) shadow-accent/10"
         style={cardStyle}
       >
         <div className="mb-1 flex items-center justify-between">
@@ -262,7 +262,7 @@ export function Tour() {
             {STEPS.map((_, i) => (
               <span
                 key={i}
-                className={`h-1.5 rounded-full transition-all ${i === idx ? 'w-4 bg-accent' : 'w-1.5 bg-foreground/20'}`}
+                className={`h-1.5 rounded-full transition-heavy ${i === idx ? 'w-4 bg-accent' : 'w-1.5 bg-foreground/20'}`}
               />
             ))}
           </div>
