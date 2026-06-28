@@ -4,20 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { computeNetProfit } from './profit';
-import type { FeeTable, Level, OrderBook, Quote, Venue } from './types';
-
-// Fees a 0.1% en todos los venues, sin withdrawal — para igualar el supuesto del reto.
-const fees10: FeeTable = {
-  binance: { takerBps: 10, makerBps: 10, withdrawalBtc: 0 },
-  okx: { takerBps: 10, makerBps: 10, withdrawalBtc: 0 },
-  kraken: { takerBps: 10, makerBps: 10, withdrawalBtc: 0 },
-  bitso: { takerBps: 10, makerBps: 10, withdrawalBtc: 0 },
-  bitstamp: { takerBps: 10, makerBps: 10, withdrawalBtc: 0 },
-};
-
-function book(venue: Venue, quote: Quote, bids: Level[], asks: Level[]): OrderBook {
-  return { venue, base: 'BTC', quote, pair: `BTC/${quote}`, bids, asks, exchangeTs: 0, recvTs: Date.now() };
-}
+import { book, fees10, feesMaker } from './__fixtures__/books';
 
 // ── El ejemplo del reto ──────────────────────────────────────────────
 // Comprar 1 BTC en Kraken a $70,000 (Ask) + fee $70.00 = costo $70,070.00
@@ -76,15 +63,6 @@ test('el slippage estimado reduce el neto', () => {
 });
 
 // ── Maker fills: mejor precio (entra al bid/ask) + fee maker menor ──
-// Fees con maker (5 bps) < taker (10 bps) para ver el doble beneficio.
-const feesMaker: FeeTable = {
-  binance: { takerBps: 10, makerBps: 5, withdrawalBtc: 0 },
-  okx: { takerBps: 10, makerBps: 5, withdrawalBtc: 0 },
-  kraken: { takerBps: 10, makerBps: 5, withdrawalBtc: 0 },
-  bitso: { takerBps: 10, makerBps: 5, withdrawalBtc: 0 },
-  bitstamp: { takerBps: 10, makerBps: 5, withdrawalBtc: 0 },
-};
-
 test('maker captura mejor neto que taker (mejor precio + fee menor)', () => {
   const buyBook = book('kraken', 'USDT', [{ price: 69990, size: 5 }], [{ price: 70000, size: 5 }]);
   const sellBook = book('binance', 'USDT', [{ price: 70250, size: 5 }], [{ price: 70260, size: 5 }]);
