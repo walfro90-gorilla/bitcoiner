@@ -34,6 +34,7 @@ export function Dashboard() {
   const { opportunities } = useOpportunities(60);
 
   const pnl = n(botState?.cumulative_pnl_usd);
+  const demo = botState?.demo_mode ?? false;
   const avgLat = opportunities.length
     ? Math.round(opportunities.reduce((s, o) => s + n(o.detection_latency_ms), 0) / opportunities.length)
     : 0;
@@ -63,8 +64,12 @@ export function Dashboard() {
           label="P&L acumulado"
           value={fmtUsd(pnl)}
           tone={pnl >= 0 ? 'up' : 'down'}
-          sub="neto simulado"
-          info="Ganancia o pérdida neta total (ya con comisiones) de todas las operaciones simuladas hasta ahora."
+          sub={demo ? 'DEMO: ejecuta todo (mecánica)' : 'neto simulado · solo rentables'}
+          info={
+            demo
+              ? 'En DEMO el bot ejecuta CADA divergencia (aunque pierda contra fees) para mostrar la mecánica completa: por eso el P&L puede ser negativo. En modo Real solo ejecuta lo rentable tras costos — ahí la disciplina deja el P&L plano o positivo.'
+              : 'Ganancia o pérdida neta total (ya con comisiones) de todas las operaciones simuladas hasta ahora.'
+          }
         />
         <Stat
           label="Operaciones"

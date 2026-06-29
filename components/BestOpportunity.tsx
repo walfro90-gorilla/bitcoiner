@@ -7,11 +7,11 @@ import { Badge, Card, SectionTitle, strategyTone } from './ui';
 
 function Mini({ label, value, tone }: { label: string; value: string; tone?: boolean }) {
   return (
-    <div className="rounded-lg border border-border bg-background/40 p-2">
+    <div className="rounded-lg border border-border bg-background/40 p-2.5">
       <div className="text-[10px] uppercase tracking-wide text-muted">{label}</div>
       <div
-        className={`font-mono text-sm tabular-nums ${
-          tone === undefined ? 'text-foreground/80' : tone ? 'text-up' : 'text-down'
+        className={`mt-0.5 font-mono text-base font-semibold tabular-nums ${
+          tone === undefined ? 'text-foreground/90' : tone ? 'text-up' : 'text-down'
         }`}
       >
         {value}

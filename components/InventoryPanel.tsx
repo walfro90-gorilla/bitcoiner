@@ -79,8 +79,8 @@ export function InventoryPanel() {
           <button
             onClick={() => void toggleAuto()}
             className={cn(
-              'rounded-md px-2.5 py-1 text-xs font-semibold transition-colors',
-              auto ? 'bg-up/15 text-up hover:bg-up/25' : 'bg-muted/15 text-muted hover:bg-muted/25',
+              'focus-ring rounded-md px-2.5 py-1 text-xs font-semibold transition-ui',
+              auto ? 'bg-up/20 text-up hover:bg-up/25' : 'bg-muted/20 text-muted hover:bg-muted/25',
             )}
           >
             {auto ? '🔄 AUTO ON' : '⏸ AUTO OFF'}

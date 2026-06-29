@@ -5,9 +5,9 @@
 > dashboard en modo **Real**, P&L reseteado si hace falta. Cada cambio del worker se ve en **~2.5 s**.
 
 ## Checklist (30 s)
-- [ ] Worker online en la VM · feeds frescos · dashboard abierto (`MAINTENANCE=off`).
-- [ ] Modo **Real**, P&L en $0 · pestaña del copiloto lista.
-- [ ] Sección 3 (**Configuración**) y Sección 5 (**Inventario & Rebalanceo**) a la vista.
+- [ ] Worker online en la VM · feeds frescos · dashboard abierto (con `?llave=gorila` el muro queda solo para el público).
+- [ ] Modo **Real**, P&L en **$0** — resetea si hace falta: página **/admin** o `curl -X POST <url>/api/admin/reset -H "x-admin-key: <ADMIN_KEY>"`. En **Real** el P&L queda plano (disciplina); así evitas el P&L negativo que muestra **DEMO** (que ejecuta todo a propósito).
+- [ ] Usa el **índice de secciones** (barra pegajosa) para saltar a **Configuración** / **Inventario** al vuelo · copiloto listo.
 
 ## Guion (≈3 min)
 

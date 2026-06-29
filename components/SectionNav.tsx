@@ -41,6 +41,13 @@ export function SectionNav() {
       className="sticky top-14 z-30 -mx-4 mb-4 border-b border-border bg-background/85 px-4 py-2 backdrop-blur"
     >
       <div className="mx-auto flex max-w-7xl gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="focus-ring shrink-0 rounded-full border border-border px-3 py-1 text-xs font-medium text-muted transition-ui hover:border-accent/30 hover:text-foreground"
+          aria-label="Ir al inicio"
+        >
+          ↑ Inicio
+        </button>
         {SECTIONS.map((s) => (
           <button
             key={s.id}
