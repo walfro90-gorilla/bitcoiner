@@ -1,5 +1,5 @@
 // app/api/chat/route.ts — Copiloto IA. Ensambla contexto en vivo desde Supabase y responde en streaming.
-// LLM pluggable (Gemini por defecto, Anthropic opcional). Fuera del hot-path: solo lee la DB.
+// LLM pluggable (en prod: Groq vía branch OpenAI-compatible; Gemini/Anthropic opcionales). Fuera del hot-path: solo lee la DB.
 import { createAdminClient } from '@/lib/supabase/admin';
 import { hasLlmKey, streamChatWithTools, type ChatMessage } from '@/lib/llm';
 import { runCopilotTool, toolSchemas, type ReadSb } from '@/lib/copilot/tools';

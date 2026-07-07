@@ -105,7 +105,7 @@
 
 **El dilema:** cada exchange extra = más oportunidades pero más RAM, conexiones y riesgo de rate-limit.
 
-**Qué elegimos:** **5 venues** (Binance, OKX, Kraken, Bitso, Bitstamp) — el punto dulce para una VM de 2 GB, con reconexión por backoff para no provocar bans. Añadir un 6º es trivial si el hardware lo permite.
+**Qué elegimos:** **7 venues** (Binance, OKX, Kraken, Bitso, Bitstamp, Coinbase, Bybit) — con reconexión por backoff para no provocar bans. Empezamos con 5 y sumar Coinbase y Bybit (libro L2 incremental snapshot/delta) fue de bajo costo; añadir más es directo si el hardware lo permite.
 
 ---
 

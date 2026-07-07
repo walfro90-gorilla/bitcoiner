@@ -167,6 +167,12 @@ export function ConfigCenter() {
         ⚙️ Centro de Configuración
       </SectionTitle>
 
+      <p className="border-b border-border bg-accent/5 px-4 py-2 text-xs leading-relaxed text-muted">
+        <span className="font-semibold text-accent">Parametrización total en vivo:</span> cada cambio lo adopta el worker
+        en ~2.5s sin reiniciar y queda <span className="text-foreground/80">auditado y es reversible</span> (mira el 📝
+        Historial de cambios abajo).
+      </p>
+
       {isLoading && !config ? (
         <div className="px-4 py-6 text-center text-xs text-muted">Cargando configuración…</div>
       ) : (

@@ -89,7 +89,7 @@ Se evaluaron **7 dimensiones** (4 en vivo contra Supabase + 3 deterministas in-p
 ```bash
 # 5) Estrés del núcleo (determinista, sin DB) — reporte completo con números (7 dimensiones)
 npm run stress
-# 6) Invariantes + property-based (fast-check) en CI — incluidas en la suite de 79 tests
+# 6) Invariantes + property-based (fast-check) en CI — incluidas en la suite de 82 tests
 npm test
 
 # 1) Carga / throughput (worker en vivo)

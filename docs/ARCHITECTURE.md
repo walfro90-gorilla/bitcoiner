@@ -14,8 +14,8 @@
  │  execution/ (Adapter+FSM)     │       │ candles · transfers · bot_state│   │ ConfigCenter     │
  │  news (LLM, fuera hot-path)   │       │ news_signals · config_audit    │   │ copiloto /api    │
  └──────────────────────────────┘       └───────────────────────────────┘   └──────────────────┘
-        ▲ WS a 5 exchanges                         ▲   Realtime (push)  │
-        Binance·OKX·Kraken·Bitso·Bitstamp          └────────────────────┘
+        ▲ WS a 7 exchanges                         ▲   Realtime (push)  │
+        Binance·OKX·Kraken·Bitso·Bitstamp·Coinbase·Bybit  └───────────┘
 ```
 
 - **Núcleo compartido** (`lib/core`, TS puro): tipos, VWAP/order book, fees, **profit** (`computeNetProfit`), 5 estrategias, **rebalance**, **precision**, **candles**, markov. Lo usan worker **y** web (p.ej. el InventoryPanel calcula el plan con el mismo motor que ejecuta el worker).

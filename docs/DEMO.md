@@ -12,7 +12,7 @@
 ## Guion (≈3 min)
 
 **1 · Velocidad y mercado (Pilar 1 velocidad) — 25 s.**
-Señala el **chart de velas** (lightweight-charts) + la **matriz de arbitraje** + el **LivePing** (latencia de detección en vivo, <1 ms). *"5 exchanges por WebSocket, detección event-driven sub-milisegundo."*
+Señala el **chart de velas** (lightweight-charts) + la **matriz de arbitraje** + el **LivePing** (latencia de detección en vivo, <1 ms). *"7 exchanges por WebSocket, detección event-driven sub-milisegundo."*
 
 **2 · Precisión: el corazón (Pilar 2 precisión) — 30 s.**
 "Oportunidades vistas" subiendo vs P&L en $0. *"Cero ejecuciones no es un bug, es la precisión: calculamos el neto real (VWAP + fees + slippage + withdrawal) y descartamos lo no rentable."* Abre **🧬 Reproducir ejemplo** → +$109.75 en el blotter.

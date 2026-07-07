@@ -14,7 +14,7 @@
 
 ## 🎬 Qué estás viendo (en 30 segundos)
 
-Un **worker** corriendo en un servidor de **Frankfurt** mantiene conexiones **WebSocket** abiertas a 4 exchanges y procesa cada cambio de precio en **<1 ms**. Cuando detecta que el precio de compra (ask) en un exchange es menor al de venta (bid) en otro, calcula si es rentable **después de todos los costos** y, si lo es, **simula la operación**. Todo se guarda en Supabase y este dashboard lo refleja **en vivo** (sin recargar). El **copiloto IA** explica lo que pasa y las **noticias** ajustan el riesgo.
+Un **worker** corriendo en un servidor de **Frankfurt** mantiene conexiones **WebSocket** abiertas a 7 exchanges y procesa cada cambio de precio en **<1 ms**. Cuando detecta que el precio de compra (ask) en un exchange es menor al de venta (bid) en otro, calcula si es rentable **después de todos los costos** y, si lo es, **simula la operación**. Todo se guarda en Supabase y este dashboard lo refleja **en vivo** (sin recargar). El **copiloto IA** explica lo que pasa y las **noticias** ajustan el riesgo.
 
 > 💡 **Toggle DEMO/Real (arriba a la derecha):** en **Real**, el bot solo ejecuta operaciones con ganancia neta ≥ umbral — y como los mercados son eficientes, *correctamente* descarta casi todas (esa es la precisión). En **DEMO** ejecuta cada divergencia real aunque el neto sea chico, para mostrar la mecánica (fills, parciales, P&L) en vivo.
 
@@ -187,14 +187,14 @@ Un buen sistema no esconde sus compensaciones: las hace explícitas y deja una *
 | **Selectividad** | Umbral alto = seguro · bajo = más trades | `min_net_bps` configurable en vivo (default 5) |
 | **Datos vs Costo DB** | Guardar todo · retención agresiva | `pg_cron` → ~6% del free tier |
 - **5º exchange (Bitstamp)** + **inyector del ejemplo del reto**: el botón "🧬 Reproducir ejemplo" del dashboard empuja el escenario $70,000→$70,250 por el pipeline real (detección → simulación → P&L), para que el jurado vea el caso del brief ejecutarse en vivo.
-- **Tests**: `npm test` corre **64 unit tests** + un harness de estrés determinista (`npm run stress`). Cubren motor neto (incl. **+$109.75/BTC** y maker/taker), Markov, CRC32, **precisión fixed-point**, **rebalanceo**, **velas OHLC**, **parametrización en vivo**, **FSM de orden + SimulatedAdapter**, **executor + circuit breakers**, **integración del motor** (gating por estrategia) e **invariantes bajo carga** (>600k iteraciones, 0 violaciones). Docs: [`PRUEBAS.md`](docs/PRUEBAS.md) · [`PRUEBAS-ESTRES.md`](docs/PRUEBAS-ESTRES.md) · [`DECISIONS.md`](docs/DECISIONS.md) · [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`DEMO.md`](docs/DEMO.md) · [`VIDEOCALL.md`](docs/VIDEOCALL.md).
+- **Tests**: `npm test` corre **82 unit tests** + un harness de estrés determinista (`npm run stress`). Cubren motor neto (incl. **+$109.75/BTC** y maker/taker), Markov, CRC32, **precisión fixed-point**, **rebalanceo**, **velas OHLC**, **parametrización en vivo**, **FSM de orden + SimulatedAdapter**, **executor + circuit breakers**, **integración del motor** (gating por estrategia) e **invariantes bajo carga** (>600k iteraciones, 0 violaciones). Docs: [`PRUEBAS.md`](docs/PRUEBAS.md) · [`PRUEBAS-ESTRES.md`](docs/PRUEBAS-ESTRES.md) · [`DECISIONS.md`](docs/DECISIONS.md) · [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`DEMO.md`](docs/DEMO.md) · [`VIDEOCALL.md`](docs/VIDEOCALL.md).
 - **Capa analítica (web-only, datos reales)**: comparador **maker/taker**, **backtest** histórico del premio Bitso y **cadena de Markov** de régimen — todo en el navegador sobre datos ya capturados, sin tocar el worker ni el hot-path. Trade-offs en [`docs/TRADE-OFFS.md`](docs/TRADE-OFFS.md).
 
 ---
 
 ## 🎤 Guion de pitch (2 minutos)
 
-1. **(15s)** "Bitcoiner detecta arbitraje de Bitcoin en tiempo real entre 4 exchanges. El cerebro corre en Frankfurt con WebSockets; este dashboard refleja todo en vivo."
+1. **(15s)** "Bitcoiner detecta arbitraje de Bitcoin en tiempo real entre 7 exchanges. El cerebro corre en Frankfurt con WebSockets; este dashboard refleja todo en vivo."
 2. **(30s)** Señala las **Oportunidades** llegando y la **latencia <1 ms**. "Detectamos cada divergencia en sub-milisegundo."
 3. **(30s)** Abre una operación en el **blotter**: "Calculamos el neto real — fees, withdrawal, slippage — y caminamos el order book (VWAP), con **órdenes parciales** si falta liquidez."
 4. **(20s)** Toggle **DEMO → Real**: "En real el bot **descarta** lo que no es rentable tras costos. Esa precisión es la diferencia entre un bot promedio y uno bueno." (Cambio se aplica al worker remoto en 2.5 s.)

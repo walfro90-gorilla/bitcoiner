@@ -47,7 +47,7 @@ export function MarketGrid() {
             {rows.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-3 py-8 text-center text-sm text-muted">
-                  Esperando datos del worker… (requiere redeploy con el muestreo de BBO activado)
+                  Esperando al worker… (los datos de mercado aparecen ~2s después de conectar los feeds)
                 </td>
               </tr>
             )}

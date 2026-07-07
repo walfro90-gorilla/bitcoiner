@@ -41,14 +41,14 @@ export default function EscuelaPage() {
           </p>
           <p>
             Hay arbitraje cuando el <strong>Ask de un exchange &lt; Bid de otro</strong>: compras barato en el primero y
-            vendes caro en el segundo. Bitcoiner vigila esto en 4 exchanges en tiempo real.
+            vendes caro en el segundo. Bitcoiner vigila esto en 7 exchanges en tiempo real.
           </p>
         </Lesson>
 
         <Lesson n={3} title="El order book y el VWAP (precio real)">
           <p>
             El <strong>order book</strong> tiene muchos niveles de precio con distinto volumen. Si quieres comprar mucho,
-            "te comes" varios niveles y tu precio promedio empeora: eso es el <strong>VWAP</strong> (precio promedio
+            “te comes” varios niveles y tu precio promedio empeora: eso es el <strong>VWAP</strong> (precio promedio
             ponderado por volumen).
           </p>
           <p>
@@ -78,7 +78,7 @@ export default function EscuelaPage() {
         <Lesson n={5} title="¿Por qué es tan difícil? (el truco)">
           <p>
             Entre exchanges líquidos, las comisiones <strong>taker (~0.1% por lado = ~0.2% ida y vuelta)</strong> suelen
-            ser <strong>mayores</strong> que el spread real (&lt;0.01%). Resultado: el arbitraje "fácil" casi nunca es
+            ser <strong>mayores</strong> que el spread real (&lt;0.01%). Resultado: el arbitraje “fácil” casi nunca es
             rentable.
           </p>
           <p>
