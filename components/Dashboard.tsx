@@ -158,8 +158,28 @@ export function Dashboard() {
         </div>
       </Section>
 
-      <footer className="mt-8 pb-4 text-center text-xs text-muted">
-        Bitcoiner — Coding Challenge México · datos de mercado en vivo (Binance · OKX · Kraken · Bitso · Bitstamp)
+      <footer className="mt-8 pb-6 text-center">
+        <p className="text-xs text-muted">
+          Bitcoiner — Coding Challenge México · datos de mercado en vivo (Binance · OKX · Kraken · Bitso · Bitstamp)
+        </p>
+
+        {/* Marca de la casa — GorillaLabs 🦍 */}
+        <a
+          href="https://www.gorillabs.dev/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Desarrollado por Laboratorios Gorila — visita gorillabs.dev"
+          className="group mt-4 inline-flex items-center gap-2 rounded-full border border-border bg-card2/60 px-4 py-1.5 text-xs text-muted shadow-(--shadow-card) transition-ui hover:border-accent/50 hover:bg-accent/10 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
+          <span className="text-sm transition-transform duration-200 group-hover:-rotate-6 group-hover:scale-110">🦍</span>
+          <span>
+            Desarrollado por{' '}
+            <span className="font-semibold tracking-tight text-foreground transition-colors group-hover:text-accent">
+              Laboratorios Gorila
+            </span>
+          </span>
+          <span aria-hidden className="text-accent transition-transform duration-200 group-hover:translate-x-0.5">↗</span>
+        </a>
       </footer>
 
       <Copilot />
