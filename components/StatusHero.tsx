@@ -23,7 +23,7 @@ export function StatusHero() {
     tone = 'accent';
   } else {
     estado =
-      'Modo Real: el bot vigila 5 exchanges y solo ejecuta si hay ganancia tras todos los costos. Si ves 0 operaciones, es disciplina — no un error.';
+      'Modo Real: el bot vigila 7 exchanges y solo ejecuta si hay ganancia tras todos los costos. Si ves 0 operaciones, es disciplina — no un error.';
     tone = 'up';
   }
 

@@ -96,7 +96,7 @@ export function Dashboard() {
       <SectionNav />
 
       {/* 1 · Mercado en vivo */}
-      <Section id="tour-mercado" n={1} title="Mercado en vivo" desc="Precios de los 5 exchanges y dónde podría haber arbitraje">
+      <Section id="tour-mercado" n={1} title="Mercado en vivo" desc="Precios de los 7 exchanges y dónde podría haber arbitraje">
         <div className="mb-3">
           <CandleChart />
         </div>

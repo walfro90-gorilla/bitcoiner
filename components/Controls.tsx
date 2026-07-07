@@ -1,7 +1,20 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useBotState } from '@/lib/hooks';
+import { getSupabaseBrowser } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
+
+/** Conteo exacto de trades — para confirmar que el inyector realmente ejecutó (no solo que se encoló). */
+async function tradesCount(): Promise<number | null> {
+  try {
+    const { count } = await getSupabaseBrowser().from('trades').select('*', { count: 'exact', head: true });
+    return count ?? 0;
+  } catch {
+    return null; // p.ej. Supabase restringido (402): no podemos confirmar → no mentimos con un ✓
+  }
+}
+
+type InjectState = 'idle' | 'running' | 'done' | 'timeout';
 
 export function Controls() {
   const { botState, mutate } = useBotState();
@@ -14,7 +27,7 @@ export function Controls() {
 
   const enabled = botState?.trading_enabled ?? true;
   const demo = botState?.demo_mode ?? true;
-  const [injected, setInjected] = useState(false);
+  const [inject, setInject] = useState<InjectState>('idle');
 
   async function post(patch: Record<string, unknown>) {
     setBusy(true);
@@ -27,17 +40,43 @@ export function Controls() {
     setBusy(false);
   }
 
-  async function inject() {
+  // El botón solo dispara: incrementa inject_seq; el WORKER (poll ~2.5s) reproduce el ejemplo y escribe el trade.
+  // Por eso NO declaramos éxito al enviar: sondeamos el conteo de trades y solo confirmamos si de verdad subió.
+  async function runInject() {
     setBusy(true);
+    setInject('running');
+    const before = await tradesCount();
     await fetch('/api/controls', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ inject: true }),
     });
     setBusy(false);
-    setInjected(true);
-    setTimeout(() => setInjected(false), 4000);
+
+    let landed = false;
+    if (before !== null) {
+      for (let i = 0; i < 9; i++) {
+        await new Promise((r) => setTimeout(r, 800)); // ~7.2s de ventana (cubre el poll de 2.5s del worker)
+        const now = await tradesCount();
+        if (now !== null && now > before) {
+          landed = true;
+          break;
+        }
+      }
+    }
+    if (landed) await mutate();
+    setInject(landed ? 'done' : 'timeout');
+    setTimeout(() => setInject('idle'), 5000);
   }
+
+  const injectLabel =
+    inject === 'running'
+      ? '⏳ Ejecutando…'
+      : inject === 'done'
+        ? '✓ +$109.75 ejecutado'
+        : inject === 'timeout'
+          ? '⏳ Esperando al worker…'
+          : '🧬 Reproducir ejemplo';
 
   return (
     <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
@@ -79,13 +118,20 @@ export function Controls() {
         </button>
       </div>
       <button
-        disabled={busy}
-        onClick={inject}
+        disabled={busy || inject === 'running'}
+        onClick={runInject}
         data-tour="inject"
-        title="Reproduce el ejemplo del reto ($70,000→$70,250) por el pipeline real: detección → simulación → P&L"
-        className="rounded-md bg-blue/15 px-3 py-1.5 text-xs font-semibold text-blue transition-ui hover:bg-blue/25 disabled:opacity-50"
+        title="Reproduce el ejemplo del reto ($70,000→$70,250) por el pipeline real: detección → simulación → P&L. Confirma la ejecución real (no solo el envío)."
+        className={cn(
+          'rounded-md px-3 py-1.5 text-xs font-semibold transition-ui disabled:opacity-50',
+          inject === 'done'
+            ? 'bg-up/15 text-up hover:bg-up/25'
+            : inject === 'timeout'
+              ? 'bg-accent/15 text-accent hover:bg-accent/25'
+              : 'bg-blue/15 text-blue hover:bg-blue/25',
+        )}
       >
-        {injected ? '✓ inyectado' : '🧬 Reproducir ejemplo'}
+        {injectLabel}
       </button>
     </div>
   );

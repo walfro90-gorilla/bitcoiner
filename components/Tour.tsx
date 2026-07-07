@@ -32,7 +32,7 @@ const STEPS: Step[] = [
     selector: '#tour-mercado',
     emoji: '🏦',
     title: 'El mercado en vivo',
-    body: 'Los precios de 5 exchanges a la vez, y una matriz que pinta en verde dónde habría diferencia de precio aprovechable. Todo se actualiza solo.',
+    body: 'Los precios de 7 exchanges a la vez, y una matriz que pinta en verde dónde habría diferencia de precio aprovechable. Todo se actualiza solo.',
   },
   {
     selector: '#tour-ejecucion',
