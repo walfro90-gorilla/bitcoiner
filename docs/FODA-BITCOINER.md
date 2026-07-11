@@ -1,7 +1,7 @@
 # 🧭 FODA — Bitcoiner · Checklist accionable
 
 > Análisis FODA del bot de arbitraje, convertido en checklist. Marcado `[x]` = hecho/confirmado · `[ ]` = pendiente.
-> Última actualización: **2026-05-30**. Estado: desplegado (UpCloud EU + Vercel + Supabase), modo **Real**, P&L $0, 5 exchanges en vivo.
+> Última actualización: **2026-07-11**. Estado: desplegado (UpCloud EU + Vercel + Supabase), modo **Real**, P&L $0, 7 exchanges en vivo.
 
 ---
 

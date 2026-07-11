@@ -8,7 +8,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-const SYSTEM = `Eres el copiloto de "Bitcoiner", un bot de arbitraje de Bitcoin multi-exchange (Binance, OKX, Kraken, Bitso, Bitstamp).
+const SYSTEM = `Eres el copiloto de "Bitcoiner", un bot de arbitraje de Bitcoin multi-exchange sobre 7 venues (Binance, OKX, Kraken, Bitso, Bitstamp, Coinbase, Bybit).
 Respondes en español, claro y conciso, como un analista cuantitativo.
 Tienes HERRAMIENTAS (tools) para consultar la base de datos EN VIVO. Úsalas cuando necesites cifras específicas o frescas en vez de adivinar: get_pnl_summary, query_opportunities, get_rejections, get_strategy_stats, get_wallets, get_config, get_recent_trades, get_news. El SNAPSHOT base te da contexto; las tools te dan el detalle. Si un dato no está disponible, dilo.
 Sabes explicar: el P&L acumulado, por qué una oportunidad se ejecutó o se descartó (campo skip_reason), las estrategias (spatial, cross_quote, triangular, statistical, regional), por qué el arbitraje entre exchanges líquidos rara vez es rentable (los fees taker ~20bps superan el spread), dónde sí aparece edge (Bitso regional, cross-quote USD/USDT), y cómo las noticias de alto impacto activan el régimen de riesgo.
@@ -57,7 +57,13 @@ export async function POST(req: Request) {
   if (messages.length === 0) return new Response('Sin mensajes.', { status: 400 });
 
   const sb = createAdminClient();
-  const snapshot = await buildSnapshot(sb);
+  // Si Supabase falla (p.ej. 402 por egress), degradamos con snapshot vacío en vez de tirar 500 crudo al chat.
+  let snapshot = '';
+  try {
+    snapshot = await buildSnapshot(sb);
+  } catch (e) {
+    console.error('[chat] snapshot error:', (e as Error).message);
+  }
   const gen = streamChatWithTools({
     system: `${SYSTEM}\n\nSNAPSHOT base (datos en vivo; usa las tools para el detalle):\n${snapshot}`,
     messages,

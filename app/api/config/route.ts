@@ -106,17 +106,23 @@ export async function POST(req: Request) {
     const snap = (prof as { snapshot?: Record<string, unknown> } | null)?.snapshot;
     if (!snap) return NextResponse.json({ error: 'perfil no encontrado' }, { status: 404 });
     const now = new Date().toISOString();
-    if (snap.bot_state && typeof snap.bot_state === 'object')
-      await sb.from('bot_state').update({ ...(snap.bot_state as object), updated_at: now }).eq('id', true);
+    if (snap.bot_state && typeof snap.bot_state === 'object') {
+      const { error } = await sb.from('bot_state').update({ ...(snap.bot_state as object), updated_at: now }).eq('id', true);
+      if (error) return NextResponse.json({ error: `apply_profile: bot_state — ${error.message}` }, { status: 500 });
+    }
     if (snap.runtime_config && typeof snap.runtime_config === 'object') {
       const { id: _id, updated_at: _u, ...rcFields } = snap.runtime_config as Record<string, unknown>;
       void _id; void _u;
-      await sb.from('runtime_config').update({ ...rcFields, updated_at: now }).eq('id', true);
+      const { error } = await sb.from('runtime_config').update({ ...rcFields, updated_at: now }).eq('id', true);
+      if (error) return NextResponse.json({ error: `apply_profile: runtime_config — ${error.message}` }, { status: 500 });
     }
     for (const row of (Array.isArray(snap.strategy_config) ? snap.strategy_config : []) as Array<Record<string, unknown>>) {
       const { strategy, updated_at: _su, ...stFields } = row;
       void _su;
-      if (strategy) await sb.from('strategy_config').update({ ...stFields, updated_at: now }).eq('strategy', strategy);
+      if (strategy) {
+        const { error } = await sb.from('strategy_config').update({ ...stFields, updated_at: now }).eq('strategy', strategy);
+        if (error) return NextResponse.json({ error: `apply_profile: strategy_config(${String(strategy)}) — ${error.message}` }, { status: 500 });
+      }
     }
     await writeAudit(sb, 'profile', `apply:${name}`, null, null);
     return NextResponse.json({ ok: true });

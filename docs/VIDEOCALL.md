@@ -35,7 +35,7 @@ OKX/Kraken incrementales con **CRC32** verificado cada tick; ante mismatch, resy
 La interfaz `ExchangeAdapter` ya existe con dos implementaciones (`SimulatedAdapter` default, `LiveAdapter` Binance Spot Testnet con REST firmado HMAC) y máquina de estados de orden. Falta capital/KYC y manejo de errores de órdenes reales; el diseño ya está. *(Abrir `worker/execution/`.)*
 
 **— ¿Cómo sé que es robusto / no inventan los números?**
-82 tests unitarios + un harness de estrés determinista: ~96k evaluaciones/s y **0 violaciones de invariantes en >600k iteraciones** (neto≤bruto, precisión exacta, rebalanceo válido, OHLC coherente). *(Abrir `docs/PRUEBAS-ESTRES.md` §5 + `npm run stress`.)*
+82 tests unitarios + un harness de estrés determinista: ~96k evaluaciones/s y **0 violaciones de invariantes en ~890k iteraciones** (neto≤bruto, precisión exacta, rebalanceo válido, OHLC coherente). *(Abrir `docs/PRUEBAS-ESTRES.md` §5 + `npm run stress`.)*
 
 **— ¿Por qué Bitso / México?**
 Es el edge **genuinamente rentable**: premio/descuento regional MXN. Modelamos su costo real (fee MXN + spread FX). Diferenciador.
