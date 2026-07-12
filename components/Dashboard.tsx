@@ -21,6 +21,7 @@ import { ExampleAnatomy } from './ExampleAnatomy';
 import { RejectionAnalysis } from './RejectionAnalysis';
 import { MakerTakerCompare } from './MakerTakerCompare';
 import { BacktestPanel } from './BacktestPanel';
+import { MarketReplay } from './MarketReplay';
 import { MarkovPanel } from './MarkovPanel';
 import { ConfigCenter } from './config/ConfigCenter';
 import { CandleChart } from './CandleChart';
@@ -137,6 +138,9 @@ export function Dashboard() {
         <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
           <PremiumPanel />
           <BacktestPanel />
+        </div>
+        <div className="mt-3">
+          <MarketReplay />
         </div>
         <div className="mt-3">
           <MarkovPanel />
