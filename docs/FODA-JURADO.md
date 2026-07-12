@@ -7,7 +7,7 @@ Análisis honesto de dónde está el proyecto **hoy** (12-jul-2026, cierre de la
 > 🆕 **Actualización 12-jul (noche) — 3 upgrades ya implementados y EN PRODUCCIÓN** (verificados en vivo con navegador + MCP):
 > - **Replay del mercado** («rewind the market», fixture real empacado, cero egress) → la oportunidad #1 hecha realidad; sube robustez + visualización con la narrativa de honestidad jugable.
 > - **Copiloto con escritura guardada** (`set_config`) → las 96 variables se ajustan por lenguaje natural con el mismo whitelist + audit; resuelve la debilidad «copiloto solo lectura» (probado escribiendo `min_net 5→12→5`, auditado).
-> - **Observabilidad del worker** (badge de salud honesto: en línea/retraso/sin conexión) + triggers de CI restaurados → mitiga parcialmente el SPOF (la HA real con 2ª VM sigue pendiente, ver cierre).
+> - **Observabilidad del worker** (badge de salud honesto) + **elección de líder por lease** (migración 0020: un 2º worker en hot-standby toma el relevo sin writes duplicados — exclusión mutua probada en vivo) + triggers de CI restaurados → **el mecanismo anti-SPOF ya está**; solo falta **provisionar la 2ª VM** para activarlo (`WORKER_ELECTION=on`).
 >
 > Lo de abajo se mantiene para trazabilidad; las líneas afectadas quedan anotadas.
 
@@ -89,7 +89,7 @@ Cosméticos, no rompen build ni runtime. Se declaran porque prometimos no escond
 
 | Amenaza | Criterio | Probabilidad | Mitigación |
 |---|---|---|---|
-| Worker apagado/caído durante la revisión → dashboard sin datos frescos | 2, 4 | **Media** | Warm-up 30 min antes de la ventana + `pm2 save`; checklist de liveness (7/7 venues frescos) antes del Meet. `pm2 startup` en backlog inmediato. |
+| Worker apagado/caído durante la revisión → dashboard sin datos frescos | 2, 4 | **Media** | Warm-up 30 min antes + `pm2 save`; checklist de liveness (7/7 venues frescos). **Elección de líder ya lista** (`WORKER_ELECTION`): al provisionar una 2ª VM en standby, el relevo es automático (~15s) sin writes duplicados. |
 | Supabase re-restringe por egress → data-plane caído | 2, 4 | Baja | Ya migrado a **Pro (250 GB)**; `opportunities` fuera de Realtime; ciclo de facturación vigilado. |
 | Muro de mantenimiento activo → el jurado abre la URL pelada y ve el gorila | 4 | Media | `MAINTENANCE=off` durante toda la ventana de revisión (o compartir la URL con `?llave`). Item #1 del checklist pre-jurado. |
 | Demo en modo DEMO driftea el P&L (ejecuta todo, neto chico) | 3, 4 | Media | Presentar en modo **Real** (P&L honesto en $0) + recipe verificado `stop → reset → start` si se quiere demostrar DEMO y limpiar después. |
@@ -102,6 +102,6 @@ Cosméticos, no rompen build ni runtime. Se declaran porque prometimos no escond
 
 1. ✅ **Replay del mercado — HECHO hoy** (versión fixture real, cero egress). El siguiente nivel: reproducir desde `book_snapshots` capturados en vivo (requiere primero domar el egress del free-tier).
 2. ✅ **Copiloto con escritura guardada — HECHO hoy** (`set_config`, mismo whitelist + audit que el panel). Diferenciador #1 potenciado por IA, verificado escribiendo en vivo.
-3. **Ops de producción real: 2ª instancia del worker + monitoring/alertas** (pm2 startup y CI ya restaurados hoy) — lo menos vistoso y lo más importante: elimina el **SPOF**, la amenaza más probable. Un bot de arbitraje que no sobrevive un reboot no está terminado, y lo sabemos. Es el **#1 pendiente**.
+3. ✅ **Elección de líder anti-SPOF — HECHA hoy** (lease en Postgres, migración 0020; solo el líder escribe; exclusión mutua + takeover probados en vivo). El mecanismo para una 2ª instancia en hot-standby ya existe (`WORKER_ELECTION=on`); lo único que resta es **provisionar la 2ª VM** + monitoring — puro ops, no código. Un bot que no sobrevive un reboot no está terminado; **ahora sí puede**.
 
 La postura no cambia: **Bitcoiner prefiere un «no» documentado a un «sí» inflado.** Este FODA aplica al proyecto el mismo estándar que el bot aplica al mercado — cada fortaleza con su `archivo:línea`, cada debilidad con su mitigación o su ADR, y cero números redondeados hacia arriba.
