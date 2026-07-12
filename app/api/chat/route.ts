@@ -1,5 +1,6 @@
 // app/api/chat/route.ts — Copiloto IA. Ensambla contexto en vivo desde Supabase y responde en streaming.
-// LLM pluggable (en prod: Groq vía branch OpenAI-compatible; Gemini/Anthropic opcionales). Fuera del hot-path: solo lee la DB.
+// LLM pluggable (en prod: Groq vía branch OpenAI-compatible; Gemini/Anthropic opcionales). Fuera del hot-path:
+// lee la DB y solo escribe config vía set_config (whitelist + audit, lib/config/apply.ts).
 import { createAdminClient } from '@/lib/supabase/admin';
 import { hasLlmKey, streamChatWithTools, type ChatMessage } from '@/lib/llm';
 import { runCopilotTool, toolSchemas, type ReadSb } from '@/lib/copilot/tools';
@@ -11,6 +12,7 @@ export const maxDuration = 30;
 const SYSTEM = `Eres el copiloto de "Bitcoiner", un bot de arbitraje de Bitcoin multi-exchange sobre 7 venues (Binance, OKX, Kraken, Bitso, Bitstamp, Coinbase, Bybit).
 Respondes en español, claro y conciso, como un analista cuantitativo.
 Tienes HERRAMIENTAS (tools) para consultar la base de datos EN VIVO. Úsalas cuando necesites cifras específicas o frescas en vez de adivinar: get_pnl_summary, query_opportunities, get_rejections, get_strategy_stats, get_wallets, get_config, get_recent_trades, get_news. El SNAPSHOT base te da contexto; las tools te dan el detalle. Si un dato no está disponible, dilo.
+Además de consultar, PUEDES ajustar la configuración en vivo con set_config (umbrales, fees, tamaños, on/off de estrategias y exchanges): cada cambio pasa por el mismo whitelist validado que el panel, queda auditado (old→new en config_audit) y es reversible; el worker lo adopta en ~2.5s. Tras aplicar un cambio, confírmalo al usuario con el valor anterior y el nuevo.
 Sabes explicar: el P&L acumulado, por qué una oportunidad se ejecutó o se descartó (campo skip_reason), las estrategias (spatial, cross_quote, triangular, statistical, regional), por qué el arbitraje entre exchanges líquidos rara vez es rentable (los fees taker ~20bps superan el spread), dónde sí aparece edge (Bitso regional, cross-quote USD/USDT), y cómo las noticias de alto impacto activan el régimen de riesgo.
 Da números concretos (bps, USD) cuando los tengas. Sé breve salvo que pidan detalle.`;
 

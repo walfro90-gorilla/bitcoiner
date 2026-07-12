@@ -1,8 +1,9 @@
-// lib/copilot/tools.ts — Herramientas READ-ONLY del copiloto (tool-use).
-// El LLM puede invocar estas funciones para consultar datos EN VIVO de la DB y justificar
-// sus respuestas con cifras reales. SOLO lectura: cada tool ejecuta un SELECT acotado y
-// parametrizado (NO acepta SQL arbitrario). El loop de tool-calling vive en lib/llm.ts.
-// Diseñado sin imports → 100% testeable con un cliente Supabase falso.
+// lib/copilot/tools.ts — Herramientas del copiloto (tool-use).
+// 8 tools de LECTURA (SELECTs acotados y parametrizados, NO SQL arbitrario) + 1 de ESCRITURA
+// GUARDADA (set_config), que reutiliza exactamente las mismas guardas que /api/config:
+// whitelist tipado por scope + validación + config_audit (lib/config/apply.ts).
+// El loop de tool-calling vive en lib/llm.ts. Testeable con un cliente Supabase falso.
+import { applyFieldChange, type ConfigSb } from '../config/apply';
 
 // Tipo mínimo del cliente Supabase (lectura). El cliente real es createAdminClient() (service-role).
 type Thenable<T> = PromiseLike<{ data: T | null; error: unknown }>;
@@ -206,6 +207,44 @@ export const COPILOT_TOOLS: CopilotTool[] = [
         .order('ts', { ascending: false })
         .limit(clampInt(args.limit, 1, 20, 10));
       return data ?? [];
+    },
+  },
+  {
+    name: 'set_config',
+    description:
+      'ESCRIBE un campo de configuración EN VIVO (mismas guardas que el panel: whitelist tipado + validación + audit log old→new; el worker lo adopta en ~2.5s). ' +
+      'Scopes válidos: "bot_state" (trading_enabled, demo_mode, min_net_bps, max_position_usd), ' +
+      '"runtime" (slippage_bps, depeg_bps, max_btc_per_trade, max_trades_per_min, maker_mode, rebalance_auto, abort_min_net_bps, …), ' +
+      '"strategy" (enabled, min_net_bps_override, maker, notional_usd, … — requiere key=spatial|cross_quote|triangular|statistical|regional), ' +
+      '"exchange" (enabled — requiere key=venue, p.ej. bybit), ' +
+      '"fee" (taker_bps, maker_bps, withdrawal_btc — requiere key=venue). ' +
+      'Ejemplos: subir el umbral a 10 bps → {scope:"bot_state", field:"min_net_bps", value:10}; ' +
+      'apagar bybit → {scope:"exchange", field:"enabled", value:false, key:"bybit"}; ' +
+      'fee taker de kraken a 25 bps → {scope:"fee", field:"taker_bps", value:25, key:"kraken"}. ' +
+      'Cualquier campo fuera del whitelist es rechazado.',
+    parameters: {
+      type: 'object',
+      properties: {
+        scope: {
+          type: 'string',
+          enum: ['runtime', 'strategy', 'fee', 'exchange', 'bot_state'],
+          description: 'ámbito de configuración a modificar',
+        },
+        field: { type: 'string', description: 'campo whitelisted dentro del scope' },
+        value: { description: 'nuevo valor: number o boolean según el campo (null solo en overrides opcionales)' },
+        key: { type: 'string', description: 'estrategia (scope=strategy) o venue (scope=exchange|fee); omitir en runtime/bot_state' },
+      },
+      required: ['scope', 'field', 'value'],
+    },
+    async execute(args, sb) {
+      const scope = String(args.scope ?? '');
+      const field = String(args.field ?? '');
+      const key = args.key != null ? String(args.key) : undefined;
+      // Mismas guardas que POST /api/config: whitelist + validación + config_audit.
+      const r = await applyFieldChange(sb as unknown as ConfigSb, { scope, field, value: args.value, key });
+      if (!r.ok) return { error: r.error };
+      const label = key ? `${scope}.${key}.${field}` : `${scope}.${field}`;
+      return { ok: true, resumen: `✓ ${label} ${r.old}→${r.new} (auditado en config_audit; el worker lo adopta en ~2.5s)` };
     },
   },
 ];
