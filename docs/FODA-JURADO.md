@@ -4,6 +4,13 @@ Análisis honesto de dónde está el proyecto **hoy** (12-jul-2026, cierre de la
 
 ---
 
+> 🆕 **Actualización 12-jul (noche) — 3 upgrades ya implementados y EN PRODUCCIÓN** (verificados en vivo con navegador + MCP):
+> - **Replay del mercado** («rewind the market», fixture real empacado, cero egress) → la oportunidad #1 hecha realidad; sube robustez + visualización con la narrativa de honestidad jugable.
+> - **Copiloto con escritura guardada** (`set_config`) → las 96 variables se ajustan por lenguaje natural con el mismo whitelist + audit; resuelve la debilidad «copiloto solo lectura» (probado escribiendo `min_net 5→12→5`, auditado).
+> - **Observabilidad del worker** (badge de salud honesto: en línea/retraso/sin conexión) + triggers de CI restaurados → mitiga parcialmente el SPOF (la HA real con 2ª VM sigue pendiente, ver cierre).
+>
+> Lo de abajo se mantiene para trazabilidad; las líneas afectadas quedan anotadas.
+
 ## 💪 Fortalezas
 
 **Criterio 1 — Profundidad y parametrización**
@@ -67,8 +74,8 @@ El motor completo existe y está testeado (9/9), pero se despliega opt-in. *Deci
 **Criterio 1 — `maker_mode` existe pero no se luce.**
 Modela fills maker (límite pasivo, fee menor, riesgo de no-fill) y está OFF por default; el jurado no lo verá salvo que se lo enseñemos. *Mitigación:* mencionarlo en la defensa y encenderlo en vivo si hay pregunta sobre fees.
 
-**Criterios 1/4 — El copiloto tiene tools solo de LECTURA.**
-Puede explicar el estado del bot pero no ejecutar acciones ni cambiar config. *Decisión consciente:* un LLM con permisos de escritura sobre un bot de trading exige guardas que no queríamos improvisar a días del cierre. Es la oportunidad #2 de la tabla.
+**Criterios 1/4 — El copiloto (antes solo lectura) AHORA ESCRIBE config — ✅ resuelto 12-jul.**
+Con `set_config` ajusta las 96 variables por lenguaje natural, por el **mismo whitelist + validación + audit + reversibilidad** que el panel (mismo helper `lib/config/apply.ts`). Verificado en vivo escribiendo `min_net 5→12` y auditándolo (old→new), luego restaurado. Las guardas no se improvisaron: se reutilizaron las del API que ya estaban probadas.
 
 **Transversal — Dependencia de Supabase.**
 El free-tier ya nos restringió una vez por egress (data-plane caído durante la preparación). *Mitigación aplicada:* upgrade a **Pro (250 GB)** + las `opportunities` se sacaron de Realtime para reducir egress. El riesgo residual es bajo pero existe.
@@ -93,8 +100,8 @@ Cosméticos, no rompen build ni runtime. Se declaran porque prometimos no escond
 
 ## 🧭 Si tuviéramos 2 semanas más
 
-1. **Replay determinista desde `book_snapshots`** — es el único movimiento que sube dos criterios a la vez (robustez + visualización) con un efecto demo inmediato: «así se veía el mercado a las 14:32:07, mira al bot decidir de nuevo». La infraestructura (snapshots persistidos) ya existe.
-2. **Copiloto con escritura guardada** — cierra el círculo de la parametrización: 96 variables gobernadas por lenguaje natural, con el mismo whitelist, confirmación explícita y audit log que ya protegen el API. Diferenciador #1 potenciado por IA.
-3. **Ops de producción real: pm2 startup + CI + monitoring + segunda instancia del worker** — lo menos vistoso y lo más importante: elimina el SPOF, que es hoy la amenaza más probable. Un bot de arbitraje que no sobrevive un reboot no está terminado, y lo sabemos.
+1. ✅ **Replay del mercado — HECHO hoy** (versión fixture real, cero egress). El siguiente nivel: reproducir desde `book_snapshots` capturados en vivo (requiere primero domar el egress del free-tier).
+2. ✅ **Copiloto con escritura guardada — HECHO hoy** (`set_config`, mismo whitelist + audit que el panel). Diferenciador #1 potenciado por IA, verificado escribiendo en vivo.
+3. **Ops de producción real: 2ª instancia del worker + monitoring/alertas** (pm2 startup y CI ya restaurados hoy) — lo menos vistoso y lo más importante: elimina el **SPOF**, la amenaza más probable. Un bot de arbitraje que no sobrevive un reboot no está terminado, y lo sabemos. Es el **#1 pendiente**.
 
 La postura no cambia: **Bitcoiner prefiere un «no» documentado a un «sí» inflado.** Este FODA aplica al proyecto el mismo estándar que el bot aplica al mercado — cada fortaleza con su `archivo:línea`, cada debilidad con su mitigación o su ADR, y cero números redondeados hacia arriba.
