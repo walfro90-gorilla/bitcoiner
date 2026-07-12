@@ -57,7 +57,7 @@ export default function EscuelaPage() {
           </p>
         </Lesson>
 
-        <Lesson n={4} title="Las 4 estrategias de Bitcoiner">
+        <Lesson n={4} title="Las 5 estrategias de Bitcoiner">
           <ul className="ml-4 list-disc space-y-1">
             <li>
               <strong>Espacial</strong>: mismo par entre dos exchanges (comprar barato en A, vender caro en B).
@@ -71,6 +71,10 @@ export default function EscuelaPage() {
             <li>
               <strong>Estadística</strong>: cuando el spread entre dos exchanges se aleja mucho de su promedio (z-score
               alto), se apuesta a que volverá a la media.
+            </li>
+            <li>
+              <strong>Regional (Bitso 🇲🇽)</strong>: el premio/descuento del mercado mexicano — comprar BTC donde está
+              barato y venderlo en Bitso cuando trae premio, modelando el costo real del cambio a MXN.
             </li>
           </ul>
         </Lesson>

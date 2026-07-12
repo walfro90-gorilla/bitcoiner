@@ -160,7 +160,7 @@ export function Dashboard() {
 
       <footer className="mt-8 pb-6 text-center">
         <p className="text-xs text-muted">
-          Bitcoiner — Coding Challenge México · datos de mercado en vivo (Binance · OKX · Kraken · Bitso · Bitstamp)
+          Bitcoiner — Coding Challenge México · datos de mercado en vivo (Binance · OKX · Kraken · Bitso · Bitstamp · Coinbase · Bybit)
         </p>
 
         {/* Marca de la casa — GorillaLabs 🦍 */}

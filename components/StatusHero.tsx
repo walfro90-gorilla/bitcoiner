@@ -1,5 +1,6 @@
 'use client';
 // StatusHero — Resumen en lenguaje humano: "qué estoy viendo y cómo va", para que CUALQUIERA lo entienda.
+import type { ReactNode } from 'react';
 import { useBotState, useCounts } from '@/lib/hooks';
 import { n } from '@/lib/format';
 import { Card } from './ui';
@@ -13,7 +14,7 @@ export function StatusHero() {
   const trades = counts.trades;
 
   // Frase de estado en lenguaje natural según el modo y la actividad.
-  let estado: string;
+  let estado: ReactNode;
   let tone: 'up' | 'accent' | 'muted';
   if (!trading) {
     estado = 'El bot está en pausa (trading apagado). Sigue observando el mercado pero no ejecuta.';
@@ -22,8 +23,12 @@ export function StatusHero() {
     estado = 'Modo DEMO: el bot ejecuta cada divergencia para mostrar la mecánica (fills, parciales, P&L).';
     tone = 'accent';
   } else {
-    estado =
-      'Modo Real: el bot vigila 7 exchanges y solo ejecuta si hay ganancia tras todos los costos. Si ves 0 operaciones, es disciplina — no un error.';
+    estado = (
+      <>
+        Modo Real: el bot vigila 7 exchanges y solo ejecuta si hay ganancia tras todos los costos.{' '}
+        <strong className="font-semibold text-up">Si ves 0 operaciones, es disciplina — no un error.</strong>
+      </>
+    );
     tone = 'up';
   }
 

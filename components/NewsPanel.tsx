@@ -17,7 +17,7 @@ export function NewsPanel() {
         info="Noticias de última hora puntuadas por IA (sentimiento e impacto). Las muy negativas activan 'risk-off' y el bot pausa las ejecuciones por precaución."
         right={
           <div className="flex gap-1.5">
-            <Badge tone={sentTone}>sent {s.toFixed(2)}</Badge>
+            <Badge tone={sentTone}>ánimo {s.toFixed(2)}</Badge>
             <Badge tone={impactTone}>impacto {impact}</Badge>
           </div>
         }

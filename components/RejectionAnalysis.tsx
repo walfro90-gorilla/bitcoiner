@@ -75,7 +75,7 @@ export function RejectionAnalysis() {
               <div key={i} className="flex items-center justify-between text-xs">
                 <Badge tone={strategyTone[m.strategy] ?? 'default'}>{m.strategy}</Badge>
                 <span className="font-mono tabular-nums text-muted">
-                  gross <span className="text-foreground/70">{m.gross_spread_bps.toFixed(1)}</span> → net{' '}
+                  bruto <span className="text-foreground/70">{m.gross_spread_bps.toFixed(1)}</span> → neto{' '}
                   <span className={m.net_spread_bps >= 0 ? 'text-up' : 'text-down'}>
                     {m.net_spread_bps.toFixed(1)} bps
                   </span>

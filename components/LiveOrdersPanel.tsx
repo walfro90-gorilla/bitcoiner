@@ -38,7 +38,7 @@ export function LiveOrdersPanel() {
 
   // Agrupa eventos por order_id, ordenados por ts ascendente (la traza de la FSM).
   const trailById = new Map<number, string[]>();
-  for (const e of [...events].sort((a, b) => a.ts - b.ts)) {
+  for (const e of [...events].sort((a, b) => a.ts - b.ts || a.id - b.id)) {
     const arr = trailById.get(e.order_id) ?? [];
     arr.push(e.to_state);
     trailById.set(e.order_id, arr);
@@ -71,7 +71,7 @@ function OrderItem({ order: o, trail, venueName }: { order: OrderRow; trail: str
   const sideTone = o.side === 'buy' ? 'up' : 'down';
   return (
     <li className="px-4 py-2.5">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-xs">
           <Badge tone={sideTone}>{o.side === 'buy' ? 'COMPRA' : 'VENTA'}</Badge>
           <span className="font-medium text-foreground/90">{venueName(o.venue)}</span>
