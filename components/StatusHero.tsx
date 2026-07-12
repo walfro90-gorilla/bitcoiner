@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useBotState, useCounts } from '@/lib/hooks';
 import { n } from '@/lib/format';
 import { Card } from './ui';
+import { WorkerHealth } from './WorkerHealth';
 
 export function StatusHero() {
   const { botState } = useBotState();
@@ -50,6 +51,7 @@ export function StatusHero() {
             >
               {demo ? 'DEMO' : 'REAL'}
             </span>
+            <WorkerHealth />
           </div>
           <p className="mt-1 text-xs leading-relaxed text-muted sm:text-sm">{estado}</p>
           <p className="mt-2 text-xs text-muted">

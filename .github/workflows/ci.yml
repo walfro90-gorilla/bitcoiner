@@ -2,15 +2,14 @@ name: CI
 
 # Sello de calidad: typecheck (web + worker), tests, build y estrés.
 #
-# ⚠️ Auto-run en push/PR DESHABILITADO temporalmente: la cuenta de GitHub tiene un bloqueo de
-# facturación que impide que Actions arranque ("account is locked due to a billing issue" — el job
-# ni inicia, no es un fallo de código). Para no ensuciar el repo (público) con runs en rojo, dejamos
-# el workflow solo en modo MANUAL. La verificación equivalente corre LOCAL en cada commit:
-#   npm run lint · npm run check:worker · npm test · npm run stress · npm run build
-# Para reactivar la CI automática tras resolver el billing, restaura el bloque de abajo:
-#   push: { branches: [main, 'feat/**'] }
-#   pull_request: { branches: [main] }
+# Triggers automáticos REACTIVADOS: hubo un bloqueo de facturación de GitHub que impedía que
+# Actions arrancara; mientras el billing se resuelve los runs pueden no iniciar (no es fallo de
+# código). La verificación equivalente también corre LOCAL: lint · check:worker · test · stress · build.
 on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch: {}
 
 jobs:
