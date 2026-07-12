@@ -36,7 +36,15 @@ export class Writer {
   private snapQueue: Row[] = [];
   private timer?: ReturnType<typeof setInterval>;
 
+  private active = true;
+
   constructor(private readonly exMap: Map<Venue, number>) {}
+
+  /** Gate de líder (anti-SPOF): cuando false (standby), TODAS las escrituras son no-op y se
+   *  descartan. El standby queda caliente (feeds+engine) pero no toca la DB → sin duplicados. */
+  setActive(active: boolean): void {
+    this.active = active;
+  }
 
   start(): void {
     this.timer = setInterval(() => void this.flush(), 250);
@@ -50,33 +58,36 @@ export class Writer {
   }
 
   queueOpportunity(row: Row): void {
+    if (!this.active) return; // standby: no encola ni escribe
     this.oppQueue.push(row);
     if (this.oppQueue.length >= 100) void this.flush();
   }
   queueSpread(row: Row): void {
+    if (!this.active) return;
     this.spreadQueue.push(row);
   }
   queueSnapshot(row: Row): void {
+    if (!this.active) return;
     this.snapQueue.push(row);
   }
 
   /** Upsert del estado de mercado en vivo (BBO). Tabla acotada: 1 fila por venue+pair. */
   async upsertMarketTicks(rows: Row[]): Promise<void> {
-    if (!supabase || !rows.length) return;
+    if (!this.active || !supabase || !rows.length) return;
     const { error } = await supabase.from('market_ticks').upsert(rows, { onConflict: 'exchange_id,pair' });
     if (error) console.error('[db] market_ticks upsert:', error.message);
   }
 
   /** Upsert de la vela OHLC en formación (1 fila por pair+minuto). Para el chart de velas. */
   async upsertCandle(row: Row): Promise<void> {
-    if (!supabase) return;
+    if (!this.active || !supabase) return;
     const { error } = await supabase.from('candles').upsert(row, { onConflict: 'pair,t' });
     if (error) console.error('[db] candles upsert:', error.message);
   }
 
   /** Inserta una transferencia (rebalanceo) y devuelve su id, o null sin DB/error. */
   async insertTransfer(row: Row): Promise<number | null> {
-    if (!supabase) return null;
+    if (!this.active || !supabase) return null;
     const { data, error } = await supabase.from('transfers').insert(row).select('id').single();
     if (error) {
       console.error('[db] transfer insert:', error.message);
@@ -87,14 +98,14 @@ export class Writer {
 
   /** Actualiza el estado de una transferencia (in_transit -> completed). */
   async updateTransfer(id: number, patch: Row): Promise<void> {
-    if (!supabase) return;
+    if (!this.active || !supabase) return;
     const { error } = await supabase.from('transfers').update(patch).eq('id', id);
     if (error) console.error('[db] transfer update:', error.message);
   }
 
   /** Persiste una orden + su ciclo de vida (order_events) para el panel "Órdenes en vivo". */
   async persistOrder(o: OrderPersist): Promise<void> {
-    if (!supabase) return;
+    if (!this.active || !supabase) return;
     const { data, error } = await supabase
       .from('orders')
       .insert({
@@ -135,7 +146,7 @@ export class Writer {
 
   /** Retención: borra órdenes (y sus eventos en cascada) más viejas que `hours`. Tabla acotada. */
   async pruneOrders(hours = 24): Promise<void> {
-    if (!supabase) return;
+    if (!this.active || !supabase) return;
     const cutoff = new Date(Date.now() - hours * 3_600_000).toISOString();
     const { error } = await supabase.from('orders').delete().lt('created_at', cutoff);
     if (error) console.error('[db] orders prune:', error.message);
@@ -143,7 +154,7 @@ export class Writer {
 
   /** Persiste el snapshot de wallets (tras un rebalanceo). */
   async upsertWallets(snapshot: Array<{ venue: Venue; asset: Asset; balance: number }>): Promise<void> {
-    if (!supabase) return;
+    if (!this.active || !supabase) return;
     const now = new Date().toISOString();
     const rows = snapshot
       .map((w) => ({ exchange_id: this.exId(w.venue), asset: w.asset, balance: w.balance, updated_at: now }))
@@ -154,7 +165,7 @@ export class Writer {
   }
 
   private async flush(): Promise<void> {
-    if (!supabase) {
+    if (!this.active || !supabase) {
       this.oppQueue.length = 0;
       this.spreadQueue.length = 0;
       this.snapQueue.length = 0;
@@ -179,7 +190,7 @@ export class Writer {
 
   /** Persistencia inmediata de una ejecución: opp -> trade (FK) -> wallets -> bot_state. */
   async persistExecution(p: ExecutionPayload): Promise<void> {
-    if (!supabase) return;
+    if (!this.active || !supabase) return;
     const { data, error } = await supabase
       .from('opportunities')
       .insert(p.oppRow)

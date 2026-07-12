@@ -66,6 +66,10 @@ export const CONFIG = {
 
 export const HAS_SUPABASE = Boolean(CONFIG.supabaseUrl && CONFIG.supabaseServiceKey);
 
+// Elección de líder (anti-SPOF): default OFF = un solo worker escribe (comportamiento actual).
+// ON solo si corres una 2ª instancia en hot-standby (requiere migración 0020). Ver worker/leader.ts.
+export const WORKER_ELECTION = (process.env.WORKER_ELECTION ?? 'off').toLowerCase() === 'on';
+
 /** Umbral efectivo: en DEMO se relaja para que se disparen operaciones en escenario. */
 export function effectiveMinNetBps(): number {
   return CONFIG.demoMode ? -25 : CONFIG.minNetBps;

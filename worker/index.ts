@@ -1,5 +1,5 @@
 // worker/index.ts — Boot + orquestación del worker (detección -> riesgo -> ejecución -> persistencia).
-import { CONFIG, HAS_SUPABASE } from './config';
+import { CONFIG, HAS_SUPABASE, WORKER_ELECTION } from './config';
 import { Engine, type OppTiming } from './engine';
 import { Feed } from './feeds/base';
 import { createBinanceFeed } from './feeds/binance';
@@ -15,6 +15,7 @@ import { startNewsPoller } from './news';
 import { alertTrade, alertRiskOff, alertLossHalt, alertBoot, alertsEnabled } from './alerts';
 import { RiskManager, type BotRuntimeState } from './risk';
 import { Writer } from './writer';
+import { LeaderElection, makeInstanceId } from './leader';
 import { Ledger } from './state';
 import {
   loadBotState,
@@ -87,6 +88,18 @@ async function main(): Promise<void> {
   const risk = new RiskManager(runtime);
   const writer = new Writer(exMap);
   writer.start();
+
+  // Anti-SPOF: elección de líder por lease. Solo el LÍDER escribe; el standby queda caliente.
+  // Default OFF (WORKER_ELECTION) → single worker, comportamiento idéntico. ON para 2ª instancia.
+  const election = WORKER_ELECTION
+    ? new LeaderElection(makeInstanceId(), { onChange: (leader) => writer.setActive(leader) })
+    : null;
+  if (election) {
+    writer.setActive(false); // no escribir hasta ganar el lease
+    await election.start(); // adquisición síncrona en boot: un solo worker lidera de inmediato
+    console.log(`[leader] elección ACTIVA · instancia=${election.instanceId} · soyLíder=${election.isLeader()}`);
+  }
+  const isLeader = (): boolean => (election ? election.isLeader() : true);
 
   const seenThrottle = new Map<string, number>();
   const SEEN_MS = 5000; // registra como mucho 1 oportunidad "vista" por ruta cada 5s (evita saturar la DB)
@@ -474,7 +487,7 @@ async function main(): Promise<void> {
       console.log('[risk] NEWS RISK-OFF activo: ejecuciones en pausa por noticias.');
       alertRiskOff({ sentiment: r.sentiment, impact: r.impact, summary: r.summary });
     }
-  });
+  }, isLeader);
 
   // 4c) Rebalanceo inteligente automatizado (fuera del hot-path; solo actúa si rebalance_auto ON).
   const rebalancer = new Rebalancer(
@@ -585,6 +598,7 @@ async function main(): Promise<void> {
     writer.stop();
     news.stop();
     rebalancer.stop();
+    election?.stop(); // libera el lease para un relevo inmediato del standby
     process.exit(0);
   });
 

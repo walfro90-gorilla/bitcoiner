@@ -85,7 +85,10 @@ ${titles}`;
 /** Arranca el poller; llama onRegime con el régimen actual tras cada ciclo.
  *  Usa setTimeout recursivo que lee RUNTIME.newsPollMs en cada ciclo → el intervalo es
  *  configurable EN VIVO desde la UI sin reiniciar. Devuelve un handle con stop(). */
-export function startNewsPoller(onRegime: (r: NewsRegime) => void): { stop: () => void } {
+export function startNewsPoller(
+  onRegime: (r: NewsRegime) => void,
+  isLeader: () => boolean = () => true, // gate anti-SPOF: solo el líder persiste noticias
+): { stop: () => void } {
   let timer: ReturnType<typeof setTimeout> | null = null;
   let stopped = false;
   const run = async () => {
@@ -93,7 +96,7 @@ export function startNewsPoller(onRegime: (r: NewsRegime) => void): { stop: () =
     if (!items.length) return;
     const regime = await score(items);
 
-    if (supabase) {
+    if (supabase && isLeader()) {
       const rows = items.slice(0, 12).map((i) => ({
         source: i.source,
         headline: i.headline,
