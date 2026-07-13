@@ -214,11 +214,18 @@ export function Tour() {
     transform: 'translate(-50%,-50%)',
   };
   if (rect) {
+    const cardH = 240; // alto estimado de la tarjeta
     const below = rect.bottom + 12;
-    const placeBelow = below + 220 < vh;
-    cardStyle = placeBelow
-      ? { left: '50%', top: below, transform: 'translateX(-50%)' }
-      : { left: '50%', top: Math.max(12, rect.top - 12), transform: 'translate(-50%,-100%)' };
+    if (below + cardH < vh) {
+      // cabe debajo del target
+      cardStyle = { left: '50%', top: below, transform: 'translateX(-50%)' };
+    } else if (rect.top - 12 - cardH > 12) {
+      // cabe encima del target
+      cardStyle = { left: '50%', top: rect.top - 12, transform: 'translate(-50%,-100%)' };
+    } else {
+      // target más alto que el viewport (secciones grandes) → fija la tarjeta abajo, SIEMPRE visible
+      cardStyle = { left: '50%', bottom: 16, transform: 'translateX(-50%)' };
+    }
   }
 
   return (
