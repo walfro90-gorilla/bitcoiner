@@ -47,16 +47,28 @@ const STEPS: Step[] = [
     body: 'Este botón reproduce el ejemplo del reto ($70,000 → $70,250) por el pipeline real y muestra +$109.75 por Bitcoin. Pruébalo después del tour.',
   },
   {
+    selector: '#tour-config',
+    emoji: '🎛️',
+    title: 'Parametrización TOTAL (el diferenciador #1)',
+    body: 'El corazón del proyecto: ~96 variables editables EN VIVO — umbrales, fees por exchange, tamaños de orden, y cada estrategia y exchange on/off. El worker las adopta en ~2.5 s sin reiniciar, y cada cambio queda auditado y es reversible.',
+  },
+  {
     selector: '#tour-analisis',
     emoji: '🔬',
     title: 'Análisis avanzado',
-    body: 'Comparador maker/taker, un backtest histórico real y un modelo de régimen con cadenas de Markov. Es la “inteligencia” del sistema, sobre datos reales.',
+    body: 'Comparador maker/taker, backtest histórico real, régimen con cadenas de Markov y ⏮️ Replay del mercado (reproduce instantes reales y ve al bot decidir de nuevo). Todo sobre datos reales.',
+  },
+  {
+    selector: '#tour-inteligencia',
+    emoji: '⚖️',
+    title: 'Inteligencia y saldos',
+    body: 'Noticias con IA que activan risk-off, rebalanceo inteligente del inventario entre exchanges (automatizado, opt-in) y las wallets simuladas. El sistema se mantiene operativo por sí solo.',
   },
   {
     selector: '[data-tour="copilot"]',
     emoji: '💬',
-    title: 'Pregúntale a la IA',
-    body: 'Este copiloto responde con datos reales: “¿por qué no se ejecutan operaciones?”, “¿cómo va el P&L?”. Ideal si algo no te queda claro.',
+    title: 'Pregúntale a la IA (y pídele cambios)',
+    body: 'Este copiloto responde con datos reales (“¿por qué no se ejecutan operaciones?”, “¿cómo va el P&L?”) y además puede AJUSTAR la configuración por lenguaje natural — “sube el umbral a 10 bps”, “apaga bybit” — con las mismas guardas (whitelist + audit) que el panel.',
   },
   {
     emoji: '📲',
@@ -70,7 +82,9 @@ const STEPS: Step[] = [
   },
 ];
 
-const SEEN_KEY = 'clawbot-tour-v1';
+// v2: bump tras agregar los pasos de Configuración (96 vars), Análisis+Replay, Inteligencia y
+// copiloto-escritura → quien ya vio el tour v1 lo verá de nuevo, actualizado, en su próxima visita.
+const SEEN_KEY = 'clawbot-tour-v2';
 const PAD = 8;
 
 interface BIPEvent extends Event {
