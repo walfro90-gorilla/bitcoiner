@@ -2,14 +2,12 @@ name: CI
 
 # Sello de calidad: typecheck (web + worker), tests, build y estrés.
 #
-# Triggers automáticos REACTIVADOS: hubo un bloqueo de facturación de GitHub que impedía que
-# Actions arrancara; mientras el billing se resuelve los runs pueden no iniciar (no es fallo de
-# código). La verificación equivalente también corre LOCAL: lint · check:worker · test · stress · build.
+# Auto-run DESACTIVADO (solo manual): la cuenta de GitHub Actions está bloqueada por facturación,
+# así que los runs fallan en ~3 s SIN llegar a correr — NO es fallo de código (87/87 tests pasan
+# en local). Para no ensuciar el repo público con runs en rojo ante el jurado, queda en
+# workflow_dispatch. La verificación equivalente corre LOCAL en cada commit: lint · check:worker
+# · test · stress · build. Restaurar push/pull_request cuando se resuelva el billing.
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch: {}
 
 jobs:

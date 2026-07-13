@@ -82,7 +82,7 @@ Flag `WORKER_ELECTION` **default off** (un solo worker = comportamiento idéntic
 
 #### 5 · **Badge de salud del worker** + CI
 
-Un indicador honesto en el hero infiere la salud del worker de la **frescura de los datos** (`en línea` / `con retraso` / `sin conexión`) — cierra el hueco *"se ve vivo pero está rancio"*. Triggers de CI (push/PR) restaurados.
+Un indicador honesto en el hero infiere la salud del worker de la **frescura de los datos** (`en línea` / `con retraso` / `sin conexión`) — cierra el hueco *"se ve vivo pero está rancio"*. *(CI: la verificación —lint · check:worker · test · stress · build— corre en **local** en cada commit; GitHub Actions queda en **manual** por un bloqueo de billing de la cuenta, no por fallo de código.)*
 
 > **Verificación end-to-end:** `npm test` → **87/87** · `npm run stress` → **~890k** iteraciones, 0 violaciones · hard-testing en **producción real** con Chrome headless (5/5 cargas, 0 errores de consola) · atomicidad del lease y write-flows **probados en vivo por MCP**. Detalle en [`docs/QA-HARDTEST.md`](docs/QA-HARDTEST.md).
 

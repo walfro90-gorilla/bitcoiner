@@ -7,7 +7,7 @@ Análisis honesto de dónde está el proyecto **hoy** (12-jul-2026, cierre de la
 > 🆕 **Actualización 12-jul (noche) — 3 upgrades ya implementados y EN PRODUCCIÓN** (verificados en vivo con navegador + MCP):
 > - **Replay del mercado** («rewind the market», fixture real empacado, cero egress) → la oportunidad #1 hecha realidad; sube robustez + visualización con la narrativa de honestidad jugable.
 > - **Copiloto con escritura guardada** (`set_config`) → las 96 variables se ajustan por lenguaje natural con el mismo whitelist + audit; resuelve la debilidad «copiloto solo lectura» (probado escribiendo `min_net 5→12→5`, auditado).
-> - **Observabilidad del worker** (badge de salud honesto) + **elección de líder por lease** (migración 0020: un 2º worker en hot-standby toma el relevo sin writes duplicados — exclusión mutua probada en vivo) + triggers de CI restaurados → **el mecanismo anti-SPOF ya está**; solo falta **provisionar la 2ª VM** para activarlo (`WORKER_ELECTION=on`).
+> - **Observabilidad del worker** (badge de salud honesto) + **elección de líder por lease** (migración 0020: un 2º worker en hot-standby toma el relevo sin writes duplicados — exclusión mutua probada en vivo) → **el mecanismo anti-SPOF ya está**; solo falta **provisionar la 2ª VM** para activarlo (`WORKER_ELECTION=on`).
 >
 > Lo de abajo se mantiene para trazabilidad; las líneas afectadas quedan anotadas.
 

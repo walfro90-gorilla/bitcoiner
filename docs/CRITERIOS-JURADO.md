@@ -14,7 +14,7 @@ El comité del **Coding Challenge México** comunicó que la fase final se evalu
 | 4 | Calidad de interfaz y visualización | 🏆 **Excedido** | 34 componentes, 18 suscripciones Realtime sobre 10 tablas, razón de cada descarte visible — QA producción: **5/5 cargas, 0 errores de consola**. |
 | 5 | Documentación y claridad del código | 🏆 **Excedido** | 18 documentos (1,428 líneas), **9 ADRs + 9 trade-offs** admitidos por escrito, **87/87 tests** verificados. |
 
-> 🆕 **12-jul (noche) — 3 upgrades más, en producción y verificados en vivo, refuerzan estos criterios:** **Replay del mercado** (fixture real jugable → criterios 2 y 4), **Copiloto que ESCRIBE las 96 variables** por lenguaje natural con audit y reversibilidad → criterio 1 (probado en vivo `min_net 5→12→5`), y **badge de salud del worker** (honesto: en línea/retraso/sin conexión) + triggers de CI restaurados → criterios 4 y 5.
+> 🆕 **12-jul (noche) — 3 upgrades más, en producción y verificados en vivo, refuerzan estos criterios:** **Replay del mercado** (fixture real jugable → criterios 2 y 4), **Copiloto que ESCRIBE las 96 variables** por lenguaje natural con audit y reversibilidad → criterio 1 (probado en vivo `min_net 5→12→5`), y **badge de salud del worker** (honesto: en línea/retraso/sin conexión) → criterios 4 y 5. *(CI se verifica en local en cada commit; GitHub Actions queda en manual por un bloqueo de billing de la cuenta — no es fallo de código.)*
 
 ---
 
