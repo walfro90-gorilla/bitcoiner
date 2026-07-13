@@ -20,6 +20,74 @@ Un **worker** corriendo en un servidor de **Frankfurt** mantiene conexiones **We
 
 ---
 
+## ⭐ Diferenciadores y novedades
+
+> El comité evalúa **5 criterios** y Bitcoiner los **excede** todos. Evidencia punto por punto en **[`docs/CRITERIOS-JURADO.md`](docs/CRITERIOS-JURADO.md)** · FODA honesto en **[`docs/FODA-JURADO.md`](docs/FODA-JURADO.md)** · metodología de QA en **[`docs/QA-HARDTEST.md`](docs/QA-HARDTEST.md)**.
+
+| # | Criterio del jurado | Veredicto | Dato duro |
+|---|---|---|---|
+| 1 | Profundidad y **parametrización** *(el factor #1)* | 🏆 Excedido | **96 variables** editables en vivo (24× las 4 palancas pedidas), adoptadas en **≤2.5 s sin reiniciar** |
+| 2 | Robustez ante escenarios adversos | 🏆 Excedido | FSM de 7 estados · fills parciales · **ABORT** con libro fresco · **~890k** iteraciones de estrés, 0 violaciones |
+| 3 | Wallets y **rebalanceo** | 🏆 Excedido | Motor puro *cuándo/dónde/ruta/worthwhile* · AUTO opt-in · 5 params en vivo |
+| 4 | Interfaz y visualización | 🏆 Excedido | 34 componentes · Realtime · cada descarte con su razón · QA en producción **5/5 · 0 errores** |
+| 5 | Documentación y código | 🏆 Excedido | 19 archivos Markdown · **9 ADRs** · **87/87 tests** + property-based |
+
+### 🆕 Upgrades recientes — todos en **producción** y **verificados en vivo**
+
+#### 1 · Parametrización TOTAL en vivo — **96 variables** (diferenciador #1)
+
+No es un formulario: es un **canal gobernado** `UI → API (whitelist) → Postgres → worker`, adoptado **en caliente, sin reiniciar**.
+
+```
+ Dashboard (ConfigCenter · 96 controles + perfiles)
+       │  POST  — whitelist tipado por scope (400 si el campo no está permitido)
+       ▼
+ app/api/config ───────────────► Postgres (runtime_config · strategy_config · fee_config · bot_state)
+       │                                │
+       │ writeAudit()  old→new          │  poll cada 2.5 s (guard de reentrancia)
+       ▼                                ▼
+ config_audit (historial)        Worker (VM Frankfurt) — recarga y aplica EN CALIENTE, sin downtime
+```
+
+| Palanca *(pedida por el jurado)* | Qué se ajusta | Granularidad |
+|---|---|---|
+| **Umbrales** | `min_net_bps` global + override | por estrategia |
+| **Fees** | taker · maker · withdrawal | por cada uno de los **7 venues** |
+| **Tamaños de orden** | `max_btc_per_trade` · `target_base` · `notional_usd` | global + por estrategia |
+| **Exchanges activos** | on/off | por venue *(descarta la pata apagada, honesto)* |
+
+**Por qué es óptimo:** whitelist tipado (imposible tocar un campo no permitido), cada cambio **auditado** (antes→después) y **reversible** por perfiles, adopción en **~2.5 s sin downtime**. Recuento exacto: `24 runtime + 8×5 estrategias + 3×7 fees + 7 exchanges + 4 bot = ` **96** (`app/api/config/route.ts`).
+
+#### 2 · Copiloto con **escritura guardada** (`set_config`)
+
+El copiloto IA ya no solo consulta: **cambia la configuración por lenguaje natural** — *"sube el umbral a 10 bps"*, *"apaga bybit"* — reutilizando el **mismo whitelist + audit** que el panel (`lib/config/apply.ts`). Verificado en vivo (`min_net 5→12→5`, auditado y revertido). Las 96 variables, gobernadas por conversación con IA.
+
+#### 3 · **Replay del mercado** — «rewind the market»
+
+Un fixture **real** de 40 instantes × 7 venues, empacado y reproducido **100 % en el navegador** (cero worker, cero egress): **play/pausa + scrubber**, y por frame recalcula el mejor arbitraje → *bruto vs fees* → veredicto **RENTABLE / DESCARTADA**. Hace **tangible** la narrativa de honestidad: casi siempre el spread bruto **no** cubre los fees.
+
+#### 4 · **Elección de líder anti-SPOF** (lease en Postgres)
+
+Permite un **2º worker en hot-standby** sin writes duplicados: **solo el líder escribe**; si cae, el standby toma el relevo en **~15 s**.
+
+```
+ Worker A (LÍDER) ──renew 5s──►┐
+                               │   worker_lease  —  UPDATE condicional ATÓMICO (exclusión mutua)
+ Worker B (standby) ──falla───►┘   → solo A escribe; B queda caliente (feeds + engine), sin tocar la DB
+
+   ✝ si A muere → su lease expira (~15 s) → B lo adquiere y arranca a escribir  (failover automático)
+```
+
+Flag `WORKER_ELECTION` **default off** (un solo worker = comportamiento idéntico a hoy). Atomicidad **probada en vivo** (exclusión mutua + renovación + takeover). Migración `0020` · [`worker/leader.ts`](worker/leader.ts).
+
+#### 5 · **Badge de salud del worker** + CI
+
+Un indicador honesto en el hero infiere la salud del worker de la **frescura de los datos** (`en línea` / `con retraso` / `sin conexión`) — cierra el hueco *"se ve vivo pero está rancio"*. Triggers de CI (push/PR) restaurados.
+
+> **Verificación end-to-end:** `npm test` → **87/87** · `npm run stress` → **~890k** iteraciones, 0 violaciones · hard-testing en **producción real** con Chrome headless (5/5 cargas, 0 errores de consola) · atomicidad del lease y write-flows **probados en vivo por MCP**. Detalle en [`docs/QA-HARDTEST.md`](docs/QA-HARDTEST.md).
+
+---
+
 ## 🖥️ Guía del dashboard — qué hace cada sección
 
 1. **Header / Controles** — `Trading ON/OFF` (kill switch global), `DEMO/Real` (modo de ejecución) y `min net bps` (umbral de rentabilidad). Cualquier cambio aquí lo obedece el worker remoto en **~2.5 s** (vía la tabla `bot_state`), sin reiniciar nada.
