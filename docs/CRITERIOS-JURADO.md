@@ -11,8 +11,8 @@ El comité del **Coding Challenge México** comunicó que la fase final se evalu
 | 1 | Profundidad y parametrización | 🏆 **Excedido** | **96 variables** editables en vivo (24× las 4 palancas pedidas), adoptadas por el worker en **≤2.5s sin reiniciar**, con audit log y perfiles. |
 | 2 | Robustez ante escenarios adversos | 🏆 **Excedido** | FSM de 7 estados, fills parciales por liquidez real, ABORT con libro fresco — **~890,000 iteraciones adversariales, 0 violaciones**. |
 | 3 | Gestión de wallets y rebalanceo | 🏆 **Excedido** | Motor puro que decide *cuándo/hacia dónde/por qué ruta/si vale la pena*, AUTO opt-in, 5 parámetros en vivo, 9/9 tests. |
-| 4 | Calidad de interfaz y visualización | 🏆 **Excedido** | 32 componentes, 18 suscripciones Realtime sobre 10 tablas, razón de cada descarte visible — QA producción: **5/5 cargas, 0 errores de consola**. |
-| 5 | Documentación y claridad del código | 🏆 **Excedido** | 17 documentos (1,337 líneas), **9 ADRs + 9 trade-offs** admitidos por escrito, **82/82 tests** verificados. |
+| 4 | Calidad de interfaz y visualización | 🏆 **Excedido** | 34 componentes, 18 suscripciones Realtime sobre 10 tablas, razón de cada descarte visible — QA producción: **5/5 cargas, 0 errores de consola**. |
+| 5 | Documentación y claridad del código | 🏆 **Excedido** | 18 documentos (1,428 líneas), **9 ADRs + 9 trade-offs** admitidos por escrito, **87/87 tests** verificados. |
 
 > 🆕 **12-jul (noche) — 3 upgrades más, en producción y verificados en vivo, refuerzan estos criterios:** **Replay del mercado** (fixture real jugable → criterios 2 y 4), **Copiloto que ESCRIBE las 96 variables** por lenguaje natural con audit y reversibilidad → criterio 1 (probado en vivo `min_net 5→12→5`), y **badge de salud del worker** (honesto: en línea/retraso/sin conexión) + triggers de CI restaurados → criterios 4 y 5.
 
@@ -40,7 +40,7 @@ La UI (`components/config/ConfigCenter.tsx`, 328 líneas, 58 controles interacti
 - **Palanca 4 — Exchanges activos**: toggle on/off por venue en la UI (`ConfigCenter.tsx:275`); el worker descarta la pata apagada y lo registra honestamente como `skip_reason='exchange_disabled'` (`worker/index.ts:177-180`).
 - **Adopción ≤2.5s sin reiniciar**: `setInterval(..., 2500)` con guard de reentrancia que recarga y aplica las 5 fuentes (`worker/index.ts:429-465`).
 - **Gobernanza**: audit log append-only (scope · campo · old→new · timestamp) en cada escritura + 3 perfiles integrados + perfiles custom (`0012:55-74`; `app/api/config/route.ts:75-129`; historial visible en `ConfigCenter.tsx:289-310`).
-- **Testeado**: `npm test` → **82/82 verde**, incluyendo `worker/runtimeConfig.test.ts` (defaults, merge de patches, resolución de overrides).
+- **Testeado**: `npm test` → **87/87 verde**, incluyendo `worker/runtimeConfig.test.ts` (defaults, merge de patches, resolución de overrides).
 
 > Las **96** son el conteo exacto contra el whitelist tipado del API ([`app/api/config/route.ts:14-33`](../app/api/config/route.ts)): 24 runtime + 8×5 por-estrategia (40) + 3×7 fees (21) + 7 exchanges on/off + 4 controles de bot. Número verificable, no redondeado.
 
@@ -76,7 +76,7 @@ Los feeds WS (`worker/feeds/`) mantienen libros íntegros: OKX y Kraken verifica
 - **Slippage dinámico**: el movimiento adverso modelado **escala con la fracción del libro consumida** — consumir un libro delgado cuesta más (`lib/core/profit.ts:60-64`; `0015_dynamic_slippage.sql`).
 - **Circuit breakers**: kill switch, halt con cooldown tras N pérdidas consecutivas, rate limit de trades/minuto — todos con umbral configurable en vivo (`worker/risk.ts:23-45`).
 - **Estrés adversarial reproducido hoy** (`npm run stress`): **~890,000 iteraciones · 0 violaciones** — incluye *fault-storm* de **50,000 órdenes adversariales** contra la FSM (qty 0, libros vacíos/delgados, 15% sin libro), **200,000 cálculos de neto** con precios $50–$120k (0 NaN, neto nunca > bruto) y 200,000 ops de libro L2, a **78,475 eval/s** con RSS 92 MB (`scripts/stress.ts:122-149,184-207`; [PRUEBAS-ESTRES.md](PRUEBAS-ESTRES.md) §6).
-- **82/82 tests** (ejecutados hoy) con suites dedicadas a los tres escenarios: `order.test.ts` (FSM), `simulatedAdapter.test.ts` (rechazos), `executor.test.ts` (parciales/wallet), `risk.test.ts` (breakers), `profit.test.ts` (cap de liquidez) + property-based con fast-check.
+- **87/87 tests** (ejecutados hoy) con suites dedicadas a los tres escenarios: `order.test.ts` (FSM), `simulatedAdapter.test.ts` (rechazos), `executor.test.ts` (parciales/wallet), `risk.test.ts` (breakers), `profit.test.ts` (cap de liquidez) + property-based con fast-check.
 - **Honestidad auditable**: **10 razones distintas** de descarte/rechazo persistidas (`below_threshold`, `spread_inverted`, `cooldown_consecutive_losses`, `max_trades_per_min`, `trading_disabled`, `news_risk_off`, `exchange_disabled`, `insufficient_balance`, `invalid_quote`, `no_exec_detail`) — cada "no" queda registrado con su porqué.
 
 **Cumplido → Excedido:** no solo manejamos los tres escenarios — los **martillamos** con 890 mil iteraciones adversariales deterministas y cero violaciones de invariantes, y cada decisión defensiva (abortar, rechazar, capear) deja una **razón auditada en la base de datos** que el dashboard grafica. La robustez no es un try/catch: es una FSM que se niega a mentir.
@@ -122,7 +122,7 @@ El worker (`worker/rebalancer.ts`) corre esto cada 5 s **fuera del hot-path**; e
 
 ### Qué implementamos
 
-Un dashboard Next.js de **32 componentes** (~26 paneles compuestos en 5 secciones numeradas) que cubre literalmente los 4 puntos del jurado: **tiempo real** vía Supabase Realtime (10 tablas, 18 suscripciones) con la **latencia de detección pulsando en pantalla**; **historial de operaciones** con VWAP/fees/P&L por trade más el ciclo de vida FSM de cada orden; **P&L acumulado** como KPI + gráfica consciente del modo DEMO/Real; y **oportunidades** con la narrativa de honestidad: cada fila lleva un badge con **la razón exacta de su descarte**, y un panel dedicado grafica la distribución de motivos sobre las últimas 500.
+Un dashboard Next.js de **34 componentes** (~26 paneles compuestos en 5 secciones numeradas) que cubre literalmente los 4 puntos del jurado: **tiempo real** vía Supabase Realtime (10 tablas, 18 suscripciones) con la **latencia de detección pulsando en pantalla**; **historial de operaciones** con VWAP/fees/P&L por trade más el ciclo de vida FSM de cada orden; **P&L acumulado** como KPI + gráfica consciente del modo DEMO/Real; y **oportunidades** con la narrativa de honestidad: cada fila lleva un badge con **la razón exacta de su descarte**, y un panel dedicado grafica la distribución de motivos sobre las últimas 500.
 
 ### Cómo funciona en Bitcoiner
 
@@ -150,21 +150,21 @@ Un dashboard Next.js de **32 componentes** (~26 paneles compuestos en 5 seccione
 
 ### Qué implementamos
 
-Una capa de documentación de **17 archivos Markdown** (README de 204 líneas + 16 docs en `docs/`, **1,337 líneas** en total) que no solo describe el proyecto: **lo defiende**. Un decision log con **9 ADRs** en formato Contexto · Decisión · Por qué · Trade-off, un doc de **9 trade-offs explícitos** con resumen para el jurado, y docs de pruebas ([PRUEBAS.md](PRUEBAS.md), [PRUEBAS-ESTRES.md](PRUEBAS-ESTRES.md), [QA-HARDTEST.md](QA-HARDTEST.md)) que reportan **números medidos, no promesas**. El README incluso mapea **cada criterio del reto a su solución concreta en el código**, en tabla.
+Una capa de documentación de **17 archivos Markdown** (README de 204 líneas + 16 docs en `docs/`, **1,428 líneas** en total) que no solo describe el proyecto: **lo defiende**. Un decision log con **9 ADRs** en formato Contexto · Decisión · Por qué · Trade-off, un doc de **9 trade-offs explícitos** con resumen para el jurado, y docs de pruebas ([PRUEBAS.md](PRUEBAS.md), [PRUEBAS-ESTRES.md](PRUEBAS-ESTRES.md), [QA-HARDTEST.md](QA-HARDTEST.md)) que reportan **números medidos, no promesas**. El README incluso mapea **cada criterio del reto a su solución concreta en el código**, en tabla.
 
 ### Cómo funciona en Bitcoiner
 
-El [README](../README.md) es la puerta de entrada: qué ves en 30 segundos, guía del dashboard sección por sección, diagrama de arquitectura de 3 capas (línea 45), la matemática del neto depth-aware, las 5 estrategias, setup local completo (línea 147: `.env.example` → migraciones → `npm run dev`/`worker`) y despliegue (línea 158). Las decisiones profundas viven en [DECISIONS.md](DECISIONS.md): 9 ADRs (no-C con float64 + fixed-point en el borde, patrón ExchangeAdapter real-ready, ABORT por inversión de spread, rebalanceo inteligente, slippage dinámico, CRC32 incremental, free-tier de Supabase…) escritos para la defensa técnica en videollamada — **cada uno con su trade-off admitido**. [TRADE-OFFS.md](TRADE-OFFS.md) complementa con 9 dilemas (maker vs taker, snapshot vs incremental, velocidad vs precisión…). En el código, `lib/core/index.ts` re-exporta los **14 módulos** del núcleo para que worker y dashboard usen **exactamente el mismo motor**; `profit.ts` abre con `// EL CORAZÓN DEL BOT` y cada campo de sus interfaces lleva comentario inline. Hasta los agentes de IA tienen documentación (`CLAUDE.md`/`AGENTS.md`). Los esquemas de DB son **19 migraciones numeradas inmutables** (0001 → 0019), nunca ediciones en caliente.
+El [README](../README.md) es la puerta de entrada: qué ves en 30 segundos, guía del dashboard sección por sección, diagrama de arquitectura de 3 capas (línea 45), la matemática del neto depth-aware, las 5 estrategias, setup local completo (línea 147: `.env.example` → migraciones → `npm run dev`/`worker`) y despliegue (línea 158). Las decisiones profundas viven en [DECISIONS.md](DECISIONS.md): 9 ADRs (no-C con float64 + fixed-point en el borde, patrón ExchangeAdapter real-ready, ABORT por inversión de spread, rebalanceo inteligente, slippage dinámico, CRC32 incremental, free-tier de Supabase…) escritos para la defensa técnica en videollamada — **cada uno con su trade-off admitido**. [TRADE-OFFS.md](TRADE-OFFS.md) complementa con 9 dilemas (maker vs taker, snapshot vs incremental, velocidad vs precisión…). En el código, `lib/core/index.ts` re-exporta los **14 módulos** del núcleo para que worker y dashboard usen **exactamente el mismo motor**; `profit.ts` abre con `// EL CORAZÓN DEL BOT` y cada campo de sus interfaces lleva comentario inline. Hasta los agentes de IA tienen documentación (`CLAUDE.md`/`AGENTS.md`). Los esquemas de DB son **20 migraciones numeradas inmutables** (0001 → 0019), nunca ediciones en caliente.
 
 ### Evidencia
 
-- **17 documentos Markdown, 1,337 líneas totales**: `README.md` (204 líneas) + 16 archivos en `docs/` (`ls docs/ | wc -l` → 16; `wc -l README.md docs/*.md` → 1,337).
+- **18 documentos en `docs/` (1,428 líneas) + `README.md` (204)** = 19 archivos Markdown, 1,632 líneas totales (`ls docs/*.md | wc -l` → 18; `wc -l README.md docs/*.md` → 1,632).
 - **9 ADRs formales** en formato Contexto · Decisión · Por qué · Trade-off ([DECISIONS.md](DECISIONS.md):8-55, ADR-001 a ADR-009; formato declarado en línea 3).
 - **9 trade-offs explícitos** con sección final «Resumen para el jurado» ([TRADE-OFFS.md](TRADE-OFFS.md):7-112).
 - El README **mapea los 6 criterios de evaluación del reto** a soluciones concretas en tabla (`README.md:130-139`) y cubre arquitectura (:45), setup local (:147-156) y despliegue (:158).
 - **Núcleo TS puro compartido** worker+web con punto de entrada único que re-exporta 14 módulos (`lib/core/index.ts:1-14`).
-- **82/82 tests pasando** (verificado en esta sesión) en **20 archivos de test**, incluyendo 3 suites property-based (fast-check) y estrés de **~890k iteraciones con 0 violaciones** ([PRUEBAS-ESTRES.md](PRUEBAS-ESTRES.md):5).
-- **19 migraciones SQL** versionadas e inmutables (`0001_init.sql` → `0019_fix_reset_fn_orders.sql`).
+- **87/87 tests pasando** (verificado en esta sesión) en **21 archivos de test**, incluyendo 3 suites property-based (fast-check) y estrés de **~890k iteraciones con 0 violaciones** ([PRUEBAS-ESTRES.md](PRUEBAS-ESTRES.md):5).
+- **20 migraciones SQL** versionadas e inmutables (`0001_init.sql` → `0019_fix_reset_fn_orders.sql`).
 - **Código autoexplicado**: cabecera en español declarando el rol de cada archivo; `lib/core/profit.ts:1-2` («EL CORAZÓN DEL BOT. Cálculo de rentabilidad NETA depth-aware…»), 36 líneas comentadas solo en ese archivo.
 
 **Cumplido → Excedido:** no solo documentamos **qué** hace el bot — documentamos **por qué** cada decisión se tomó y **qué costó**: 9 ADRs y 9 trade-offs admitidos por escrito, un README que mapea criterio por criterio del reto a la línea de código que lo cumple, y docs de pruebas que citan números reproducidos hoy, no aspiraciones.
@@ -175,7 +175,7 @@ El [README](../README.md) es la puerta de entrada: qué ves en 30 segundos, guí
 
 Todo lo afirmado arriba se sometió a un QA de tres capas, documentado con evidencia en [QA-HARDTEST.md](QA-HARDTEST.md):
 
-1. **Capa lógica** — `npm test`: **82/82** tests (unitarios + property-based con fast-check) + `npm run stress`: **~890,000 iteraciones adversariales, 0 violaciones**, reproducidos en esta sesión.
+1. **Capa lógica** — `npm test`: **87/87** tests (unitarios + property-based con fast-check) + `npm run stress`: **~890,000 iteraciones adversariales, 0 violaciones**, reproducidos en esta sesión.
 2. **Capa de navegador** — Chrome headless + Playwright **contra producción**: loop de consistencia de **5/5 cargas con 0 errores de consola**; write-flows de configuración en loop (el audit log creció **12→16 en vivo**, el worker en Frankfurt **adoptó cada cambio con cero drift** entre lo escrito y lo aplicado); móvil a **390px sin ningún overflow** horizontal.
 3. **Capa de datos** — verificación directa por MCP contra Supabase: **7/7 venues con datos frescos al segundo** y P&L en **$0 honesto** (modo Real descartando lo no rentable, exactamente como está diseñado).
 

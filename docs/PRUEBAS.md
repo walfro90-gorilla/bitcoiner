@@ -12,9 +12,9 @@ npm run lint        # eslint
 node --import tsx --test lib/core/profit.test.ts   # un solo archivo
 ```
 
-**Estado:** **82/82 verde** · `check:worker` RC=0 · `npm run stress` → 0 violaciones. Node 24 (runner nativo `node --test` + `tsx`, sin frameworks externos).
+**Estado:** **87/87 verde** · `check:worker` RC=0 · `npm run stress` → 0 violaciones. Node 24 (runner nativo `node --test` + `tsx`, sin frameworks externos).
 
-> **Cobertura fase final** (además de profit/markov/crc32): `precision.test.ts` (fixed-point), `rebalance.test.ts` (núcleo) + `worker/rebalancer.test.ts` (FSM), `candles.test.ts`, `runtimeConfig.test.ts`, `worker/engine.test.ts` (gating por estrategia), `worker/execution/{order,simulatedAdapter}.test.ts` (FSM + adapter), `worker/executor.test.ts` + `worker/risk.test.ts` (fills/parciales/wallet-guard/breakers) y `lib/core/stress.test.ts` (invariantes). El estrés determinista vive en `scripts/stress.ts` (`npm run stress`) — ver [`PRUEBAS-ESTRES.md`](PRUEBAS-ESTRES.md) §5.
+> **Cobertura fase final** (además de profit/markov/crc32): `precision.test.ts` (fixed-point), `rebalance.test.ts` (núcleo) + `worker/rebalancer.test.ts` (FSM), `candles.test.ts`, `runtimeConfig.test.ts`, `worker/engine.test.ts` (gating por estrategia), `worker/execution/{order,simulatedAdapter}.test.ts` (FSM + adapter), `worker/executor.test.ts` + `worker/risk.test.ts` (fills/parciales/wallet-guard/breakers), `worker/leader.test.ts` (elección de líder anti-SPOF) y `lib/core/stress.test.ts` (invariantes). El estrés determinista vive en `scripts/stress.ts` (`npm run stress`) — ver [`PRUEBAS-ESTRES.md`](PRUEBAS-ESTRES.md) §5.
 
 ## Suite por área
 

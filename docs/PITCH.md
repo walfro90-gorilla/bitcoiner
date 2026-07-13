@@ -119,7 +119,7 @@ Piezas analíticas que demuestran profundidad — todas sobre **datos reales** y
 > Real: reproduce `spread_history`, el premio Bitso que el worker ya capturó. No simulamos precios — usamos los registrados. El slider de costo muestra el punto de equilibrio.
 
 **— ¿Cómo sé que no está roto?**
-> `npm test` → **82/82** (motor neto +$109.75, CRC32, Markov, precisión, rebalanceo, executor, risk). Además **property-based** con fast-check y un harness de estrés (~890k iteraciones, 0 violaciones: FSM fault storm + L2Book + 7 venues). `npm run build` y `check:worker` verdes.
+> `npm test` → **87/87** (motor neto +$109.75, CRC32, Markov, precisión, rebalanceo, executor, risk). Además **property-based** con fast-check y un harness de estrés (~890k iteraciones, 0 violaciones: FSM fault storm + L2Book + 7 venues). `npm run build` y `check:worker` verdes.
 
 ---
 
@@ -141,7 +141,7 @@ Piezas analíticas que demuestran profundidad — todas sobre **datos reales** y
 - Circuit breakers + parciales + wallet guard + **CRC32** (OKX/Kraken/Coinbase/Bybit incrementales)
 - **Copiloto IA con tool-use** (herramientas de solo lectura sobre la DB en vivo) · alertas **Telegram** opt-in
 - Capa analítica web-only sobre datos reales: **comparador maker/taker**, **backtest** del premio, **Markov** de régimen
-- Robustez: `npm test` → **82/82** + **property-based** (fast-check) + estrés **~890k iteraciones, 0 violaciones** (ver `docs/PRUEBAS-ESTRES.md`)
+- Robustez: `npm test` → **87/87** + **property-based** (fast-check) + estrés **~890k iteraciones, 0 violaciones** (ver `docs/PRUEBAS-ESTRES.md`)
 - Desplegado: **UpCloud Frankfurt** (worker 24/7) + **Vercel** (web) + **Supabase** (datos/realtime)
 - Trade-offs y decisiones documentados: `docs/TRADE-OFFS.md` · `docs/DECISIONS.md` (9 ADRs)
 - **PWA instalable** (mobile-first, se ve bien en PC) + **tour guiado autoexplicativo** (🎯)

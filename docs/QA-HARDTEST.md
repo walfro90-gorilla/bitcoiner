@@ -18,7 +18,7 @@ Este documento cubre **cómo lo probamos**. Hay tres capas:
 
 El motor de decisión (VWAP, fees, slippage, precisión, rebalanceo, FSM de órdenes, breakers) se prueba con el runner nativo de Node (`node --test` + `tsx`, sin frameworks):
 
-- **82 tests unitarios**, 0 fallos.
+- **87 tests unitarios**, 0 fallos.
 - **Property-based** con `fast-check`: invariantes verificadas sobre miles de entradas generadas (neto ≤ bruto, precisión exacta en satoshis, rebalanceo válido).
 - **Estrés determinista** (`npm run stress`): **~890 000 iteraciones, 0 violaciones** (FSM fault-storm de 50k órdenes adversariales, L2Book incremental de 200k ops, throughput a 7 venues).
 
@@ -94,7 +94,7 @@ El hard-testing encontró cosas reales que los tests unitarios no ven. Todo corr
 | Remate de honestidad poco visible | El punchline vivía en gris chico junto a los KPIs grandes | Resaltado (`<strong>`) |
 | Labels en inglés en UI en español | `sent`, `gross/net` | `ánimo`, `bruto/neto` |
 
-Cada cambio se verificó con `npm test` (82/82) + `next build` + re-QA visual en el navegador antes de desplegar.
+Cada cambio se verificó con `npm test` (87/87) + `next build` + re-QA visual en el navegador antes de desplegar.
 
 ---
 
@@ -102,7 +102,7 @@ Cada cambio se verificó con `npm test` (82/82) + `next build` + re-QA visual en
 
 ```bash
 # 1. Núcleo determinista
-npm test                 # 82/82
+npm test                 # 87/87
 npm run stress           # ~890k iteraciones, 0 violaciones
 
 # 2. Hard-test del dashboard (Chrome headless + Playwright contra producción)
@@ -119,7 +119,7 @@ npm run stress           # ~890k iteraciones, 0 violaciones
 
 ## Resultado
 
-- **82/82** tests · **~890k** iteraciones de estrés sin violaciones.
+- **87/87** tests · **~890k** iteraciones de estrés sin violaciones.
 - Dashboard: **5/5** cargas consistentes, **0** errores de consola, **0** imágenes rotas, **0** overflow en móvil.
 - Write-flows en vivo: auditados, adoptados por el worker, **cero drift**.
 - Datos en vivo: **7/7** venues frescos al segundo, P&L honesto en $0.

@@ -26,12 +26,12 @@ Análisis honesto de dónde está el proyecto **hoy** (12-jul-2026, cierre de la
 - Modo **AUTO opt-in** con FSM `in_transit→completed`, 5 parámetros en vivo con audit, y **el mismo núcleo corriendo en el browser** para previsualizar el plan que el worker ejecutará.
 
 **Criterio 4 — Calidad de interfaz y visualización**
-- **32 componentes** con Supabase Realtime (10 tablas, 18 suscripciones), latencia pulsando en pantalla, y la narrativa de honestidad **graficada**: `RejectionAnalysis` muestra la razón exacta de cada descarte sobre las últimas 500 oportunidades ([evidencia §4](CRITERIOS-JURADO.md)).
+- **34 componentes** con Supabase Realtime (10 tablas, 18 suscripciones), latencia pulsando en pantalla, y la narrativa de honestidad **graficada**: `RejectionAnalysis` muestra la razón exacta de cada descarte sobre las últimas 500 oportunidades ([evidencia §4](CRITERIOS-JURADO.md)).
 - Calidad **probada contra producción**, no prometida: 5/5 cargas consistentes, **0 errores de consola**, 0 overflow a 390px, PWA instalable mobile-first ([QA-HARDTEST.md](QA-HARDTEST.md)).
 
 **Criterio 5 — Documentación y claridad del código**
-- **17 documentos (1,337 líneas)** con **9 ADRs** formales (Contexto·Decisión·Por qué·Trade-off) y **9 trade-offs admitidos por escrito** ([DECISIONS.md](DECISIONS.md), [TRADE-OFFS.md](TRADE-OFFS.md)); el README mapea cada criterio del reto a su línea de código.
-- **82/82 tests** en 20 archivos (incl. property-based con fast-check), 19 migraciones SQL inmutables, núcleo compartido worker+web re-exportado desde un punto único, y un QA de tres capas documentado con números medidos hoy ([QA-HARDTEST.md](QA-HARDTEST.md)).
+- **18 documentos (1,428 líneas)** con **9 ADRs** formales (Contexto·Decisión·Por qué·Trade-off) y **9 trade-offs admitidos por escrito** ([DECISIONS.md](DECISIONS.md), [TRADE-OFFS.md](TRADE-OFFS.md)); el README mapea cada criterio del reto a su línea de código.
+- **87/87 tests** en 21 archivos (incl. property-based con fast-check), 20 migraciones SQL inmutables, núcleo compartido worker+web re-exportado desde un punto único, y un QA de tres capas documentado con números medidos hoy ([QA-HARDTEST.md](QA-HARDTEST.md)).
 
 ---
 
@@ -63,7 +63,7 @@ La debilidad más importante y la más consciente: Bitcoiner no opera capital re
 El worker vive en una única VM de UpCloud y se mantiene apagado por default para ahorrar. Si la VM cae durante una demo, el dashboard se queda sin datos frescos. *Mitigación:* recipe de warm-up antes de cualquier ventana de revisión + `pm2 save`; la redundancia real está en el backlog (ver Oportunidades). Es una decisión de costo consciente para un proyecto de concurso, no una omisión.
 
 **Criterio 2/5 — CI auto-run apagado.**
-El pipeline existe pero el auto-run está bloqueado por un lock de billing → no hay gate automático de regresión en cada push. *Mitigación:* disciplina manual documentada — cada cambio pasó `npm test` (82/82) + `next build` + re-QA visual antes de desplegar ([QA §4](QA-HARDTEST.md)). Reactivarlo es S y está priorizado.
+El pipeline existe pero el auto-run está bloqueado por un lock de billing → no hay gate automático de regresión en cada push. *Mitigación:* disciplina manual documentada — cada cambio pasó `npm test` (87/87) + `next build` + re-QA visual antes de desplegar ([QA §4](QA-HARDTEST.md)). Reactivarlo es S y está priorizado.
 
 **Criterio 3 — El reset de P&L requiere reiniciar el worker.**
 Gotcha real encontrado en hard-testing: el worker mantiene el P&L en RAM y reescribe el valor viejo tras un reset. *Mitigación:* recipe operativo verificado `pm2 stop → reset → pm2 start` (P&L $0 durable), documentado en [QA-HARDTEST.md](QA-HARDTEST.md) §4. Fix de raíz (invalidación por señal) pendiente.

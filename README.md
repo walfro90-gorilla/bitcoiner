@@ -1,6 +1,6 @@
 # 🦅 Bitcoiner — Bot de Arbitraje de Bitcoin en tiempo real
 
-> Sistema que **detecta oportunidades de arbitraje de BTC en tiempo real** entre Binance, OKX, Kraken, Bitso y Bitstamp, calcula su **rentabilidad neta** (fees + withdrawal + slippage), **simula la ejecución** respetando la liquidez del order book, e incorpora **noticias de última hora + IA** en la gestión de riesgo. Construido para el **Coding Challenge México**.
+> Sistema que **detecta oportunidades de arbitraje de BTC en tiempo real** entre Binance, OKX, Kraken, Bitso, Bitstamp, Coinbase y Bybit, calcula su **rentabilidad neta** (fees + withdrawal + slippage), **simula la ejecución** respetando la liquidez del order book, e incorpora **noticias de última hora + IA** en la gestión de riesgo. Construido para el **Coding Challenge México**.
 
 ## 🔗 Enlaces
 
@@ -34,7 +34,7 @@ Un **worker** corriendo en un servidor de **Frankfurt** mantiene conexiones **We
 6. **Operaciones ejecutadas (blotter)** — trades simulados: volumen, **VWAP** de compra/venta, fees, **P&L neto**, `ms` de ejecución y bandera **parcial** (cuando la liquidez no cubrió el tamaño completo).
 7. **Noticias & sentimiento** — titulares recientes + **termómetro** (sentimiento −1..1 e impacto) generado por la **IA**. Noticias de alto impacto negativo activan **risk-off** (el bot pausa ejecuciones).
 8. **Wallets simuladas** — saldos por exchange y activo; se actualizan tras cada operación (y el *wallet guard* impide que se vuelvan negativos).
-9. **Copiloto 🦅 (abajo a la derecha)** — chat con IA (Gemini) que responde sobre P&L, por qué se ejecutó/descartó una operación, estado del mercado y noticias, **con datos reales** de la base de datos.
+9. **Copiloto 🦅 (abajo a la derecha)** — chat con IA (Groq/Llama en prod) que responde sobre P&L, por qué se ejecutó/descartó una operación, estado del mercado y noticias, **con datos reales** de la base de datos.
 
 > **Paneles de mercado (parte superior):** **Estado del mercado** (mejor bid/ask por exchange) + **Matriz de arbitraje** N×N que resalta dónde `ask(compra) < bid(venta)` · **Profundidad del libro** (ladder de niveles por venue) · **Anatomía del ejemplo del reto** ($70,000→$70,250 = +$109.75/BTC) · **Velocidad de detección** (avg/p50/p95/p99) · **Mejor oportunidad reciente** (priorización por neto) · **Desempeño por estrategia** (trades, win-rate y P&L de las 5).
 >
@@ -187,7 +187,7 @@ Un buen sistema no esconde sus compensaciones: las hace explícitas y deja una *
 | **Selectividad** | Umbral alto = seguro · bajo = más trades | `min_net_bps` configurable en vivo (default 5) |
 | **Datos vs Costo DB** | Guardar todo · retención agresiva | `pg_cron` → ~6% del free tier |
 - **5º exchange (Bitstamp)** + **inyector del ejemplo del reto**: el botón "🧬 Reproducir ejemplo" del dashboard empuja el escenario $70,000→$70,250 por el pipeline real (detección → simulación → P&L), para que el jurado vea el caso del brief ejecutarse en vivo.
-- **Tests**: `npm test` corre **82 unit tests** + un harness de estrés determinista (`npm run stress`). Cubren motor neto (incl. **+$109.75/BTC** y maker/taker), Markov, CRC32, **precisión fixed-point**, **rebalanceo**, **velas OHLC**, **parametrización en vivo**, **FSM de orden + SimulatedAdapter**, **executor + circuit breakers**, **integración del motor** (gating por estrategia) e **invariantes bajo carga** (~890k iteraciones, 0 violaciones). Docs: **[`CRITERIOS-JURADO.md`](docs/CRITERIOS-JURADO.md)** (evidencia punto por punto de los 5 criterios del jurado) · **[`FODA-JURADO.md`](docs/FODA-JURADO.md)** (FODA + oportunidades de mejora vs. esos criterios) · [`PRUEBAS.md`](docs/PRUEBAS.md) · [`PRUEBAS-ESTRES.md`](docs/PRUEBAS-ESTRES.md) · [`QA-HARDTEST.md`](docs/QA-HARDTEST.md) · [`DECISIONS.md`](docs/DECISIONS.md) · [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`DEMO.md`](docs/DEMO.md) · [`VIDEOCALL.md`](docs/VIDEOCALL.md).
+- **Tests**: `npm test` corre **87 unit tests** + un harness de estrés determinista (`npm run stress`). Cubren motor neto (incl. **+$109.75/BTC** y maker/taker), Markov, CRC32, **precisión fixed-point**, **rebalanceo**, **velas OHLC**, **parametrización en vivo**, **FSM de orden + SimulatedAdapter**, **executor + circuit breakers**, **integración del motor** (gating por estrategia) e **invariantes bajo carga** (~890k iteraciones, 0 violaciones). Docs: **[`CRITERIOS-JURADO.md`](docs/CRITERIOS-JURADO.md)** (evidencia punto por punto de los 5 criterios del jurado) · **[`FODA-JURADO.md`](docs/FODA-JURADO.md)** (FODA + oportunidades de mejora vs. esos criterios) · [`PRUEBAS.md`](docs/PRUEBAS.md) · [`PRUEBAS-ESTRES.md`](docs/PRUEBAS-ESTRES.md) · [`QA-HARDTEST.md`](docs/QA-HARDTEST.md) · [`DECISIONS.md`](docs/DECISIONS.md) · [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`DEMO.md`](docs/DEMO.md) · [`VIDEOCALL.md`](docs/VIDEOCALL.md).
 - **Capa analítica (web-only, datos reales)**: comparador **maker/taker**, **backtest** histórico del premio Bitso y **cadena de Markov** de régimen — todo en el navegador sobre datos ya capturados, sin tocar el worker ni el hot-path. Trade-offs en [`docs/TRADE-OFFS.md`](docs/TRADE-OFFS.md).
 
 ---
