@@ -8,7 +8,7 @@
 |---|---|
 | 🌐 **Dashboard en vivo** | **https://bitcoiner-three.vercel.app** |
 | 💻 **Repositorio** | https://github.com/walfro90-gorilla/bitcoiner |
-| ⚙️ **Worker** | UpCloud · Frankfurt (EU) · 24/7 con pm2 |
+| ⚙️ **Worker** | VM región EU · pm2 · *(la VM se retiró el 2026-08-28 — [ADR-010](docs/DECISIONS.md); el dashboard muestra el último estado persistido)* |
 
 ---
 
@@ -115,7 +115,7 @@ Un indicador honesto en el hero infiere la salud del worker de la **frescura de 
 Tres piezas; **el hot-path (detección) nunca toca el servidor web**:
 
 ```
-  UpCloud VM (Frankfurt, EU)             Supabase (Postgres + Realtime)        Vercel
+  VM región EU (Frankfurt)               Supabase (Postgres + Realtime)        Vercel
  ┌───────────────────────┐          ┌──────────────────────────────┐   ┌────────────────────┐
  │  WORKER (Node + tsx)   │  service │ exchanges · fee_config        │   │ Next.js dashboard  │
  │  WebSockets ─► RAM     │  role    │ wallets · opportunities       │◄──┤ (anon, RLS)        │
@@ -225,7 +225,7 @@ npm run dev        # dashboard en http://localhost:3000
 
 ## ☁️ Despliegue
 
-- **Worker** → **UpCloud VM región EU** (guía paso a paso: [`deploy/UPCLOUD.md`](deploy/UPCLOUD.md)); alternativas: Railway EU (`railway.json`) o Docker (`Dockerfile`). IP **no-US** para Binance/OKX.
+- **Worker** → **VM en región EU** (guía paso a paso: [`deploy/UPCLOUD.md`](deploy/UPCLOUD.md)); alternativas: Railway EU (`railway.json`) o Docker (`Dockerfile`). IP **no-US** para Binance/OKX. *Sin VM activa desde el 2026-08-28 ([ADR-010](docs/DECISIONS.md)); el worker es stateless — levantar una VM EU y seguir la guía lo revive.*
 - **Web** → **Vercel** (import del repo). Env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, y el LLM del copiloto — por defecto **Groq** (`LLM_PROVIDER=openai`, `OPENAI_API_KEY=gsk_…`, `OPENAI_MODEL=llama-3.3-70b-versatile`); alternativa: `GEMINI_API_KEY` + `LLM_PROVIDER=gemini`. `worker/` se ignora con `.vercelignore`.
 - **Supabase** → un proyecto compartido por worker y web.
 

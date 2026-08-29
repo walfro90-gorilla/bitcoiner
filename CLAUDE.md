@@ -29,7 +29,7 @@ Local necesita `.env.local` (web) y `.env.worker` (worker); ver `.env.example` y
 ## Arquitectura (3 piezas — el hot-path nunca toca el servidor web)
 
 ```
-UpCloud VM (Frankfurt)          Supabase (Postgres + Realtime)        Vercel
+VM en región EU (sin host hoy)  Supabase (Postgres + Realtime)        Vercel
   worker/  (Node + tsx)   write   exchanges·fees·wallets·             app/ + components/
   WS → order books en RAM ──────► opportunities·trades·       ◄────── Next.js read-only
   engine event-driven     service spread_history·bot_state            (anon + RLS)
@@ -56,4 +56,4 @@ SQL versionado en `supabase/migrations/` (`0001_init` … `0011`). Cambios de es
 
 ## Deploy
 - **Web:** Vercel (import del repo; `worker/` ignorado vía `.vercelignore`).
-- **Worker:** VM UpCloud Frankfurt `root@94.237.99.158`, repo en `~/clawbot`, pm2 `clawbot-worker`. Redeploy: `cd ~/clawbot && git pull && pm2 restart all`.
+- **Worker:** ⚠️ **sin VM desde el 2026-08-28** — la VM UpCloud Frankfurt (`94.237.99.158`) fue borrada. El worker no corre en ningún lado; el dashboard lee lo último que quedó en Supabase. Para revivirlo hace falta una VM **en región EU** (Binance/OKX bloquean IPs de EE.UU.): receta completa en `~/upcloud-rescue/wal-trading-fra1/REBUILD.md` (fuera del repo) y `docs/DEPLOY.md`. Con VM viva el redeploy era `cd ~/clawbot && git pull && pm2 restart all`.

@@ -57,6 +57,12 @@
 **Decisión.** `opportunities` **fuera** de Realtime (era ~99% del tráfico); el dashboard la refresca por polling. Solo tablas chicas (trades, wallets, bot_state, runtime/strategy_config, transfers) en Realtime. Retención con `pg_cron`.
 **Por qué.** Mantiene el proyecto en el free tier sin sacrificar la experiencia en vivo de P&L/ejecuciones.
 
+## ADR-010 · Retirar la VM del worker; el estado vive en Supabase, no en el host
+**Contexto.** La VM UpCloud `wal-trading-fra1` (Frankfurt, `94.237.99.158`) hospedaba el worker 24/7 con pm2. Costaba dinero corriendo on-demand y quedó ociosa tras la entrega. Antes de borrarla había que responder si la máquina guardaba algo irrecuperable.
+**Decisión.** **Borrar la VM (2026-08-28)** y dejar el worker sin host, tras auditar la máquina y extraer un paquete de rescate a `~/upcloud-rescue/wal-trading-fra1/` (**fuera del repo**): `REBUILD.md` (receta de reconstrucción), `.env.worker` cifrado con **age**, logs pm2 y configs reales. Revivir = levantar cualquier VM en **región EU** y seguir `REBUILD.md`.
+**Por qué.** La arquitectura de ADR-001 ya hacía esto barato: **todo el estado de trading vive en Supabase** (opportunities, trades, spread_history, book_snapshots, bot_state), y el worker es un proceso sin estado propio que lee `runtime_config` al arrancar. Auditado: cero sqlite, cero carpetas de estado, cero código sin pushear (el HEAD del server era ancestro de `main`), cero API keys de exchange (solo WebSockets públicos). Lo único que existía **solo** ahí eran los logs pm2 (12,024,353 líneas, rescatados y verificados por conteo) y la copia de `.env.worker`.
+**Trade-off.** El dashboard queda mostrando el último estado persistido en vez de datos frescos, y revivir cuesta ~15 min de setup manual en vez de un `pm2 restart`. El precio de no automatizar el aprovisionamiento (sin Terraform/Ansible) se paga una sola vez y a cambio no hay factura de VM ociosa. La región EU **no** es negociable al reconstruir: Binance y OKX geo-bloquean IPs de EE.UU.
+
 ---
 
 ### Resumen de filosofía

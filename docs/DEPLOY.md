@@ -11,12 +11,23 @@
 - **Verificar el deploy** (vía MCP de Vercel): `list_deployments` → el último commit debe quedar `state: READY`. Si `ERROR`, `get_deployment_build_logs(errorsOnly:true)`.
   - ⚠️ **Gotcha de build:** ningún archivo que el `tsconfig.json` (web) type-checkee puede importar de `worker/` (excluido en Vercel vía `.vercelignore`). Por eso `scripts/` está fuera del tsconfig web y dentro de `tsconfig.worker.json`.
 
-## Worker (VM UpCloud Frankfurt) — manual
+## Worker (VM en región EU) — manual
+
+> ⚠️ **Estado 2026-08-28: no hay VM.** La instancia UpCloud `wal-trading-fra1`
+> (`94.237.99.158`) fue borrada permanentemente. El worker no corre en ningún lado
+> hasta levantar una VM nueva. Ver ADR-010.
+>
+> **Para revivirlo:** la receta de reconstrucción (distro, Node 22 NodeSource, pm2,
+> `pm2 startup`, variables por nombre) vive **fuera del repo** en
+> `~/upcloud-rescue/wal-trading-fra1/REBUILD.md`, junto con `.env.worker` cifrado
+> con age. La región **debe ser EU** — Binance y OKX bloquean IPs de EE.UU.
+
+Con la VM viva, el redeploy era:
 ```bash
 ssh bitcoiner 'cd ~/clawbot && git pull --ff-only origin main && pm2 restart clawbot-worker'
 ssh bitcoiner 'bash -lc "pm2 logs clawbot-worker --lines 40 --nostream"'   # verificar arranque
 ```
-- La VM se corre **on-demand** (encender en la consola de UpCloud antes de demos/jurado).
+- La VM se corría **on-demand** (encender en la consola del proveedor antes de demos/jurado).
 - El worker **no** usa deps nuevas de la web (lightweight-charts es web-only) → no hace falta `npm install` para un redeploy normal.
 - Las migraciones (Supabase) se aplican aparte (MCP `supabase-bitcoiner` `apply_migration`); el código del worker tolera columnas/tablas nuevas con defaults neutros.
 

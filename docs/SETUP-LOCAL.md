@@ -16,7 +16,7 @@ Cópialos del laptop viejo, o recréalos desde `.env.example` con las llaves rea
 | `.env.worker` | Worker (corre en la VM, no local) | mismas de Supabase + LLM |
 | `.env.supabase` | acceso SQL (PAT de Supabase) | token personal de Supabase |
 
-En producción estas viven en **Vercel** (web) y en **`~/clawbot/.env.worker`** de la VM (worker) — el laptop nuevo no las necesita para eso, solo para correr en local.
+En producción la web las toma de **Vercel**. Las del worker vivían en `~/clawbot/.env.worker` de la VM; con la VM borrada, la única copia está cifrada con age en `~/upcloud-rescue/wal-trading-fra1/secrets/env.worker.age` (fuera del repo). El laptop nuevo no las necesita para eso, solo para correr en local.
 
 ## 3. Arrancar en local
 ```bash
@@ -40,4 +40,4 @@ Si quieres conservarla, el truco es que la carpeta se nombra según la ruta del 
 
 ## 6. Deploy / worker (referencia)
 - **Web:** Vercel (import del repo). `worker/` se ignora vía `.vercelignore`.
-- **Worker:** VM UpCloud (Frankfurt), `root@94.237.99.158`, repo en `~/clawbot`, pm2 como `clawbot-worker`. Redeploy: `cd ~/clawbot && git pull && pm2 restart all`.
+- **Worker:** ⚠️ **sin VM desde el 2026-08-28** (la instancia UpCloud `94.237.99.158` fue borrada). Reconstrucción en `~/upcloud-rescue/wal-trading-fra1/REBUILD.md` — fuera del repo, incluye `.env.worker` cifrado con age. Debe ser región **EU**. Ver [`DEPLOY.md`](DEPLOY.md) y ADR-010.
