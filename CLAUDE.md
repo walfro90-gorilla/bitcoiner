@@ -10,18 +10,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Bitcoiner** — bot de arbitraje de BTC en tiempo real para el **Coding Challenge México** (finalista 17/250). Detecta divergencias de precio entre Binance, OKX, Kraken, Bitso y Bitstamp, calcula rentabilidad **neta** (fees + withdrawal + slippage + depeg), **simula** la ejecución respetando la liquidez del order book, y modula el riesgo con noticias + IA. La narrativa central es de **honestidad**: registra *todas* las oportunidades y **descarta correctamente** las no rentables (entre venues líquidos los fees taker superan el spread). El idioma del proyecto (commits, docs, UI, comentarios) es **español**.
 
-## Comandos
-
-```bash
-npm run dev            # dashboard Next.js → http://localhost:3000
-npm run build          # build de producción (Vercel)
-npm run lint           # eslint
-npm test               # tests del núcleo (node --test + tsx): profit, crc32, markov
-npm run check:worker   # typecheck del worker (tsconfig.worker.json)
-npm run worker         # corre el worker en local (raro; normalmente vive en la VM)
-npm run worker:watch   # worker con hot-reload
-```
-
 Un solo test: `node --import tsx --test lib/core/profit.test.ts`
 
 Local necesita `.env.local` (web) y `.env.worker` (worker); ver `.env.example` y `docs/SETUP-LOCAL.md`. Los `.env*` NO están en git.

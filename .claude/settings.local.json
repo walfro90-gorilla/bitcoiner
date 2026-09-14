@@ -23,7 +23,15 @@
       "Bash(node -p \"require\\('./node_modules/next/package.json'\\).version\")",
       "Bash(node *)",
       "Bash(npx tsc *)",
-      "Bash(echo \"exit: $?\")"
+      "Bash(echo \"exit: $?\")",
+      "mcp__claude_ai_Supabase__list_projects",
+      "mcp__claude_ai_Vercel__list_teams",
+      "mcp__claude_ai_Vercel__list_projects",
+      "Bash(claude mcp *)",
+      "Bash(npm ls *)",
+      "Bash(claude --version)",
+      "mcp__supabase-bitcoiner__list_tables",
+      "mcp__supabase-bitcoiner__execute_sql"
     ]
   }
 }
