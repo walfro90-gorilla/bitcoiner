@@ -6,8 +6,10 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
+  // Sin ADMIN_KEY configurada no hay reset: el repo es público y un default sería una llave conocida.
+  const adminKey = process.env.ADMIN_KEY;
   const key = req.headers.get('x-admin-key') ?? '';
-  if (key !== (process.env.ADMIN_KEY || 'clawbot-admin')) {
+  if (!adminKey || key !== adminKey) {
     return new NextResponse('Passcode inválido', { status: 401 });
   }
   const sb = createAdminClient();
